@@ -1,7 +1,7 @@
 # Teknoo Software - East UX - Change Log
 
-## [1.0.0] - Unreleased
-### First Release
+## [0.1.0] - 2026-10-22
+### Alpha Release
 
 The application-level UI pieces of an East application, extracted from an application built on East Foundation and
 East Common, into a Symfony bundle (`Teknoo\East\UXBundle\TeknooEastUXBundle`) and universal code (`Teknoo\East\UX\`).
