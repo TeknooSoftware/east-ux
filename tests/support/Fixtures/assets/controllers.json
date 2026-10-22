@@ -1,0 +1,35 @@
+{
+    "controllers": {
+        "@teknoo/east-ux": {
+            "form-window": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "form-window-dynamic-loader": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "list-window-refresh": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "window-close": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "window-drag": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "delete-item": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "clipboard": {
+                "enabled": true,
+                "fetch": "eager"
+            }
+        }
+    },
+    "entrypoints": []
+}

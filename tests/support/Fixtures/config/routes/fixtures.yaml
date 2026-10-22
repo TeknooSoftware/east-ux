@@ -1,0 +1,76 @@
+fixtures_home:
+  path: '/home'
+  methods: ['GET']
+  defaults:
+    _controller: 'teknoo.east.common.endpoint.static'
+    template: 'home.html.twig'
+    errorTemplate: 'error.html.twig'
+
+fixtures_item_list:
+  path: '/items/'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'teknoo.east.common.endpoint.crud.list'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    defaultOrderDirection: 'ASC'
+    itemsPerPage: 5
+    template: 'item/list.html.twig'
+    errorTemplate: 'error.html.twig'
+
+fixtures_item_new:
+  path: '/items/new'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'teknoo.east.common.endpoint.crud.new'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    writer: '@Teknoo\Tests\East\UX\Support\Fixtures\Writer\ItemWriter'
+    objectClass: 'Teknoo\Tests\East\UX\Support\Fixtures\Object\Item'
+    formClass: 'Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType'
+    template: 'item/new.html.twig'
+    errorTemplate: 'error.html.twig'
+    route: 'fixtures_item_edit'
+    formOptions: { }
+
+fixtures_item_edit:
+  path: '/items/edit/{id}'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'teknoo.east.common.endpoint.crud.edit'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    writer: '@Teknoo\Tests\East\UX\Support\Fixtures\Writer\ItemWriter'
+    formClass: 'Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType'
+    template: 'item/edit.html.twig'
+    errorTemplate: 'error.html.twig'
+    formOptions: { }
+
+# Same recipe as `fixtures_item_new`, behind the `^/admin` access rule (ROLE_ADMIN)
+fixtures_admin_item_new:
+  path: '/admin/items/new'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'teknoo.east.common.endpoint.crud.new'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    writer: '@Teknoo\Tests\East\UX\Support\Fixtures\Writer\ItemWriter'
+    objectClass: 'Teknoo\Tests\East\UX\Support\Fixtures\Object\Item'
+    formClass: 'Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType'
+    template: 'item/new.html.twig'
+    errorTemplate: 'error.html.twig'
+    route: 'fixtures_item_edit'
+    formOptions: { }
+
+# Same recipe, on a path starting with a placeholder (the shape of a multi-tenant application), behind the
+# `^/[^/]+/admin` access rule (ROLE_ADMIN): the placeholder accepts `?` and `#`, so the path matched by East
+# Foundation's router must be the path checked by the component renderer
+fixtures_tenant_admin_item_new:
+  path: '/{tenant}/admin/items/new'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'teknoo.east.common.endpoint.crud.new'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    writer: '@Teknoo\Tests\East\UX\Support\Fixtures\Writer\ItemWriter'
+    objectClass: 'Teknoo\Tests\East\UX\Support\Fixtures\Object\Item'
+    formClass: 'Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType'
+    template: 'item/new.html.twig'
+    errorTemplate: 'error.html.twig'
+    route: 'fixtures_item_edit'
+    formOptions: { }

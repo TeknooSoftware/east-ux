@@ -1,0 +1,92 @@
+{% extends '@TeknooEastUX/components/Window.html.twig' %}
+
+{# Overlay classes, hidden by default #}
+{% block window_classes %} form-window{% if this.hasSubForms() %} form-window-wide{% endif %}{% if this.hidden %} d-none{% endif %}{% if this.isFixed %} form-fixed{% endif %}{% endblock %}
+{%- block window_attributes -%}
+    {% if this.isLive %}
+        {{ attributes.defaults({
+            'data-controller': 'form-window' ~ (this.isDraggable() ? ' window-drag' : ''),
+            'data-form-window': this.windowId,
+            'data-form-window-error-text-value': 'teknoo.east.ux.form_window.text.error'|trans({}, 'east_ux'),
+            'data-form-window-network-error-text-value': 'teknoo.east.ux.form_window.text.network_error'|trans({}, 'east_ux')
+        }) }}
+    {% else %}
+        {{ attributes.defaults({
+            'data-controller': 'window-close' ~ (this.isDraggable() ? ' window-drag' : ''),
+            'data-form-window': this.windowId,
+            'data-window-close-redirect-url-value': this.closeRedirectUrl
+        }) }}
+    {% endif %}
+{%- endblock -%}
+{%- block closeAction -%}
+    {% if this.isLive %}
+        data-action="click->form-window#close"
+    {% else %}
+        data-action="click->window-close#close"
+    {% endif %}
+{%- endblock -%}
+
+{% block content %}
+    {% if this.formView is not null %}
+        {% if this.formTheme is not empty %}
+            {% form_theme this.formView with [this.formTheme] %}
+        {% endif %}
+        {{ form_start(this.formView, {
+            'action': this.formPath,
+            'attr': {
+                'data-form-window-target': 'form',
+                'data-action': 'submit->form-window#submit',
+                'data-skip-morph': ''
+            }
+        }) }}
+            <div class="p-3">
+                <div data-form-window-target="errors" class="alert alert-danger d-none" role="alert"></div>
+                {% set direct_fields = [] %}
+                {% set sub_forms = [] %}
+                {% for child in this.formView %}
+                    {% if child.vars.compound %}
+                        {% set sub_forms = sub_forms|merge([child]) %}
+                    {% else %}
+                        {% if child.vars.block_prefixes is defined and 'hidden' not in child.vars.block_prefixes %}
+                            {% set direct_fields = direct_fields|merge([child]) %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                {% if sub_forms is not empty %}
+                    <div class="form-window-subforms">
+                        {% if direct_fields is not empty %}
+                            <fieldset class="east-ux-fieldset border rounded p-3">
+                                <legend class="float-none w-auto px-2 fs-6 fw-semibold">
+                                    {{ 'teknoo.east.ux.form_window.fieldset.main'|trans({}, 'east_ux') }}
+                                </legend>
+                                {% for field in direct_fields %}
+                                    {{ form_row(field) }}
+                                {% endfor %}
+                            </fieldset>
+                        {% endif %}
+                        {% for subform in sub_forms %}
+                            <fieldset class="east-ux-fieldset border rounded p-3">
+                                <legend class="float-none w-auto px-2 fs-6 fw-semibold">
+                                    {{ (subform.vars.label is not empty ? subform.vars.label : subform.vars.name)|trans }}
+                                </legend>
+                                {{ form_widget(subform) }}
+                                {{ form_errors(subform) }}
+                            </fieldset>
+                        {% endfor %}
+                    </div>
+                    {{ form_rest(this.formView) }}
+                {% else %}
+                    {{ form_widget(this.formView) }}
+                {% endif %}
+            </div>
+            <div class="p-3 text-center border-top">
+                <button type="submit" class="btn btn-primary" data-form-window-target="submitButton">
+                    {{ 'teknoo.east.ux.form_window.action.save'|trans({}, 'east_ux') }}
+                </button>
+                <button type="button" class="btn" data-action="click->form-window#close">
+                    {{ 'teknoo.east.ux.form_window.action.cancel'|trans({}, 'east_ux') }}
+                </button>
+            </div>
+        {{ form_end(this.formView) }}
+    {% endif %}
+{% endblock %}

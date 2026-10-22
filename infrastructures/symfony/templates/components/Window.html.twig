@@ -1,0 +1,41 @@
+{% block window %}
+<div class="window{% if this.isDraggable() %} draggable{% endif %}{% block window_classes '' %}"
+    {% block window_attributes %}{{ attributes.defaults({
+        'data-controller': 'window-close' ~ (this.isDraggable() ? ' window-drag' : ''),
+        'data-form-window': this.windowId,
+        'data-window-close-redirect-url-value': this.closeRedirectUrl
+    }) }}{% endblock %}>
+    {% block title_bar %}
+        <div class="title-bar{% block title_bar_classes ''%}"
+                {% if this.isDraggable() %} data-action="mousedown->window-drag#startDrag"{% endif %}
+                {% block title_bar_attributes '' %}
+            >
+            {% if closable %}
+                <button aria-label="{{ closeAriaLabel }}" class="close" {% block closeAction 'data-action="click->window-close#close"' %}></button>
+            {% else %}
+                <button aria-label="{{ closeAriaLabel }}" class="close hidden"></button>
+            {% endif %}
+            <h1 class="title">{{ title }}</h1>
+            {% if resizable %}
+                <button aria-label="{{ resizeAriaLabel }}" class="resize"></button>
+            {% else %}
+                <button aria-label="{{ resizeAriaLabel }}" class="resize hidden"></button>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+    {% block separator %}
+        <div class="separator{% block separator_classes %}{% endblock %}"{% block separator_attributes %}{% endblock %}></div>
+    {% endblock %}
+
+    {% block window_pane %}
+        <div class="window-pane{% block window_pane_classes %}{% endblock %}"{% block window_pane_attributes %}{% endblock %}>
+            {% block content %}
+                {{ content ?? '' }}
+            {% endblock %}
+        </div>
+    {% endblock %}
+
+    {% block window_modals '' %}
+</div>
+{% endblock %}

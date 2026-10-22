@@ -1,0 +1,60 @@
+parameters:
+  # Error template of East Common's recipes, used when an error occurs before a route's `errorTemplate` is read
+  teknoo.east.common.plan.default_error_template: 'error.html.twig'
+
+services:
+  # PSR-17 factories, required by East Foundation's PSR bridge
+  Psr\Http\Message\ServerRequestFactoryInterface:
+    class: 'Laminas\Diactoros\ServerRequestFactory'
+
+  Psr\Http\Message\StreamFactoryInterface:
+    class: 'Laminas\Diactoros\StreamFactory'
+
+  Psr\Http\Message\UploadedFileFactoryInterface:
+    class: 'Laminas\Diactoros\UploadedFileFactory'
+
+  Psr\Http\Message\ResponseFactoryInterface:
+    class: 'Laminas\Diactoros\ResponseFactory'
+
+  # Items, kept in memory. The loader and the writer are public: East's recipe endpoints fetch the services named in
+  # the routes' defaults (`loader: '@...'`) from the container at runtime
+  Teknoo\Tests\East\UX\Support\Fixtures\Repository\ItemRepository:
+    class: 'Teknoo\Tests\East\UX\Support\Fixtures\Repository\ItemRepository'
+    public: true
+
+  Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader:
+    class: 'Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    public: true
+    arguments:
+      - '@Teknoo\Tests\East\UX\Support\Fixtures\Repository\ItemRepository'
+
+  Teknoo\Tests\East\UX\Support\Fixtures\Writer\ItemWriter:
+    class: 'Teknoo\Tests\East\UX\Support\Fixtures\Writer\ItemWriter'
+    public: true
+    arguments:
+      - '@Teknoo\Tests\East\UX\Support\Fixtures\Repository\ItemRepository'
+
+  Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType:
+    class: 'Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType'
+    tags:
+      - { name: 'form.type' }
+
+  # Menu generators, tagged as an application must do
+  Teknoo\Tests\East\UX\Support\Fixtures\Menu\ContentMenu:
+    class: 'Teknoo\Tests\East\UX\Support\Fixtures\Menu\ContentMenu'
+    tags:
+      - { name: 'teknoo.east.ux.menu.generator' }
+
+  Teknoo\Tests\East\UX\Support\Fixtures\Menu\UserMenu:
+    class: 'Teknoo\Tests\East\UX\Support\Fixtures\Menu\UserMenu'
+    tags:
+      - { name: 'teknoo.east.ux.menu.generator' }
+
+  Teknoo\Tests\East\UX\Support\Fixtures\Security\CurrentUser:
+    class: 'Teknoo\Tests\East\UX\Support\Fixtures\Security\CurrentUser'
+    arguments:
+      - '@security.token_storage'
+
+  # No log output in the tests (without it, the default logger of the debug kernel writes on stderr)
+  logger:
+    class: 'Psr\Log\NullLogger'

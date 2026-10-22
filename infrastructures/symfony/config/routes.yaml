@@ -1,0 +1,7 @@
+# Imported by the application with a prefix, e.g. `/component`, the renderer then answers on `POST /component/render`.
+# The application's firewall access map must require an authenticated user on that prefix.
+_teknoo_east_ux_component_render:
+    path: '/render'
+    methods: ['POST']
+    defaults:
+        _controller: 'Teknoo\East\UXBundle\Controller\ComponentRenderer'

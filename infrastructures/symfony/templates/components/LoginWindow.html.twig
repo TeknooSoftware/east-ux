@@ -1,0 +1,78 @@
+<div class="window">
+    <div class="title-bar">
+        {% if this.isClosable %}
+            <button aria-label="{{ closeAriaLabel }}" class="close"></button>
+        {% else %}
+            <button aria-label="{{ closeAriaLabel }}" class="close hidden"></button>
+        {% endif %}
+        <h1 class="title">{{ title }}</h1>
+        {% if this.isResizable() %}
+            <button aria-label="{{ resizeAriaLabel }}" class="resize"></button>
+        {% else %}
+            <button aria-label="{{ resizeAriaLabel }}" class="resize hidden"></button>
+        {% endif %}
+    </div>
+    <div class="separator"></div>
+
+    <div class="window-pane login-pane">
+        {# Error display #}
+        {% set authenticationError = this.authenticationError %}
+        {% if authenticationError %}
+            <div id="login-error" class="alert alert-danger" role="alert">
+                <strong>{{ 'teknoo.east.ux.login_window.text.error_prefix'|trans({}, 'east_ux') }}</strong> {{ authenticationError.messageKey|trans(authenticationError.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        {# Login form - Symfony standard form_login #}
+        <form action="{{ actionPath }}" method="post">
+            <div class="mb-3">
+                <label for="_username" class="form-label">{{ 'teknoo.east.ux.login_window.input.username'|trans({}, 'east_ux') }}</label>
+                <input
+                    type="text"
+                    id="_username"
+                    name="_username"
+                    class="form-control"
+                    value="{{ this.lastUsername }}"
+                    required
+                    autofocus
+                >
+            </div>
+
+            <div class="mb-3">
+                <label for="_password" class="form-label">{{ 'teknoo.east.ux.login_window.input.password'|trans({}, 'east_ux') }}</label>
+                <input
+                    type="password"
+                    id="_password"
+                    name="_password"
+                    class="form-control"
+                    required
+                >
+            </div>
+
+            {% if this.rememberMe %}
+                <div class="form-check mb-3">
+                    <input
+                        type="checkbox"
+                        id="_remember_me"
+                        name="_remember_me"
+                        class="form-check-input mt-2"
+                    >
+                    <label for="_remember_me" class="form-check-label">
+                        {{ 'teknoo.east.ux.login_window.input.remember_me'|trans({}, 'east_ux') }}
+                    </label>
+                </div>
+            {% endif %}
+
+            {# CSRF token #}
+            {% if this.csrfTokenId is not empty %}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token(this.csrfTokenId) }}">
+            {% endif %}
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    {{ 'teknoo.east.ux.login_window.button.sign_in'|trans({}, 'east_ux') }}
+                </button>
+            </div>
+        </form>
+    </div>{# end window-pane #}
+</div>{# end window #}

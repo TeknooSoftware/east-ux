@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         backupGlobals="false"
+         backupStaticProperties="false"
+         bootstrap="tests/bootstrap.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         displayDetailsOnAllIssues="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         failOnDeprecation="true"
+         failOnNotice="true"
+         failOnPhpunitDeprecation="true"
+         failOnRisky="true"
+         failOnWarning="true"
+         processIsolation="false"
+         stopOnFailure="false"
+  >
+  <coverage/>
+  <testsuites>
+    <testsuite name="Teknoo Software/East UX Test Suite">
+      <directory suffix="Test.php">tests/</directory>
+      <exclude>tests/behat/</exclude>
+      <exclude>tests/var/</exclude>
+    </testsuite>
+  </testsuites>
+  <source>
+    <include>
+      <directory>src</directory>
+      <directory>infrastructures</directory>
+    </include>
+    <exclude>
+      <directory>docs</directory>
+      <directory>demo</directory>
+      <directory>licences</directory>
+    </exclude>
+  </source>
+</phpunit>

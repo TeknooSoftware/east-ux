@@ -1,0 +1,51 @@
+{% if pageCount > 1 %}
+    <nav aria-label="{{ 'teknoo.east.ux.pagination.text.pagination'|trans({}, 'east_ux') }}" class="mt-3{% block nav_classes %}{% endblock %}"{% block nav_attributes %}{% endblock %}>
+        <ul class="pagination justify-content-center{% block ul_classes %}{% endblock %}"{% block ul_attributes %}{% endblock %}>
+            {# Previous #}
+            <li class="page-item{% if page == 1 %} disabled{% endif %}">
+                {% if page > 1 %}
+                    <button type="button"
+                            class="page-link"
+                            data-model="page"
+                            data-action="live#update"
+                            data-value="{{ page - 1 }}"
+                            value="{{ page - 1 }}">
+                        {{ 'teknoo.east.ux.pagination.action.previous'|trans({}, 'east_ux') }}
+                    </button>
+                {% else %}
+                    <span class="page-link">{{ 'teknoo.east.ux.pagination.action.previous'|trans({}, 'east_ux') }}</span>
+                {% endif %}
+            </li>
+
+            {# Page numbers #}
+            {% for pageNumber in 1..pageCount %}
+                <li class="page-item{% if pageNumber == page %} active{% endif %}">
+                    <button type="button"
+                            class="page-link"
+                            data-model="page"
+                            data-action="live#update"
+                            data-value="{{ pageNumber }}"
+                            value="{{ pageNumber }}">
+                        {{ pageNumber }}
+                    </button>
+                </li>
+            {% endfor %}
+
+            {# Next #}
+            <li class="page-item{% if page == pageCount %} disabled{% endif %}">
+                {% if page < pageCount %}
+                    <button type="button"
+                            class="page-link"
+                            data-model="page"
+                            data-action="live#update"
+                            data-value="{{ page + 1 }}"
+                            value="{{ page + 1 }}">
+                        {{ 'teknoo.east.ux.pagination.action.next'|trans({}, 'east_ux') }}
+                    </button>
+                {% else %}
+                    <span class="page-link">{{ 'teknoo.east.ux.pagination.action.next'|trans({}, 'east_ux') }}</span>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+{% endif %}

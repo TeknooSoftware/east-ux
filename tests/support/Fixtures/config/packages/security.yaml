@@ -1,0 +1,28 @@
+# Stateless HTTP basic authentication with in-memory users: `user` (ROLE_USER) and `admin` (ROLE_USER, ROLE_ADMIN)
+security:
+  password_hashers:
+    Symfony\Component\Security\Core\User\InMemoryUser: 'plaintext'
+
+  providers:
+    fixtures_users:
+      memory:
+        users:
+          user: { password: 'user-password', roles: ['ROLE_USER'] }
+          admin: { password: 'admin-password', roles: ['ROLE_USER', 'ROLE_ADMIN'] }
+
+  firewalls:
+    main:
+      lazy: true
+      stateless: true
+      provider: 'fixtures_users'
+      http_basic: ~
+
+  # The rules an application using East UX needs: `^/component` (the component renderer) and `^/_components` (the
+  # Live Component endpoint) require an authenticated user
+  access_control:
+    - { path: '^/admin', roles: ['ROLE_ADMIN'], requires_channel: 'https' }
+    - { path: '^/[^/]+/admin', roles: ['ROLE_ADMIN'], requires_channel: 'https' }
+    - { path: '^/items', roles: ['ROLE_USER'], requires_channel: 'https' }
+    - { path: '^/component', roles: ['IS_AUTHENTICATED_FULLY'], requires_channel: 'https' }
+    - { path: '^/_components', roles: ['IS_AUTHENTICATED_FULLY'], requires_channel: 'https' }
+    - { path: '^/', roles: ['PUBLIC_ACCESS'] }

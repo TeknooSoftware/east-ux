@@ -1,0 +1,20 @@
+{# Row of the items list (the `itemComponent` of ListWindow), with an edit button opening a FormWindow loaded by the
+   component renderer #}
+{% props object %}
+<tr class="item-row" data-item-id="{{ object.id }}">
+    <td class="item-name">{{ object.name }}</td>
+    <td class="text-end">
+        <button type="button"
+                class="btn btn-sm btn-secondary"
+                data-controller="form-window-dynamic-loader"
+                data-form-window-dynamic-loader-url-value="{{ path('_teknoo_east_ux_component_render') }}"
+                data-form-window-dynamic-loader-window-id-value="item-{{ object.id }}"
+                data-form-window-dynamic-loader-form-path-value="{{ path('fixtures_item_edit', {'id': object.id}) }}"
+                data-form-window-dynamic-loader-form-name-value="Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType"
+                data-form-window-dynamic-loader-object-id-value="{{ object.id }}"
+                data-form-window-dynamic-loader-title-value="{{ object.name }}"
+                data-action="click->form-window-dynamic-loader#open">
+            {{ 'fixtures.items.edit'|trans }}
+        </button>
+    </td>
+</tr>

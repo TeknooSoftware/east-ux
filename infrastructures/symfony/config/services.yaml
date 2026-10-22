@@ -1,0 +1,100 @@
+# The parameters `teknoo_east_ux.home_route`, `teknoo_east_ux.form_theme` and
+# `teknoo_east_ux.component_rendering.allow_unreferenced_components` are set by `TeknooEastUXExtension` from the
+# `teknoo_east_ux` configuration.
+
+services:
+    ########################
+    # Menu
+    # Generators implement `Teknoo\East\UX\Contracts\Menu\MenuGeneratorInterface` and are tagged
+    # `teknoo.east.ux.menu.generator` by the application.
+    Teknoo\East\UX\Service\MenuService:
+        class: 'Teknoo\East\UX\Service\MenuService'
+        arguments:
+            - !tagged_iterator 'teknoo.east.ux.menu.generator'
+        tags:
+            - { name: 'kernel.reset', method: 'reset' }
+
+    ########################
+    # Components
+    # `autoconfigure` lets the `#[AsTwigComponent]` and `#[AsLiveComponent]` attributes of the classes register
+    # them in Symfony UX; their names and templates come from the `twig_component.defaults` entry prepended by
+    # `TeknooEastUXExtension` (`FormWindow` -> `@TeknooEastUX/components/FormWindow.html.twig`).
+    Teknoo\East\UXBundle\Components\Card:
+        class: 'Teknoo\East\UXBundle\Components\Card'
+        autoconfigure: true
+
+    Teknoo\East\UXBundle\Components\ConfirmModal:
+        class: 'Teknoo\East\UXBundle\Components\ConfirmModal'
+        autoconfigure: true
+
+    Teknoo\East\UXBundle\Components\FormWindow:
+        class: 'Teknoo\East\UXBundle\Components\FormWindow'
+        autoconfigure: true
+        arguments:
+            - '@form.factory'
+            - '%teknoo_east_ux.form_theme%'
+
+    Teknoo\East\UXBundle\Components\ListWindow:
+        class: 'Teknoo\East\UXBundle\Components\ListWindow'
+        autoconfigure: true
+        arguments:
+            - '@request_stack'
+            - '@form.factory'
+
+    Teknoo\East\UXBundle\Components\LoginWindow:
+        class: 'Teknoo\East\UXBundle\Components\LoginWindow'
+        autoconfigure: true
+        arguments:
+            - '@security.authentication_utils'
+
+    Teknoo\East\UXBundle\Components\MenuBar:
+        class: 'Teknoo\East\UXBundle\Components\MenuBar'
+        autoconfigure: true
+        arguments:
+            - '@Teknoo\East\UX\Service\MenuService'
+            - '%teknoo_east_ux.home_route%'
+
+    Teknoo\East\UXBundle\Components\ObjectList:
+        class: 'Teknoo\East\UXBundle\Components\ObjectList'
+        autoconfigure: true
+
+    Teknoo\East\UXBundle\Components\Pagination:
+        class: 'Teknoo\East\UXBundle\Components\Pagination'
+        autoconfigure: true
+        arguments:
+            - '@request_stack'
+
+    Teknoo\East\UXBundle\Components\Window:
+        class: 'Teknoo\East\UXBundle\Components\Window'
+        autoconfigure: true
+
+    ########################
+    # Component renderer (route `_teknoo_east_ux_component_render`, `POST /render`)
+    # The controller extends Symfony's `AbstractController`: East Foundation's router hands a route back to Symfony
+    # only for such a controller, so `autowire` (the `#[Required]` `setContainer()`) and `autoconfigure`
+    # (`controller.service_arguments` and `container.service_subscriber`) are both needed.
+    Teknoo\East\UXBundle\Controller\ComponentRenderer:
+        class: 'Teknoo\East\UXBundle\Controller\ComponentRenderer'
+        autowire: true
+        autoconfigure: true
+        public: true
+        arguments:
+            - '@Teknoo\East\UXBundle\ComponentRendering\PropsValidatorRegistry'
+            - '@ux.twig_component.component_factory'
+
+    ########################
+    # Validation of the props of the components rendered by the component renderer
+    # A validator implements `Teknoo\East\UXBundle\Contracts\ComponentRendering\PropsValidatorInterface` and is tagged
+    # `teknoo.east.ux.component_rendering.validation`, with the class of its component in the attribute `component`.
+    Teknoo\East\UXBundle\ComponentRendering\PropsValidatorRegistry:
+        class: 'Teknoo\East\UXBundle\ComponentRendering\PropsValidatorRegistry'
+        arguments:
+            - !tagged_iterator { tag: 'teknoo.east.ux.component_rendering.validation', index_by: 'component' }
+            - '%teknoo_east_ux.component_rendering.allow_unreferenced_components%'
+
+    Teknoo\East\UXBundle\ComponentRendering\Validator\FormWindowPropsValidator:
+        class: 'Teknoo\East\UXBundle\ComponentRendering\Validator\FormWindowPropsValidator'
+        arguments:
+            - '@validator'
+        tags:
+            - { name: 'teknoo.east.ux.component_rendering.validation', component: 'Teknoo\East\UXBundle\Components\FormWindow' }

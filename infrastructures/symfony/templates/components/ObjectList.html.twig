@@ -1,0 +1,30 @@
+{% if this.hasObjects() %}
+    <table class="table table-hover{% block table_classes %}{% endblock %}"{% block table_attributes %}{% endblock %}>
+        {% block table_header %}
+            {% if this.tableHeaders|length > 0 %}
+                <thead>
+                    <tr>
+                        {% for header in this.tableHeaders %}
+                            <th{% if loop.last %} class="text-end"{% endif %}>{{ header|trans }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+            {% endif %}
+        {% endblock %}
+        <tbody{% block tbody_attributes %}{% endblock %}>
+            {% block list_items %}
+                {% for object in objectsCollection %}
+                    {% if this.itemComponent %}
+                        {{ component(this.itemComponent, {object: object}) }}
+                    {% else %}
+                        {% block list_item %}{% endblock %}
+                    {% endif %}
+                {% endfor %}
+            {% endblock %}
+        </tbody>
+    </table>
+{% else %}
+    <div class="alert alert-info text-center{% block no_results_classes %}{% endblock %}"{% block no_results_attributes %}{% endblock %}>
+        {{ 'teknoo.east.ux.object_list.text.no_results'|trans({}, 'east_ux') }}
+    </div>
+{% endif %}

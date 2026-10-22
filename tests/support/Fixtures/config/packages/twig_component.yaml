@@ -1,0 +1,5 @@
+# TeknooEastUXBundle prepends its own namespace (`Teknoo\East\UXBundle\Components\` to `@TeknooEastUX/components/`)
+twig_component:
+  anonymous_template_directory: 'components/anonymous/'
+  defaults:
+    Teknoo\Tests\East\UX\Support\Fixtures\Components\: 'components/'

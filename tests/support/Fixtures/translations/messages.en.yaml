@@ -1,0 +1,18 @@
+# Labels of the test application (default domain), used by the menu generators and the templates
+fixtures:
+  menu:
+    home: 'Home section'
+    dashboard: 'Dashboard'
+    content: 'Content'
+    items: 'All items'
+    new_item: 'New item'
+    administration: 'Administration'
+    admin_new_item: 'New item (admin)'
+    settings: 'My settings'
+    logout: 'Logout'
+  items:
+    name: 'Name'
+    actions: 'Actions'
+    new: 'Add an item'
+    edit: 'Edit'
+    delete: 'Delete'

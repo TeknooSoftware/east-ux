@@ -1,0 +1,21 @@
+<div class="modal fade" id="{{ modalId }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="window confirm-modal modal-content">
+            <div class="title-bar">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="{{ cancelText }}"></button>
+                <h1 class="title">{{ title }}</h1>
+                <button class="resize hidden"></button>
+            </div>
+            <div class="separator"></div>
+            <div class="window-pane">
+                <p>{{ message }}</p>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" class="btn" data-bs-dismiss="modal">{{ cancelText }}</button>
+                    <button type="button" class="btn {{ confirmClass }}" data-confirm-button>
+                        {{ confirmText }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

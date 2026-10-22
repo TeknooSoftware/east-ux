@@ -1,0 +1,35 @@
+# East UX English translations, domain `east_ux` (always passed explicitly to the `trans` filter by the templates)
+# Pattern: teknoo.east.ux.{component}.{group}.{id}
+
+# FormWindow
+teknoo.east.ux.form_window.fieldset.main: 'General Information'
+teknoo.east.ux.form_window.action.save: 'Save'
+teknoo.east.ux.form_window.action.cancel: 'Cancel'
+teknoo.east.ux.form_window.text.error: 'An error occurred while saving.'
+teknoo.east.ux.form_window.text.network_error: 'A network error occurred.'
+
+# ListWindow
+teknoo.east.ux.list_window.action.new: 'New'
+teknoo.east.ux.list_window.action.delete: 'Delete'
+teknoo.east.ux.list_window.action.cancel: 'Cancel'
+teknoo.east.ux.list_window.modal.delete_title: 'Confirm Deletion'
+teknoo.east.ux.list_window.modal.delete_message: 'Are you sure you want to delete this item? This action cannot be undone.'
+teknoo.east.ux.list_window.text.load_error: 'An error occurred while loading the form.'
+
+# LoginWindow
+teknoo.east.ux.login_window.text.error_prefix: 'Error:'
+teknoo.east.ux.login_window.input.username: 'Username'
+teknoo.east.ux.login_window.input.password: 'Password'
+teknoo.east.ux.login_window.input.remember_me: 'Remember me'
+teknoo.east.ux.login_window.button.sign_in: 'Sign In'
+
+# ObjectList
+teknoo.east.ux.object_list.text.no_results: 'No results found'
+
+# Pagination
+teknoo.east.ux.pagination.text.pagination: 'Pagination'
+teknoo.east.ux.pagination.action.previous: 'Previous'
+teknoo.east.ux.pagination.action.next: 'Next'
+
+# MenuBar
+teknoo.east.ux.menu_bar.brand.title: 'Home'

@@ -1,0 +1,3 @@
+teknoo_east_ux:
+  home_route: 'fixtures_home'
+  form_theme: 'bootstrap_5_layout.html.twig'

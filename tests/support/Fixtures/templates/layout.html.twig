@@ -1,0 +1,15 @@
+{# Layout of the test application: the menu bar, the page and the container of the windows loaded dynamically #}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}East UX{% endblock %}</title>
+    </head>
+    <body>
+        <twig:MenuBar :user="fixtures_user.user" />
+        <main id="content">
+            {% block body %}{% endblock %}
+        </main>
+        <div id="dynamic-modals"></div>
+    </body>
+</html>

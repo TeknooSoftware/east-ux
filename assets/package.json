@@ -1,0 +1,65 @@
+{
+    "name": "@teknoo/east-ux",
+    "description": "Components, Stimulus controllers and stylesheet of Teknoo East UX",
+    "license": "BSD-3-Clause",
+    "version": "1.0.0",
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "symfony": {
+        "controllers": {
+            "form-window": {
+                "main": "dist/controllers/form_window_controller.js",
+                "name": "form-window",
+                "fetch": "eager",
+                "enabled": true
+            },
+            "form-window-dynamic-loader": {
+                "main": "dist/controllers/form_window_dynamic_loader_controller.js",
+                "name": "form-window-dynamic-loader",
+                "fetch": "eager",
+                "enabled": true
+            },
+            "list-window-refresh": {
+                "main": "dist/controllers/list_window_refresh_controller.js",
+                "name": "list-window-refresh",
+                "fetch": "eager",
+                "enabled": true
+            },
+            "window-close": {
+                "main": "dist/controllers/window_close_controller.js",
+                "name": "window-close",
+                "fetch": "eager",
+                "enabled": true
+            },
+            "window-drag": {
+                "main": "dist/controllers/window_drag_controller.js",
+                "name": "window-drag",
+                "fetch": "eager",
+                "enabled": true
+            },
+            "delete-item": {
+                "main": "dist/controllers/delete_item_controller.js",
+                "name": "delete-item",
+                "fetch": "eager",
+                "enabled": true
+            },
+            "clipboard": {
+                "main": "dist/controllers/clipboard_controller.js",
+                "name": "clipboard",
+                "fetch": "eager",
+                "enabled": true
+            }
+        },
+        "importmap": {
+            "@hotwired/stimulus": "^3.0.0",
+            "bootstrap": "^5.3",
+            "@teknoo/east-ux/styles/east-ux.css": "path:%PACKAGE%/dist/styles/east-ux.css"
+        }
+    },
+    "peerDependencies": {
+        "@hotwired/stimulus": "^3.0.0",
+        "bootstrap": "^5.3"
+    }
+}

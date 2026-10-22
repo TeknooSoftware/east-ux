@@ -1,0 +1,84 @@
+{% extends '@TeknooEastUX/components/Window.html.twig' %}
+
+{# Override the classes of the containers #}
+{% block window_classes %} h-100 d-flex flex-column{% endblock %}
+{% block window_pane_classes %} flex-grow-1 overflow-auto p-3{% endblock %}
+{% block window_attributes %}{{ attributes.defaults({'data-controller': 'list-window-refresh'}) }}{% endblock %}
+
+{% block window %}
+    {{ parent() }}
+{% endblock %}
+
+{% block content %}
+    {% block search_form %}
+        <div class="mb-3 d-flex justify-content-between align-items-center{% block search_form_container_classes %}{% endblock %}">
+            {% if this.hasSearchForm() and form is defined and form is not null %}
+                <div class="flex-grow-1 me-2">
+                    {{ form_start(
+                        form,
+                        {
+                            'attr': {
+                                'data-action': 'live#action:prevent',
+                                'data-live-action-param': 'save'
+                        }
+                        }
+                    ) }}
+                        {% form_theme form with ['bootstrap_5_layout.html.twig'] %}
+                        {{ form_widget(form) }}
+                    {{ form_end(form) }}
+                </div>
+            {% endif %}
+
+            {% if this.newFormRoute is not empty %}
+                {% set new_button_label = this.newButtonLabel is not empty
+                    ? this.newButtonLabel|trans
+                    : 'teknoo.east.ux.list_window.action.new'|trans({}, 'east_ux') %}
+                {% set new_form_title = this.newFormTitle is not empty
+                    ? this.newFormTitle|trans
+                    : new_button_label %}
+                <button type="button"
+                        class="btn btn-primary ms-auto"
+                        data-controller="form-window-dynamic-loader"
+                        data-form-window-dynamic-loader-url-value="{{ path('_teknoo_east_ux_component_render') }}"
+                        data-form-window-dynamic-loader-window-id-value="new-object-form"
+                        data-form-window-dynamic-loader-form-path-value="{{ path(this.newFormRoute) }}"
+                        data-form-window-dynamic-loader-form-name-value="{{ this.newFormName }}"
+                        data-form-window-dynamic-loader-title-value="{{ new_form_title }}"
+                        data-form-window-dynamic-loader-closable-value="1"
+                        data-form-window-dynamic-loader-draggable-value="1"
+                        data-form-window-dynamic-loader-close-aria-label-value="{{ closeAriaLabel }}"
+                        data-form-window-dynamic-loader-load-error-text-value="{{ 'teknoo.east.ux.list_window.text.load_error'|trans({}, 'east_ux') }}"
+                        data-action="click->form-window-dynamic-loader#open">
+                    {{ new_button_label }}
+                </button>
+            {% endif %}
+        </div>
+    {% endblock %}
+
+    {% block objects_list %}
+        <twig:ObjectList objectsCollection="{{ objectsCollection }}" itemComponent="{{ itemComponent }}" tableHeaders="{{ tableHeaders }}" />
+    {% endblock %}
+
+    {% block pagination %}
+        {% if this.hasPagination() %}
+            <twig:Pagination
+                pageCount="{{ pageCount }}"
+                page="{{ page }}"
+            />
+        {% endif %}
+    {% endblock %}
+{% endblock %}
+
+{% block window_modals %}
+    {# Confirmation modals #}
+    {% block confirm_modals %}
+        <twig:ConfirmModal
+                modalId="delete-confirm-modal"
+                title="{{ 'teknoo.east.ux.list_window.modal.delete_title'|trans({}, 'east_ux') }}"
+                message="{{ 'teknoo.east.ux.list_window.modal.delete_message'|trans({}, 'east_ux') }}"
+                confirmText="{{ 'teknoo.east.ux.list_window.action.delete'|trans({}, 'east_ux') }}"
+                cancelText="{{ 'teknoo.east.ux.list_window.action.cancel'|trans({}, 'east_ux') }}"
+                confirmClass="btn-danger"
+        />
+    {% endblock %}
+{% endblock %}

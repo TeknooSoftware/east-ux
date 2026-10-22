@@ -1,0 +1,17 @@
+{% extends 'layout.html.twig' %}
+
+{# Rendered by East Common's creation recipe: `formView` and `objectInstance` are its view parameters #}
+{% block body %}
+    <twig:FormWindow
+        title="New item"
+        windowId="item-new"
+        closable="1"
+        hidden="0"
+        isLive="0"
+        formView="{{ formView }}"
+        objectInstance="{{ objectInstance }}"
+        formName="Teknoo\\Tests\\East\\UX\\Support\\Fixtures\\Form\\Type\\ItemType"
+        formPath="{{ app.request.pathInfo }}"
+        closeRedirectUrl="{{ path('fixtures_item_list') }}"
+    />
+{% endblock %}

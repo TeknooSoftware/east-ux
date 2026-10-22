@@ -1,0 +1,18 @@
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ title }}</h5>
+        <p class="card-text">{% if contentIsHtml %}{{ content|raw|nl2br }}{% else %}{{ content|nl2br }}{% endif %}</p>
+        {% set hasLeftAction = leftActionPath is not empty and leftActionText is not empty %}
+        {% set hasRightAction = rightActionPath is not empty and rightActionText is not empty %}
+        {% if hasLeftAction or hasRightAction %}
+            <div class="d-flex {% if hasLeftAction and hasRightAction %}justify-content-between{% elseif hasRightAction %}justify-content-end{% else %}justify-content-start{% endif %}">
+                {% if hasLeftAction %}
+                    <a class="btn" href="{{ leftActionPath }}">{{ leftActionText }}</a>
+                {% endif %}
+                {% if hasRightAction %}
+                    <a class="btn btn-secondary" href="{{ rightActionPath }}">{{ rightActionText }}</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>

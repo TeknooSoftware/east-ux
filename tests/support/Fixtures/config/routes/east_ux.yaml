@@ -1,0 +1,9 @@
+# The component renderer of East UX answers on `POST /component/render`
+teknoo_east_ux:
+  resource: '@TeknooEastUXBundle/config/routes.yaml'
+  prefix: '/component'
+
+# Live Component endpoint (`/_components/<Name>`), re-routed by East Foundation to the recipe of `originalPath`
+ux_live_component_routes:
+  resource: '@LiveComponentBundle/config/routes.php'
+  prefix: '/_components'

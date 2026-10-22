@@ -1,0 +1,29 @@
+framework:
+  test: true
+  secret: 'east-ux-tests-secret'
+  http_method_override: false
+  default_locale: 'en'
+  # The session holds the CSRF tokens of the LoginWindow (East Foundation also needs one)
+  session:
+    storage_factory_id: 'session.storage.factory.mock_file'
+  csrf_protection: true
+  # The validators of the props of the components rendered by the component renderer use Symfony's validator
+  validation:
+    enabled: true
+  # Forms of the recipes and of the components are tested without CSRF tokens
+  form:
+    csrf_protection:
+      enabled: false
+  router:
+    utf8: true
+    default_uri: 'https://localhost/'
+  translator:
+    enabled: true
+    default_path: '%kernel.project_dir%/tests/support/Fixtures/translations'
+    fallbacks: ['en']
+  # The application maps no directory: `@teknoo/east-ux` is mapped by TeknooEastUXBundle, the Symfony UX packages by
+  # their own bundles
+  asset_mapper:
+    paths: []
+    importmap_path: '%kernel.project_dir%/tests/support/Fixtures/importmap.php'
+    missing_import_mode: 'warn'

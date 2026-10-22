@@ -1,0 +1,5 @@
+twig:
+  default_path: '%kernel.project_dir%/tests/support/Fixtures/templates'
+  strict_variables: true
+  globals:
+    fixtures_user: '@Teknoo\Tests\East\UX\Support\Fixtures\Security\CurrentUser'

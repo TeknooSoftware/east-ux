@@ -1,0 +1,17 @@
+{% extends 'layout.html.twig' %}
+
+{# Rendered by East Common's list recipe: `objectsCollection`, `pageCount` and `page` are its view parameters #}
+{% block body %}
+    <twig:ListWindow
+        title="Items"
+        windowId="items"
+        objectsCollection="{{ objectsCollection }}"
+        pageCount="{{ pageCount }}"
+        page="{{ page }}"
+        itemComponent="ItemRow"
+        tableHeaders="{{ ['fixtures.items.name', 'fixtures.items.actions'] }}"
+        newFormRoute="fixtures_item_new"
+        newFormName="Teknoo\\Tests\\East\\UX\\Support\\Fixtures\\Form\\Type\\ItemType"
+        newButtonLabel="fixtures.items.new"
+    />
+{% endblock %}

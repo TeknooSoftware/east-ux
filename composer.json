@@ -1,0 +1,125 @@
+{
+    "name": "teknoo/east-ux",
+    "type": "symfony-bundle",
+    "description": "Symfony bundle, following the #East programming philosophy, build on Teknoo/East-Foundation and Teknoo/East-Common, providing the application-level UI pieces of an East application: Symfony UX Twig and Live Components (windows, forms, lists, menu bar, ...), their Stimulus controllers and stylesheet, a component renderer endpoint and a menu service.",
+    "keywords": ["east","ux","symfony-ux","twig-component","live-component","stimulus"],
+    "homepage": "https://teknoo.software/east-collection/ux",
+    "license": ["BSD-3-Clause"],
+    "authors": [
+        {
+            "name": "Richard Déloge",
+            "email": "richard@teknoo.software",
+            "role": "Software architect, Lead developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/TeknooSoftware/east-ux/issues",
+        "source": "https://github.com/TeknooSoftware/east-ux"
+    },
+    "funding": [
+        {
+            "type": "patreon",
+            "url": "https://www.patreon.com/teknoo_software"
+        },
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/TeknooSoftware"
+        }
+    ],
+    "config": {
+        "audit": {
+            "abandoned": "report"
+        },
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Teknoo\\East\\UX\\": "src/",
+            "Teknoo\\East\\UXBundle\\": "infrastructures/symfony",
+            "Teknoo\\Tests\\East\\UX\\": "tests/universal",
+            "Teknoo\\Tests\\East\\UXBundle\\": "tests/infrastructures/symfony"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Teknoo\\Tests\\East\\UX\\Behat\\": "tests/behat",
+            "Teknoo\\Tests\\East\\UX\\Support\\PHPStan\\": "tests/support/PHPStan",
+            "Teknoo\\Tests\\East\\UX\\Support\\Fixtures\\": "tests/support/Fixtures"
+        }
+    },
+    "require": {
+        "php": "^8.4",
+        "teknoo/east-foundation": "^9.4",
+        "teknoo/east-common": "^4.8",
+        "symfony/form": "^7.4||^8.1",
+        "symfony/framework-bundle": "^7.4||^8.1",
+        "symfony/http-foundation": "^7.4||^8.1",
+        "symfony/security-http": "^7.4||^8.1",
+        "symfony/service-contracts": "^3.6",
+        "symfony/translation-contracts": "^3.6.1",
+        "symfony/ux-live-component": "^3",
+        "symfony/ux-twig-component": "^3",
+        "symfony/validator": "^7.4||^8.1",
+        "twig/twig": "^3.24"
+    },
+    "require-dev": {
+        "roave/security-advisories": "dev-latest",
+        "phpunit/phpunit": "^13.3.2",
+        "squizlabs/php_codesniffer": "^4.0.1",
+        "phpstan/phpstan": "^2.2.12",
+        "phpstan/extension-installer": "^1.4.3",
+        "behat/behat": "^4.0",
+        "behat/phpunit-assertions-extension": "^1.0",
+        "teknoo/bridge-phpdi-symfony": "^7.2",
+        "laminas/laminas-diactoros": "^3.8",
+        "symfony/asset": "^7.4||^8.1",
+        "symfony/asset-mapper": "^7.4||^8.1",
+        "symfony/cache": "^7.4||^8.1",
+        "symfony/config": "^7.4||^8.1",
+        "symfony/console": "^7.4||^8.1",
+        "symfony/css-selector": "^7.4||^8.1",
+        "symfony/dependency-injection": "^7.4||^8.1",
+        "symfony/dom-crawler": "^7.4||^8.1",
+        "symfony/error-handler": "^7.4.17||^8.1.5",
+        "symfony/event-dispatcher": "^7.4||^8.1",
+        "symfony/event-dispatcher-contracts": "^3.6",
+        "symfony/expression-language": "^7.4||^8.1",
+        "symfony/filesystem": "^7.4||^8.1",
+        "symfony/http-kernel": "^7.4||^8.1",
+        "symfony/password-hasher": "^7.4||^8.1",
+        "symfony/polyfill-php83": "^1.31",
+        "symfony/property-access": "^7.4||^8.1",
+        "symfony/property-info": "^7.4||^8.1",
+        "symfony/psr-http-message-bridge": "^7.4||^8.1",
+        "symfony/routing": "^7.4||^8.1",
+        "symfony/security-bundle": "^7.4||^8.1",
+        "symfony/security-core": "^7.4||^8.1",
+        "symfony/security-csrf": "^7.4||^8.1",
+        "symfony/stimulus-bundle": "^3",
+        "symfony/translation": "^7.4||^8.1",
+        "symfony/twig-bridge": "^7.4||^8.1",
+        "symfony/twig-bundle": "^7.4||^8.1",
+        "symfony/var-dumper": "^7.4||^8.1",
+        "symfony/yaml": "^7.4||^8.1"
+    },
+    "suggest": {
+        "symfony/stimulus-bundle": "Required to load the Stimulus controllers of the components from the controllers.json of the application.",
+        "symfony/asset-mapper": "Required to serve the Stimulus controllers and the stylesheet of the components without a build step (the bundle maps its assets as `@teknoo/east-ux`)."
+    },
+    "archive": {
+        "exclude": ["features", "tests", "vendor", ".idea"]
+    },
+    "extra": {
+        "thanks": {
+            "name": "teknoo/east-common",
+            "url": "https://github.com/TeknooSoftware/east-common"
+        },
+        "branch-alias": {
+            "dev-main": "1.0.x-dev"
+        }
+    }
+}

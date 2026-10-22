@@ -1,0 +1,44 @@
+{% macro menu_section(section, dropdownId) %}
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="{{ dropdownId }}" role="button" data-bs-toggle="dropdown">
+            {% if section.icon %}<span class="menu-icon {{ section.icon }}" aria-hidden="true"></span> {% endif %}{% if section.rawLabel %}{{ section.name }}{% else %}{{ section.name|trans }}{% endif %}
+        </a>
+        <ul class="dropdown-menu">
+            {% for item in section.items %}
+                {% if item.divider %}
+            <li><hr class="dropdown-divider"></li>
+                {% else %}
+            <li><a class="dropdown-item" href="{{ path(item.route, item.routeParameters) }}">{% if item.icon %}<span class="menu-icon {{ item.icon }}" aria-hidden="true"></span> {% endif %}{% if item.rawLabel %}{{ item.name }}{% else %}{{ item.name|trans }}{% endif %}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </li>
+{% endmacro %}
+<nav {{ attributes.defaults({class: 'navbar navbar-expand-lg fixed-top'}) }}>
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% if this.getHomeRoute() is not empty %}{{ path(this.getHomeRoute()) }}{% else %}/{% endif %}">
+            {% block brand %}
+                {{ 'teknoo.east.ux.menu_bar.brand.title'|trans({}, 'east_ux') }}
+            {% endblock %}
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            {% block left_sections %}
+                <ul class="navbar-nav me-auto">
+                    {% for section in this.getLeftItems() %}
+                        {{ _self.menu_section(section, 'menuBarLeftDropdown' ~ loop.index) }}
+                    {% endfor %}
+                </ul>
+            {% endblock %}
+            {% block right_sections %}
+                <ul class="navbar-nav ms-auto">
+                    {% for section in this.getRightItems() %}
+                        {{ _self.menu_section(section, 'menuBarRightDropdown' ~ loop.index) }}
+                    {% endfor %}
+                </ul>
+            {% endblock %}
+        </div>
+    </div>
+</nav>
