@@ -40,55 +40,13 @@ This library requires:
 
     * PHP 8.4+
     * A PHP autoloader (Composer is recommended)
-    * Teknoo/East-Foundation 9.3+
-    * Teknoo/East-Common 4.6+
-    * Symfony 7.4+ or 8.1+ (FrameworkBundle, Form, Security HTTP), with SecurityBundle registered in the application
+    * Teknoo/East-Foundation 9.4+
+    * Teknoo/East-Common 4.8+
+    * Symfony 7.4+ or 8.1+ (FrameworkBundle, Form, Security HTTP, Validator), with SecurityBundle registered and
+      `framework.validation` enabled in the application
     * Symfony UX TwigComponent 3 and LiveComponent 3
     * Twig 3.24+
     * Optional: Symfony AssetMapper and StimulusBundle, to serve the controllers and the stylesheet without build step
-
-### Before the release on Packagist
-
-`teknoo/east-ux` is not published on Packagist yet: an application requires it from its Git repository. Add the
-`repositories` entry and the requirement together, in the application's `composer.json`:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "git@gitlab.teknoo.software:teknoosoftware/east-ux.git"
-        }
-    ],
-    "require": {
-        "teknoo/east-ux": "^1.0@dev"
-    },
-    "config": {
-        "gitlab-domains": [
-            "gitlab.teknoo.software"
-        ]
-    }
-}
-```
-
-* The `main` branch is aliased `1.0.x-dev`: `^1.0@dev` resolves to it today and to the `1.0.0` tag once it exists
-  (with `"minimum-stability": "stable"` and `"prefer-stable": true`, the tag wins). The constraint never changes; only
-  the `repositories` entry is removed once the package is on Packagist.
-* With a GitLab token (the `COMPOSER_AUTH` variable, or `auth.json`:
-  `{"gitlab-token": {"gitlab.teknoo.software": "<token>"}}`), Composer reaches the GitLab API and downloads the dist
-  archive: the usual `composer install --prefer-dist` works. Use a project access token in the CI.
-* Composer 2.10 no longer installs a package from source when the download of its dist archive fails (its
-  `source-fallback` option is `false` by default, and deprecated). Before the library is pushed to GitLab, or for a
-  developer with an SSH access to the repository but without GitLab API token, install with
-  `composer install --prefer-install=auto` (or `composer update --prefer-install=auto`): dev versions, such as
-  `1.0.x-dev`, are installed from source with git, every other package from its dist archive.
-* Before the library is pushed, the SSH URL can point at a local checkout of the library with a git rewrite scoped to
-  the Composer process, never written to a configuration file: `GIT_CONFIG_COUNT=1`,
-  `GIT_CONFIG_KEY_0=url.<path of the local checkout>.insteadOf` and
-  `GIT_CONFIG_VALUE_0=git@gitlab.teknoo.software:teknoosoftware/east-ux.git`, with `--no-interaction` and
-  `--prefer-install=auto`. `composer.json` and `composer.lock` keep the GitLab URL and the commit hashes.
-
-### Once released
 
 ```sh
 composer require teknoo/east-ux
