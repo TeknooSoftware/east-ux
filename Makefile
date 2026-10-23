@@ -55,6 +55,23 @@ test:
 
 .PHONY: test
 
+### System.css x Bootstrap theme
+# Copies the stylesheet, the fonts and the license of the theme from a clone of its repository
+# (https://github.com/TeknooSoftware/system.css-x-bootstrap) into `assets/dist/system-theme/`.
+SYSTEM_THEME_DIR ?= ../../ui/system.css-x-bootstrap
+SYSTEM_THEME_FONTS = ChicagoFLF monaco ChiKareGo2
+
+system-theme:
+	test -f "${SYSTEM_THEME_DIR}/css/bootstrap-system-theme.css"
+	mkdir -p assets/dist/system-theme/css assets/dist/system-theme/fonts
+	cp "${SYSTEM_THEME_DIR}/css/bootstrap-system-theme.css" "${SYSTEM_THEME_DIR}/css/bootstrap-system-theme.min.css" assets/dist/system-theme/css/
+	for font in ${SYSTEM_THEME_FONTS}; do \
+		cp "${SYSTEM_THEME_DIR}/fonts/$$font.woff" "${SYSTEM_THEME_DIR}/fonts/$$font.woff2" assets/dist/system-theme/fonts/ || exit 1; \
+	done
+	cp "${SYSTEM_THEME_DIR}/LICENSE" assets/dist/system-theme/LICENSE
+
+.PHONY: system-theme
+
 ### Cleaning
 clean:
 	rm -rf vendor

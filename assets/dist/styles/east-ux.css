@@ -172,3 +172,23 @@
 .modal .window.confirm-modal .window-pane p {
     margin: 0 0 15px 0;
 }
+
+/* Theme entries of the menu bar (ThemeMenuGenerator): the current ones are checked, as in the menus of System OS, in
+   the gutter the System.css theme keeps on the left of the entries */
+.dropdown-item[data-theme-target~="menuOption"] {
+    padding-left: calc(var(--bs-dropdown-item-padding-x, 1rem) + 1em + 6px);
+    position: relative;
+}
+
+.dropdown-item[data-theme-target~="menuOption"][aria-checked="true"]::before {
+    content: "\2713";
+    left: var(--bs-dropdown-item-padding-x, 1rem);
+    position: absolute;
+}
+
+/* Theme switch: no color fade while the `theme` controller switches the style or the mode of the page */
+html.east-ux-theme-switching *,
+html.east-ux-theme-switching *::before,
+html.east-ux-theme-switching *::after {
+    transition: none !important;
+}

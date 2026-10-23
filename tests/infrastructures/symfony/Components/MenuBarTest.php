@@ -406,6 +406,68 @@ class MenuBarTest extends TestCase
         $this->assertStringNotContainsString('<a class="nav-link" href="#">', $html);
     }
 
+    public function testRenderButtonsAttributesAndTranslationDomains(): void
+    {
+        $theme = new MenuSection(name: 'east.theme', position: 1, icon: 'icon-palette', translationDomain: 'east_ux');
+        $theme->addItem(
+            new MenuItem(
+                name: 'east.theme.dark',
+                route: '',
+                attributes: ['data-action' => 'click->theme#select', 'data-theme-mode-param' => 'dark'],
+                translationDomain: 'east_ux',
+            )
+        );
+        $theme->addItem(
+            new MenuItem(
+                name: 'app.menu.help',
+                route: 'app_help',
+                icon: 'icon-help',
+                attributes: ['data-turbo' => 'false', 'title' => 'Help "now" <b>'],
+            )
+        );
+        $theme->addItem(new MenuItem(name: 'Raw <button>', route: '', rawLabel: true));
+
+        $menuService = $this->createStub(MenuService::class);
+        $menuService->method('getMenuFor')->willReturnCallback(
+            static fn (UserInterface $user, Location $location): array => match ($location) {
+                Location::TopLeft => [],
+                Location::TopRight => [$theme],
+            }
+        );
+
+        $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+        $urlGenerator->expects($this->once())->method('generate')->with('app_help')->willReturn('/app_help');
+
+        $menuBar = $this->buildMenuBar($menuService);
+        $menuBar->user = new User();
+
+        $html = $this->render($menuBar, $urlGenerator);
+
+        // The section is translated in its domain
+        $this->assertStringContainsString(
+            'data-bs-toggle="dropdown"> <span class="menu-icon icon-palette" aria-hidden="true"></span> '
+            . 'east.theme|east_ux </a>',
+            $html,
+        );
+        // An item without route is a button, with its attributes and translated in its domain
+        $this->assertStringContainsString(
+            '<li><button type="button" class="dropdown-item" data-action="click-&gt;theme#select" '
+            . 'data-theme-mode-param="dark">east.theme.dark|east_ux</button></li>',
+            $html,
+        );
+        // The attributes of a link are escaped, its name is translated in the default domain
+        $this->assertStringContainsString(
+            '<li><a class="dropdown-item" href="/app_help" data-turbo="false" '
+            . 'title="Help &quot;now&quot; &lt;b&gt;"><span class="menu-icon icon-help" aria-hidden="true"></span> '
+            . 'app.menu.help|default</a></li>',
+            $html,
+        );
+        $this->assertStringContainsString(
+            '<li><button type="button" class="dropdown-item">Raw &lt;button&gt;</button></li>',
+            $html,
+        );
+    }
+
     public function testRenderWithMenuServiceAndGenerators(): void
     {
         $generator = $this->createStub(MenuGeneratorInterface::class);

@@ -95,6 +95,33 @@ class MenuServiceTest extends TestCase
         $this->assertSame(1, $generator->captured->position);
         $this->assertSame('icon', $generator->captured->icon);
         $this->assertFalse($generator->captured->rawLabel);
+        $this->assertNull($generator->captured->translationDomain);
+    }
+
+    public function testGetSectionWithTranslationDomain(): void
+    {
+        $generator = new class implements MenuGeneratorInterface {
+            public function generate(
+                MenuService $menuService,
+                Location $location,
+                UserInterface $user,
+                array $roles,
+            ): void {
+                $menuService->getSection(
+                    name: 'east.section',
+                    location: Location::TopRight,
+                    translationDomain: 'east_ux',
+                );
+            }
+        };
+
+        $service = new MenuService([$generator]);
+        $sections = $service->getMenuFor($this->buildUser('user1'), Location::TopRight);
+
+        $this->assertCount(1, $sections);
+        $this->assertSame('east.section', $sections[0]->name);
+        $this->assertSame('east_ux', $sections[0]->translationDomain);
+        $this->assertFalse($sections[0]->rawLabel);
     }
 
     public function testGetSectionWithRawLabel(): void

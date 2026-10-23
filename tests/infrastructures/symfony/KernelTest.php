@@ -36,6 +36,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\Routing\RouterInterface;
@@ -45,7 +46,9 @@ use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\ComponentRendererInterface;
 use Teknoo\East\Common\Object\User;
+use Teknoo\East\UX\Service\Menu\ThemeMenuGenerator;
 use Teknoo\East\UX\Service\MenuService;
+use Teknoo\East\UX\Service\ThemeService;
 use Teknoo\East\UXBundle\Components\Card;
 use Teknoo\East\UXBundle\Components\ConfirmModal;
 use Teknoo\East\UXBundle\Components\FormWindow;
@@ -54,10 +57,14 @@ use Teknoo\East\UXBundle\Components\LoginWindow;
 use Teknoo\East\UXBundle\Components\MenuBar;
 use Teknoo\East\UXBundle\Components\ObjectList;
 use Teknoo\East\UXBundle\Components\Pagination;
+use Teknoo\East\UXBundle\Components\ThemeSwitcher;
 use Teknoo\East\UXBundle\Components\Window;
 use Teknoo\East\UXBundle\Controller\ComponentRenderer;
+use Teknoo\East\UXBundle\Controller\ThemePreferenceUpdater;
 use Teknoo\East\UXBundle\DependencyInjection\TeknooEastUXExtension;
 use Teknoo\East\UXBundle\TeknooEastUXBundle;
+use Teknoo\East\UXBundle\Theme\SessionThemePreferenceStorage;
+use Teknoo\East\UXBundle\Twig\ThemeExtension;
 use Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType;
 use Teknoo\Tests\East\UX\Support\Fixtures\Kernel;
 use Teknoo\Tests\East\UX\Support\Fixtures\Object\Item;
@@ -65,6 +72,7 @@ use Teknoo\Tests\East\UX\Support\Fixtures\Object\Item;
 use function array_keys;
 use function array_unique;
 use function array_values;
+use function basename;
 use function count;
 use function dirname;
 use function file_get_contents;
@@ -99,17 +107,31 @@ use function substr_count;
 #[CoversClass(MenuBar::class)]
 #[CoversClass(ObjectList::class)]
 #[CoversClass(Pagination::class)]
+#[CoversClass(ThemeSwitcher::class)]
 #[CoversClass(Window::class)]
 #[CoversClass(ComponentRenderer::class)]
+#[CoversClass(ThemePreferenceUpdater::class)]
 #[CoversClass(MenuService::class)]
+#[CoversClass(ThemeMenuGenerator::class)]
+#[CoversClass(ThemeService::class)]
+#[CoversClass(SessionThemePreferenceStorage::class)]
+#[CoversClass(ThemeExtension::class)]
 class KernelTest extends TestCase
 {
     private ?Kernel $kernel = null;
+
+    /**
+     * Cookies sent by the test application, sent back with the next requests as a browser does
+     *
+     * @var array<string, string>
+     */
+    private array $cookies = [];
 
     protected function setUp(): void
     {
         $this->kernel = new Kernel('test', true);
         $this->kernel->boot();
+        $this->cookies = [];
     }
 
     protected function tearDown(): void
@@ -194,6 +216,7 @@ class KernelTest extends TestCase
         yield 'MenuBar' => ['MenuBar', MenuBar::class, false];
         yield 'ObjectList' => ['ObjectList', ObjectList::class, false];
         yield 'Pagination' => ['Pagination', Pagination::class, false];
+        yield 'ThemeSwitcher' => ['ThemeSwitcher', ThemeSwitcher::class, false];
         yield 'Window' => ['Window', Window::class, false];
     }
 
@@ -350,13 +373,52 @@ class KernelTest extends TestCase
             ['Home section', 'Content', 'Administration'],
             $crawler->filter('ul.me-auto > li > a.dropdown-toggle')->each(static fn (Crawler $a) => $a->text()),
         );
+        // The theme switcher of `ThemeMenuGenerator` (tagged with a lower priority) follows the user dropdown
         self::assertSame(
-            ['Jane <Tester>'],
+            ['Jane <Tester>', 'Theme'],
             $crawler->filter('ul.ms-auto > li > a.dropdown-toggle')->each(static fn (Crawler $a) => $a->text()),
         );
         self::assertStringContainsString('Jane &lt;Tester&gt;', (string) $crawler->filter('ul.ms-auto')->html());
-        self::assertCount(1, $crawler->filter('ul.ms-auto hr.dropdown-divider'));
+        self::assertCount(1, $crawler->filter('ul.ms-auto > li')->first()->filter('hr.dropdown-divider'));
         self::assertSame('/home?page=settings', $crawler->filter('ul.ms-auto a.dropdown-item')->first()->attr('href'));
+
+        // Labels of the `east_ux` catalogue, buttons of the `theme` controller
+        $theme = $crawler->filter('ul.ms-auto > li')->last();
+        self::assertSame(
+            ['Day', 'Night', 'Automatic', 'Classic', 'Modern'],
+            $theme->filter('button.dropdown-item')->each(static fn (Crawler $button) => $button->text()),
+        );
+        self::assertCount(1, $theme->filter('hr.dropdown-divider'));
+        self::assertCount(
+            5,
+            $theme->filter(
+                'button[data-action="click->theme#select"][data-theme-target="menuOption"][role="menuitemradio"]'
+            ),
+        );
+        self::assertSame(
+            'dark',
+            $theme->filter('button.dropdown-item')->eq(1)->attr('data-theme-mode-param'),
+        );
+        self::assertSame(
+            'modern',
+            $theme->filter('button.dropdown-item')->eq(4)->attr('data-theme-style-param'),
+        );
+    }
+
+    public function testRenderThemeSwitcher(): void
+    {
+        $this->pushRequest();
+
+        $crawler = $this->render('ThemeSwitcher', ['showStyle' => false]);
+
+        self::assertSame('Theme', $crawler->filter('div.east-ux-theme-switcher')->attr('aria-label'));
+        self::assertSame(
+            ['Day', 'Night', 'Automatic'],
+            $crawler->filter('button[data-theme-mode-param]')->each(static fn (Crawler $button) => $button->text()),
+        );
+        self::assertCount(0, $crawler->filter('button[data-theme-style-param]'));
+        // Default mode of the configuration
+        self::assertSame('auto', $crawler->filter('button[aria-pressed="true"]')->attr('data-theme-mode-param'));
     }
 
     public function testRenderLoginWindow(): void
@@ -501,6 +563,30 @@ class KernelTest extends TestCase
         self::assertSame(0, $exitCode, $content);
         self::assertStringContainsString('@teknoo/east-ux/controllers/form_window_controller.js', $content);
         self::assertStringContainsString('@teknoo/east-ux/styles/east-ux.css', $content);
+        self::assertStringContainsString('@teknoo/east-ux/controllers/theme_controller.js', $content);
+        self::assertStringContainsString('@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css', $content);
+        self::assertStringContainsString('@teknoo/east-ux/system-theme/fonts/ChicagoFLF.woff2', $content);
+        self::assertStringContainsString('@teknoo/east-ux/system-theme/fonts/monaco.woff2', $content);
+        self::assertStringContainsString('@teknoo/east-ux/system-theme/fonts/ChiKareGo2.woff2', $content);
+    }
+
+    public function testTheStylesheetOfTheThemeReferencesItsFonts(): void
+    {
+        $assetMapper = $this->getTestContainer()->get('asset_mapper');
+        self::assertInstanceOf(AssetMapperInterface::class, $assetMapper);
+
+        $stylesheet = $assetMapper->getAsset('@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css');
+        self::assertNotNull($stylesheet);
+
+        // The relative `url(../fonts/...)` are compiled by AssetMapper to the versioned files of the fonts
+        foreach (['ChicagoFLF.woff', 'ChicagoFLF.woff2', 'monaco.woff2', 'ChiKareGo2.woff2'] as $font) {
+            $asset = $assetMapper->getAsset('@teknoo/east-ux/system-theme/fonts/' . $font);
+            self::assertNotNull($asset, $font);
+            self::assertStringContainsString(
+                'url("../fonts/' . basename($asset->publicPath) . '")',
+                (string) $stylesheet->content,
+            );
+        }
     }
 
     public function testStimulusRegistersTheControllersUnderTheirShortIdentifiers(): void
@@ -520,6 +606,7 @@ class KernelTest extends TestCase
                 'window-drag' => 'window_drag_controller.js',
                 'delete-item' => 'delete_item_controller.js',
                 'clipboard' => 'clipboard_controller.js',
+                'theme' => 'theme_controller.js',
             ] as $identifier => $file
         ) {
             self::assertStringContainsString('@teknoo/east-ux/controllers/' . $file, (string) $controllers->content);
@@ -594,5 +681,121 @@ class KernelTest extends TestCase
 
         // The 400 of the controller, not a response of East Foundation's router
         self::assertSame(400, $response->getStatusCode());
+    }
+
+    /**
+     * @param array<string, string> $server
+     */
+    private function handle(string $method, string $path, array $server = [], ?string $content = null): Response
+    {
+        $request = Request::create(
+            uri: 'https://localhost' . $path,
+            method: $method,
+            cookies: $this->cookies,
+            server: $server,
+            content: $content,
+        );
+
+        $kernel = $this->getKernel();
+        $response = $kernel->handle($request);
+        $kernel->terminate($request, $response);
+
+        foreach ($response->headers->getCookies() as $cookie) {
+            $this->cookies[$cookie->getName()] = (string) $cookie->getValue();
+        }
+
+        return $response;
+    }
+
+    private function sendTheme(string $content): Response
+    {
+        return $this->handle(
+            method: 'POST',
+            path: '/east-ux/theme',
+            server: ['CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'],
+            content: $content,
+        );
+    }
+
+    public function testPagesAreRenderedWithTheDefaultTheme(): void
+    {
+        $response = $this->handle('GET', '/home');
+        self::assertSame(200, $response->getStatusCode());
+
+        $crawler = new Crawler((string) $response->getContent());
+        $html = $crawler->filter('html');
+        self::assertSame('', $html->attr('class'));
+        // Legacy style and auto mode: `data-bs-theme` is set by the script, from `prefers-color-scheme`
+        self::assertNull($html->attr('data-bs-theme'));
+        self::assertSame('theme', $html->attr('data-controller'));
+        self::assertSame('legacy', $html->attr('data-theme-style-value'));
+        self::assertSame('auto', $html->attr('data-theme-mode-value'));
+        self::assertSame('session', $html->attr('data-theme-storage-value'));
+        self::assertSame('/east-ux/theme', $html->attr('data-theme-url-value'));
+        self::assertStringContainsString('prefers-color-scheme', $crawler->filter('head script')->text());
+
+        self::assertSame(
+            ['auto', 'legacy'],
+            $crawler->filter('#theme-switcher button[aria-pressed="true"]')->each(
+                static fn (Crawler $button): string => (string) (
+                    $button->attr('data-theme-mode-param') ?? $button->attr('data-theme-style-param')
+                ),
+            ),
+        );
+    }
+
+    public function testTheThemeChosenByTheVisitorIsKeptInTheSession(): void
+    {
+        $response = $this->sendTheme((string) json_encode(['style' => 'modern', 'mode' => 'dark']));
+        self::assertSame(204, $response->getStatusCode());
+        self::assertSame('', $response->getContent());
+        // The session cookie
+        self::assertNotEmpty($this->cookies);
+
+        $page = $this->handle('GET', '/home');
+        self::assertSame(200, $page->getStatusCode());
+
+        $crawler = new Crawler((string) $page->getContent());
+        $html = $crawler->filter('html');
+        self::assertSame('system-modern', $html->attr('class'));
+        self::assertSame('dark', $html->attr('data-bs-theme'));
+        self::assertSame('modern', $html->attr('data-theme-style-value'));
+        self::assertSame('dark', $html->attr('data-theme-mode-value'));
+
+        // Only the mode changes, the style is kept
+        self::assertSame(204, $this->sendTheme((string) json_encode(['mode' => 'light']))->getStatusCode());
+
+        $html = new Crawler((string) $this->handle('GET', '/home')->getContent())->filter('html');
+        self::assertSame('system-modern', $html->attr('class'));
+        self::assertSame('light', $html->attr('data-bs-theme'));
+        self::assertSame('light', $html->attr('data-theme-mode-value'));
+    }
+
+    public function testAnotherVisitorKeepsTheDefaultTheme(): void
+    {
+        self::assertSame(204, $this->sendTheme((string) json_encode(['style' => 'modern']))->getStatusCode());
+
+        // Without the session cookie of the first visitor
+        $this->cookies = [];
+        $html = new Crawler((string) $this->handle('GET', '/home')->getContent())->filter('html');
+
+        self::assertSame('', $html->attr('class'));
+        self::assertSame('legacy', $html->attr('data-theme-style-value'));
+    }
+
+    public function testTheThemeEndpointRefusesInvalidChoices(): void
+    {
+        // Reached through East Foundation's router: the responses of the controller
+        self::assertSame(400, $this->sendTheme((string) json_encode(['style' => 'retro']))->getStatusCode());
+
+        $response = $this->handle(
+            method: 'POST',
+            path: '/east-ux/theme',
+            server: ['CONTENT_TYPE' => 'application/x-www-form-urlencoded'],
+            content: 'style=modern',
+        );
+        self::assertSame(415, $response->getStatusCode());
+
+        self::assertSame(405, $this->handle('GET', '/east-ux/theme')->getStatusCode());
     }
 }

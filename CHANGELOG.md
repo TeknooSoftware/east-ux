@@ -1,5 +1,54 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.2.0] - 2026-10-23
+### Alpha Release
+
+The [System.css x Bootstrap](https://github.com/TeknooSoftware/system.css-x-bootstrap) theme, shipped with its fonts,
+and the switch of its style (legacy, modern) and its mode (light, dark, auto) by the visitors, without reloading the
+page.
+
+#### Theme
+- Stylesheet (`bootstrap-system-theme.css` and `.min.css`, from the commit `78388f9` of the theme), fonts (Chicago,
+  Monaco, Chicago 12) and MIT license of the theme in `assets/dist/system-theme/`, mapped by AssetMapper as
+  `@teknoo/east-ux/system-theme/`; importmap entry of the minified stylesheet. Bootstrap stays a peer dependency.
+- `make system-theme` copies the theme from a clone of its repository (`SYSTEM_THEME_DIR`).
+- Universal code: enums `Contracts\Enum\Theme\Style` and `Contracts\Enum\Theme\Mode`, DTO
+  `Object\DTO\Theme\ThemePreference`, contract `Contracts\Theme\ThemePreferenceStorageInterface` (East oriented, a
+  promise), and `Service\ThemeService` (preference of the visitor, cached until `kernel.reset`, and its rendering on
+  `<html>`: the class `system-modern`, `data-bs-theme`).
+- `SessionThemePreferenceStorage`: the choice of the visitor in the session, read only with an existing session. An
+  application aliases `ThemePreferenceStorageInterface` to its own storage, for example in the account of the user.
+- Twig functions `east_ux_theme()`, `east_ux_theme_class()`, `east_ux_theme_attributes()` and
+  `east_ux_theme_script()` (inline script applying the `auto` mode and the choice kept by the browser before the first
+  paint, with an optional CSP nonce). Their style and mode arguments render a choice kept by the application.
+- Controller `ThemePreferenceUpdater`, route `_teknoo_east_ux_theme_update` (`POST /theme`, in `theme_routes.yaml`,
+  imported with a public prefix such as `/east-ux`): JSON bodies only (415 otherwise), 400 for an invalid choice, 204.
+- Twig Component `ThemeSwitcher` (props `showMode` and `showStyle`).
+- Stimulus controller `theme` (actions `select`, `toggleStyle`, `toggleMode`, targets `option` (pressed buttons) and
+  `menuOption` (checked menu entries), event `theme:changed`), set on `<html>`: switches the theme, follows `prefers-color-scheme` in the auto mode, sends the
+  choice to its `url` value and/or keeps it in the localStorage (synchronised between tabs).
+- `east-ux.css`: no transition while the theme switches (`html.east-ux-theme-switching`), check mark of the current
+  theme entries of the menu bar.
+- Translation keys `teknoo.east.ux.theme_switcher.*`.
+
+#### Menu
+- `ThemeMenuGenerator`: the switch of the theme in the menu bar (entries `role="menuitemradio"`, the current ones
+  checked), in its own section once tagged
+  `teknoo.east.ux.menu.generator`, or in a section of the application with `addItemsTo()`.
+- `MenuItem`: new `attributes` (HTML attributes of the entry, escaped) and `translationDomain`; an entry without route
+  (and not a divider) is rendered as a button.
+- `MenuSection` and `MenuService::getSection()`: new `translationDomain`.
+
+#### Configuration
+- `teknoo_east_ux.theme`: `style` (`legacy`), `mode` (`auto`), `storage` (`session` or `browser`) and `update_route`
+  (`_teknoo_east_ux_theme_update`), as the parameters `teknoo_east_ux.theme.*`.
+
+#### Tests and documentation
+- Unit tests of the theme and of the menu changes; kernel tests and Behat features (`theme.feature`) of the choice of
+  the visitor kept in the session, the test application and the Behat context sending the cookies back.
+- `documentation/theme.md`; components, menu, Stimulus, theming and README updated.
+- `assets/package.json`: version aligned on the library (`0.2.0`).
+
 ## [0.1.0] - 2026-10-22
 ### Alpha Release
 

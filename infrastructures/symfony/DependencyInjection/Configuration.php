@@ -34,7 +34,13 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * - `form_theme`: Twig form theme applied by the `FormWindow` component when its `formTheme` prop is not set
  *   (none by default: the form themes of the application apply),
  * - `component_rendering.allow_unreferenced_components`: allows the component renderer to render a component without
- *   validator of its props (false by default).
+ *   validator of its props (false by default),
+ * - `theme.style` and `theme.mode`: default preference of the System.css x Bootstrap theme, used while the visitor has
+ *   not chosen (`legacy` and `auto` by default),
+ * - `theme.storage`: where the choice of the visitor is kept, `session` (by default, sent by the `theme` Stimulus
+ *   controller to the route `theme.update_route`) or `browser` (in the localStorage, nothing is sent),
+ * - `theme.update_route`: route receiving the choice of the visitor with the `session` storage
+ *   (`_teknoo_east_ux_theme_update` by default, from `theme_routes.yaml`).
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -73,6 +79,34 @@ class Configuration implements ConfigurationInterface
                                 . '(tag teknoo.east.ux.component_rendering.validation)'
                             )
                             ->defaultFalse()
+                        ->end()
+                    ->end()
+                ->end()
+                ->arrayNode('theme')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->enumNode('style')
+                            ->info('Default style of the System.css x Bootstrap theme')
+                            ->values(['legacy', 'modern'])
+                            ->defaultValue('legacy')
+                        ->end()
+                        ->enumNode('mode')
+                            ->info('Default mode of the theme, auto follows the prefers-color-scheme of the browser')
+                            ->values(['light', 'dark', 'auto'])
+                            ->defaultValue('auto')
+                        ->end()
+                        ->enumNode('storage')
+                            ->info(
+                                'Storage of the choice of the visitor: session (sent to update_route) or browser '
+                                . '(localStorage)'
+                            )
+                            ->values(['session', 'browser'])
+                            ->defaultValue('session')
+                        ->end()
+                        ->stringNode('update_route')
+                            ->info('Route receiving the choice of the visitor with the session storage')
+                            ->defaultValue('_teknoo_east_ux_theme_update')
+                            ->cannotBeEmpty()
                         ->end()
                     ->end()
                 ->end()

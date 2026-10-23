@@ -32,6 +32,10 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Teknoo\East\UX\Contracts\Enum\Theme\Mode;
+use Teknoo\East\UX\Contracts\Enum\Theme\Style;
+use Teknoo\East\UX\Contracts\Theme\ThemePreferenceStorageInterface;
+use Teknoo\East\UXBundle\Theme\SessionThemePreferenceStorage;
 
 use function dirname;
 use function interface_exists;
@@ -46,7 +50,10 @@ use function is_string;
  *   `@TeknooEastUX/components/`,
  * - prepends `framework.asset_mapper.paths` with the `assets/dist` directory of the package, as
  *   `@teknoo/east-ux`, when AssetMapper is available (same guard as Symfony UX's own bundles),
- * - loads the services of the bundle and exposes its configuration as `teknoo_east_ux.*` parameters.
+ * - loads the services of the bundle and exposes its configuration as `teknoo_east_ux.*` parameters,
+ * - builds the default theme preference from `theme.style` and `theme.mode`, and, with the `session` storage of the
+ *   theme, aliases `ThemePreferenceStorageInterface` to `SessionThemePreferenceStorage` (an alias defined by the
+ *   application wins, for example a storage in the account of the user).
  *
  * The Twig namespace `@TeknooEastUX` (templates/) and the translations (translations/, domain `east_ux`) are
  * registered by Symfony from the bundle's directory.
@@ -63,6 +70,10 @@ class TeknooEastUXExtension extends Extension implements PrependExtensionInterfa
     public const string COMPONENTS_TEMPLATE_DIRECTORY = '@TeknooEastUX/components/';
 
     public const string ASSETS_NAMESPACE = '@teknoo/east-ux';
+
+    public const string THEME_DEFAULT_PREFERENCE = 'teknoo.east.ux.theme.default_preference';
+
+    public const string THEME_SESSION_STORAGE = 'session';
 
     public function getAssetsPath(): string
     {
@@ -139,6 +150,7 @@ class TeknooEastUXExtension extends Extension implements PrependExtensionInterfa
          *     home_route: string|null,
          *     form_theme: string|null,
          *     component_rendering: array{allow_unreferenced_components: bool},
+         *     theme: array{style: string, mode: string, storage: string, update_route: string},
          * } $config
          */
         $config = $this->processConfiguration($configuration, $configs);
@@ -152,6 +164,20 @@ class TeknooEastUXExtension extends Extension implements PrependExtensionInterfa
             'teknoo_east_ux.component_rendering.allow_unreferenced_components',
             $config['component_rendering']['allow_unreferenced_components'],
         );
+
+        $container->setParameter('teknoo_east_ux.theme.style', $config['theme']['style']);
+        $container->setParameter('teknoo_east_ux.theme.mode', $config['theme']['mode']);
+        $container->setParameter('teknoo_east_ux.theme.storage', $config['theme']['storage']);
+        $container->setParameter('teknoo_east_ux.theme.update_route', $config['theme']['update_route']);
+
+        $container->getDefinition(self::THEME_DEFAULT_PREFERENCE)->setArguments([
+            Style::from($config['theme']['style']),
+            Mode::from($config['theme']['mode']),
+        ]);
+
+        if (self::THEME_SESSION_STORAGE === $config['theme']['storage']) {
+            $container->setAlias(ThemePreferenceStorageInterface::class, SessionThemePreferenceStorage::class);
+        }
     }
 
     public function getAlias(): string

@@ -11,11 +11,14 @@ Symfony bundle, following the #East programming philosophy, built on Teknoo/East
 providing the application-level UI pieces of an East application:
 
 * Symfony UX Twig and Live Components, with their templates: windows (`Window`, `FormWindow`, `ListWindow`,
-  `LoginWindow`), `ObjectList`, `Pagination`, `ConfirmModal`, `Card` and `MenuBar`;
+  `LoginWindow`), `ObjectList`, `Pagination`, `ConfirmModal`, `Card`, `MenuBar` and `ThemeSwitcher`;
 * their Stimulus controllers and a structural stylesheet, served by AssetMapper without build step (or consumed with
   npm);
 * a component renderer endpoint, to load a `FormWindow` dynamically;
-* a menu service, fed by the menu generators of the application.
+* a menu service, fed by the menu generators of the application;
+* the [System.css x Bootstrap](https://github.com/TeknooSoftware/system.css-x-bootstrap) theme with its fonts, the Twig
+  functions writing its style (legacy, modern) and its mode (light, dark, auto) on `<html>`, and the switch of the
+  theme without reloading the page, kept in the session or in the browser.
 
 The Live Components are re-rendered by the East recipe of their page: East Foundation's router maps a
 `POST /_components/<Name>` back to the route of the component's `originalPath` and runs its recipe again, and East
@@ -32,6 +35,8 @@ Documentation
 * [Stimulus controllers](documentation/stimulus.md): values of each controller and contract with the page.
 * [Menu](documentation/menu.md): menu generators, sections, items and the menu service.
 * [Theming](documentation/theming.md): stylesheet, form theme, template overrides and translations.
+* [System.css x Bootstrap theme](documentation/theme.md): assets, Twig functions, the `theme` controller, the
+  switcher and the storage of the choice of the visitor.
 
 Installation & Requirements
 ---------------------------
@@ -96,6 +101,11 @@ teknoo_east_ux:
     form_theme: '@App/form/fields.html.twig'     # form theme of the FormWindow
     component_rendering:
         allow_unreferenced_components: false     # render a component without validator of its props
+    theme:
+        style: 'legacy'                          # default style of the theme: legacy or modern
+        mode: 'auto'                             # default mode: light, dark or auto
+        storage: 'session'                       # where the choice of the visitor is kept: session or browser
+        update_route: '_teknoo_east_ux_theme_update'
 ```
 
 | Key                                                   | Default | Meaning                                                                         |
@@ -103,10 +113,13 @@ teknoo_east_ux:
 | `home_route`                                          | `null`  | Route of the brand link of `MenuBar`; without it, the brand links to `/`        |
 | `form_theme`                                          | `null`  | Default of the `formTheme` prop of `FormWindow`; without it, no theme is set on the form and the global form themes apply |
 | `component_rendering.allow_unreferenced_components`   | `false` | Lets the component renderer render a component without validator of its props   |
+| `theme.style`, `theme.mode`                           | `legacy`, `auto` | Theme rendered while the visitor has not chosen                       |
+| `theme.storage`                                       | `session` | `session`: the choice is sent to `theme.update_route` and kept on the server; `browser`: it is kept in the localStorage |
+| `theme.update_route`                                  | `_teknoo_east_ux_theme_update` | Route receiving the choice with the `session` storage    |
 
 A configured value can not be an empty string. The values are available as the parameters
-`teknoo_east_ux.home_route`, `teknoo_east_ux.form_theme` and
-`teknoo_east_ux.component_rendering.allow_unreferenced_components`. The validators of the props use Symfony's
+`teknoo_east_ux.home_route`, `teknoo_east_ux.form_theme`,
+`teknoo_east_ux.component_rendering.allow_unreferenced_components` and `teknoo_east_ux.theme.*`. The validators of the props use Symfony's
 validator: the application enables `framework.validation` (the default `config/packages/validator.yaml` of the
 Symfony recipe does).
 
@@ -122,6 +135,11 @@ east_ux:
 live_component:
     resource: '@LiveComponentBundle/config/routes.php'
     prefix: '/_components'
+
+# config/routes/east_ux_theme.yaml: the theme chosen by the visitor (`session` storage), on `POST /east-ux/theme`
+east_ux_theme:
+    resource: '@TeknooEastUXBundle/config/theme_routes.yaml'
+    prefix: '/east-ux'
 ```
 
 ```yaml
@@ -138,6 +156,9 @@ The component renderer renders the component and the props of its JSON body: the
 route named by the signed `originalPath`, after checking the access rules of that route with the firewall (East
 Foundation 9.4). The details are in [documentation/live-components.md](documentation/live-components.md).
 
+The route of the theme stays public: anonymous visitors choose a theme too, on the login page for example. It accepts
+only JSON bodies, which a cross-site form cannot send.
+
 Components
 ----------
 
@@ -152,6 +173,7 @@ Components
 | `Pagination`   | Twig | Page buttons bound to the `page` prop of `ListWindow`                             |
 | `ConfirmModal` | Twig | Bootstrap confirmation modal, used by `ListWindow` for deletions                  |
 | `Card`         | Twig | Bootstrap card; its content is escaped unless `contentIsHtml` is set              |
+| `ThemeSwitcher` | Twig | Buttons choosing the style and the mode of the System.css x Bootstrap theme      |
 
 Every template can be overridden in `templates/bundles/TeknooEastUXBundle/components/<Name>.html.twig`. Texts are
 translation keys of the `east_ux` domain, with an English catalogue; labels supplied by the application (menu entries,
@@ -238,6 +260,29 @@ services:
 The menu service caches the sections per user and location in its instance, and is reset between two requests
 (`kernel.reset`). See [documentation/menu.md](documentation/menu.md).
 
+`Teknoo\East\UX\Service\Menu\ThemeMenuGenerator` adds the switch of the theme to the menu bar: tag it
+`teknoo.east.ux.menu.generator` for its own section, or call its `addItemsTo()` from a generator of the application.
+
+Theme
+-----
+
+```twig
+<html lang="en" class="{{ east_ux_theme_class() }}" {{ east_ux_theme_attributes() }}>
+    <head>
+        {{ east_ux_theme_script() }}
+        {# stylesheets: Bootstrap, east-ux.css, then the theme #}
+    </head>
+    <body>
+        <twig:ThemeSwitcher />
+```
+
+`east_ux_theme_class()` writes `system-modern` for the modern style, and `east_ux_theme_attributes()` writes
+`data-bs-theme` and the `theme` Stimulus controller with the preference of the visitor. `east_ux_theme_script()`
+resolves the `auto` mode from `prefers-color-scheme` before the first paint. The controller switches the theme without
+reloading the page and sends the choice to the server, or keeps it in the localStorage. An application can keep the
+choice in its database through `ThemePreferenceStorageInterface`, or by passing its own values to the Twig functions.
+See [documentation/theme.md](documentation/theme.md).
+
 Assets
 ------
 
@@ -245,17 +290,19 @@ Assets
 
 `assets/package.json` is read by Symfony Flex (the package has the `symfony-ux` keyword) and by StimulusBundle. When
 the library is installed or updated, Flex writes the `@teknoo/east-ux` entries into the application's
-`assets/controllers.json` (the seven controllers) and `importmap.php` (`@teknoo/east-ux/styles/east-ux.css`, and
-`@hotwired/stimulus` and `bootstrap` when they are missing), each file only if it already exists: commit both files
+`assets/controllers.json` (the eight controllers) and `importmap.php` (`@teknoo/east-ux/styles/east-ux.css`,
+`@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css`, and `@hotwired/stimulus` and `bootstrap` when they
+are missing), each file only if it already exists: commit both files
 first, then require the library and commit the entries Flex adds. A later `composer install` leaves them unchanged.
 
-The application imports the stylesheet in its `assets/app.js`:
+The application imports the stylesheets in its `assets/app.js` (the theme is optional):
 
 ```js
 import './stimulus_bootstrap.js';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@teknoo/east-ux/styles/east-ux.css';
+import '@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css';
 import './styles/app.css';
 ```
 
@@ -267,11 +314,12 @@ import './styles/app.css';
 The same `assets/package.json` is a valid npm package. In an application still on npm (a `package.json` and no
 `importmap.php`), Flex adds `"@teknoo/east-ux": "file:vendor/teknoo/east-ux/assets"` to `package.json` when the
 library is installed or updated (in `devDependencies`, or where the key already is: move it to `dependencies`, the
-browser loads the package at runtime), and writes the seven controllers into `assets/controllers.json` if that file
+browser loads the package at runtime), and writes the eight controllers into `assets/controllers.json` if that file
 exists. Run `npm install` after Composer. The application imports the controllers from
 `@teknoo/east-ux/dist/controllers/`, registers them with their identifiers (`form-window`,
-`form-window-dynamic-loader`, `list-window-refresh`, `window-close`, `window-drag`, `delete-item`, `clipboard`) and
-loads `@teknoo/east-ux/dist/styles/east-ux.css`. Without a bundler, its import map needs the prefix entry
+`form-window-dynamic-loader`, `list-window-refresh`, `window-close`, `window-drag`, `delete-item`, `clipboard`,
+`theme`) and loads `@teknoo/east-ux/dist/styles/east-ux.css`. The theme is served from the whole
+`@teknoo/east-ux/dist/system-theme/` directory (its stylesheet loads `../fonts/`). Without a bundler, its import map needs the prefix entry
 `"@teknoo/east-ux/": "<public URL of node_modules>/@teknoo/east-ux/"`.
 
 See [documentation/stimulus.md](documentation/stimulus.md) for the controllers and the contract with the page
@@ -290,6 +338,10 @@ Credits
 -------
 EIRL Richard Déloge - <https://deloge.io> - Lead developer.
 SASU Teknoo Software - <https://teknoo.software>
+
+The System.css x Bootstrap theme (`assets/dist/system-theme/`) is MIT licensed, see its
+[LICENSE](assets/dist/system-theme/LICENSE). It is based on [system.css](https://github.com/sakofchit/system.css) by
+[@sakofchit](https://github.com/sakofchit), and includes the Chicago, Chicago 12 and Monaco fonts of the system.css project.
 
 About Teknoo Software
 ---------------------

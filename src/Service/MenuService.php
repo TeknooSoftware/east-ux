@@ -103,6 +103,7 @@ class MenuService implements ResetInterface
         string $icon = '',
         Sorting $position = Sorting::Append,
         bool $rawLabel = false,
+        ?string $translationDomain = null,
     ): MenuSection {
         if (!isset($this->currentSections[$location->value][$name])) {
             $sectionPosition = match ($position) {
@@ -115,6 +116,7 @@ class MenuService implements ResetInterface
                 position: $sectionPosition,
                 icon: $icon,
                 rawLabel: $rawLabel,
+                translationDomain: $translationDomain,
             );
         }
 

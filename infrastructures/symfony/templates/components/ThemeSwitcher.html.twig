@@ -1,0 +1,19 @@
+{% macro option(parameter, value, label, pressed) %}
+    <button type="button" class="btn btn-sm{% if pressed %} active{% endif %}" data-action="click->theme#select" data-theme-{{ parameter }}-param="{{ value }}" data-theme-target="option" aria-pressed="{{ pressed ? 'true' : 'false' }}">{{ label }}</button>
+{% endmacro %}
+{% set preference = this.preference %}
+<div {{ attributes.defaults({class: 'east-ux-theme-switcher d-flex flex-wrap align-items-center gap-2', role: 'group', 'aria-label': 'teknoo.east.ux.theme_switcher.group.theme'|trans({}, 'east_ux')}) }}>
+    {% if showMode %}
+        <div class="btn-group" role="group" aria-label="{{ 'teknoo.east.ux.theme_switcher.group.mode'|trans({}, 'east_ux') }}">
+            {{ _self.option('mode', 'light', 'teknoo.east.ux.theme_switcher.mode.light'|trans({}, 'east_ux'), preference.mode.value == 'light') }}
+            {{ _self.option('mode', 'dark', 'teknoo.east.ux.theme_switcher.mode.dark'|trans({}, 'east_ux'), preference.mode.value == 'dark') }}
+            {{ _self.option('mode', 'auto', 'teknoo.east.ux.theme_switcher.mode.auto'|trans({}, 'east_ux'), preference.mode.value == 'auto') }}
+        </div>
+    {% endif %}
+    {% if showStyle %}
+        <div class="btn-group" role="group" aria-label="{{ 'teknoo.east.ux.theme_switcher.group.style'|trans({}, 'east_ux') }}">
+            {{ _self.option('style', 'legacy', 'teknoo.east.ux.theme_switcher.style.legacy'|trans({}, 'east_ux'), preference.style.value == 'legacy') }}
+            {{ _self.option('style', 'modern', 'teknoo.east.ux.theme_switcher.style.modern'|trans({}, 'east_ux'), preference.style.value == 'modern') }}
+        </div>
+    {% endif %}
+</div>

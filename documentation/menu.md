@@ -9,11 +9,12 @@ The menu classes are universal (`src/`, namespace `Teknoo\East\UX\`), only the c
 | Class or enum                                     | Role                                                                    |
 |---------------------------------------------------|-------------------------------------------------------------------------|
 | `Contracts\Menu\MenuGeneratorInterface`           | Implemented by the generators of the application                       |
-| `Menu\MenuService`                                | Runs the generators for a user and a location, sorts and caches the sections |
-| `Menu\Location`                                   | `TopLeft` (`top-left`), `TopRight` (`top-right`)                        |
-| `Menu\Sorting`                                    | `Append` (`append`), `Prepend` (`prepend`)                              |
-| `Menu\MenuSection`                                | A section: `name`, `position`, `icon`, `rawLabel`, its items            |
-| `Menu\MenuItem`                                   | An entry: `name`, `route`, `routeParameters`, `icon`, `divider`, `rawLabel` |
+| `Service\MenuService`                             | Runs the generators for a user and a location, sorts and caches the sections |
+| `Contracts\Enum\Menu\Location`                    | `TopLeft` (`top-left`), `TopRight` (`top-right`)                        |
+| `Contracts\Enum\Menu\Sorting`                     | `Append` (`append`), `Prepend` (`prepend`)                              |
+| `Object\DTO\Menu\MenuSection`                     | A section: `name`, `position`, `icon`, `rawLabel`, `translationDomain`, its items |
+| `Object\DTO\Menu\MenuItem`                        | An entry: `name`, `route`, `routeParameters`, `icon`, `divider`, `rawLabel`, `attributes`, `translationDomain` |
+| `Service\Menu\ThemeMenuGenerator`                 | The generator of the theme switcher (see [theme.md](theme.md#in-the-menu-bar)) |
 
 ## Writing a generator
 
@@ -69,6 +70,7 @@ public function getSection(
     string $icon = '',
     Sorting $position = Sorting::Append,
     bool $rawLabel = false,
+    ?string $translationDomain = null,
 ): MenuSection
 ```
 
@@ -90,11 +92,26 @@ new MenuItem(
     icon: 'icon-settings',          // CSS class(es) of the icon, rendered in a span.menu-icon
     divider: false,                 // a separator between two entries: name and route are not rendered
     rawLabel: false,                // name displayed as is instead of being translated
+    attributes: [],                 // HTML attributes of the link or the button, escaped
+    translationDomain: null,        // domain of the name, the default domain of the application when null
 );
 ```
 
 - Labels (`name` of the sections and of the items) are translation keys of the application, translated in its
-  **default domain** (not in `east_ux`).
+  **default domain**, or in the `translationDomain` of the section or the item (the entries of
+  `ThemeMenuGenerator` use `east_ux`).
+- An item without route (and not a divider) is rendered as `<button type="button" class="dropdown-item">`: an entry
+  handled by a Stimulus controller, bound with its `attributes`:
+
+  ```php
+  new MenuItem(
+      name: 'app.menu.night',
+      route: '',
+      attributes: ['data-action' => 'click->theme#select', 'data-theme-mode-param' => 'dark'],
+  );
+  ```
+
+  `attributes` are added to the link or the button, names and values escaped.
 - `rawLabel: true` displays the name as is: for a label that is not a translation key, such as a user's display name.
   The label is still escaped by Twig: a raw label is never rendered with `|raw`.
 - A divider is written `new MenuItem(name: '', route: '', divider: true)` and rendered as

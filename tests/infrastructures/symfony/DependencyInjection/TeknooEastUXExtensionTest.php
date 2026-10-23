@@ -31,8 +31,14 @@ use stdClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\UX\TwigComponent\DependencyInjection\TwigComponentExtension;
+use Symfony\Component\DependencyInjection\Compiler\MergeExtensionConfigurationPass;
+use Teknoo\East\UX\Contracts\Enum\Theme\Mode;
+use Teknoo\East\UX\Contracts\Enum\Theme\Style;
+use Teknoo\East\UX\Contracts\Theme\ThemePreferenceStorageInterface;
+use Teknoo\East\UXBundle\Theme\SessionThemePreferenceStorage;
 use Teknoo\East\UXBundle\DependencyInjection\TeknooEastUXExtension;
 use TypeError;
 
@@ -64,6 +70,7 @@ class TeknooEastUXExtensionTest extends TestCase
         'MenuBar',
         'ObjectList',
         'Pagination',
+        'ThemeSwitcher',
         'Window',
     ];
 
@@ -336,6 +343,13 @@ class TeknooEastUXExtensionTest extends TestCase
         $this->assertFalse(
             $container->getParameter('teknoo_east_ux.component_rendering.allow_unreferenced_components')
         );
+        $this->assertSame('legacy', $container->getParameter('teknoo_east_ux.theme.style'));
+        $this->assertSame('auto', $container->getParameter('teknoo_east_ux.theme.mode'));
+        $this->assertSame('session', $container->getParameter('teknoo_east_ux.theme.storage'));
+        $this->assertSame(
+            '_teknoo_east_ux_theme_update',
+            $container->getParameter('teknoo_east_ux.theme.update_route'),
+        );
     }
 
     public function testLoadWithMergedConfigurations(): void
@@ -473,6 +487,132 @@ class TeknooEastUXExtensionTest extends TestCase
         $this->assertEquals(
             [['component' => 'Teknoo\\East\\UXBundle\\Components\\FormWindow']],
             $validator->getTag('teknoo.east.ux.component_rendering.validation'),
+        );
+    }
+
+    public function testLoadRegistersTheThemeWithTheSessionStorage(): void
+    {
+        $container = new ContainerBuilder();
+        $this->buildExtension()->load([], $container);
+
+        $default = $container->getDefinition('teknoo.east.ux.theme.default_preference');
+        $this->assertEquals('Teknoo\\East\\UX\\Object\\DTO\\Theme\\ThemePreference', $default->getClass());
+        $this->assertSame([Style::Legacy, Mode::Auto], $default->getArguments());
+
+        $service = $container->getDefinition('Teknoo\\East\\UX\\Service\\ThemeService');
+        $this->assertEquals('Teknoo\\East\\UX\\Service\\ThemeService', $service->getClass());
+        $this->assertEquals([['method' => 'reset']], $service->getTag('kernel.reset'));
+        $this->assertEquals(
+            [
+                new Reference('teknoo.east.ux.theme.default_preference'),
+                new Reference(
+                    'Teknoo\\East\\UX\\Contracts\\Theme\\ThemePreferenceStorageInterface',
+                    ContainerInterface::IGNORE_ON_INVALID_REFERENCE,
+                ),
+            ],
+            $service->getArguments(),
+        );
+
+        $this->assertTrue(
+            $container->hasAlias('Teknoo\\East\\UX\\Contracts\\Theme\\ThemePreferenceStorageInterface')
+        );
+        $this->assertEquals(
+            'Teknoo\\East\\UXBundle\\Theme\\SessionThemePreferenceStorage',
+            (string) $container->getAlias('Teknoo\\East\\UX\\Contracts\\Theme\\ThemePreferenceStorageInterface'),
+        );
+
+        $storage = $container->getDefinition('Teknoo\\East\\UXBundle\\Theme\\SessionThemePreferenceStorage');
+        $this->assertEquals([new Reference('request_stack')], $storage->getArguments());
+
+        $extension = $container->getDefinition('Teknoo\\East\\UXBundle\\Twig\\ThemeExtension');
+        $this->assertEquals([[]], $extension->getTag('twig.extension'));
+        $this->assertEquals(
+            [
+                new Reference('Teknoo\\East\\UX\\Service\\ThemeService'),
+                new Reference('router'),
+                '%teknoo_east_ux.theme.storage%',
+                '%teknoo_east_ux.theme.update_route%',
+            ],
+            $extension->getArguments(),
+        );
+
+        $controller = $container->getDefinition('Teknoo\\East\\UXBundle\\Controller\\ThemePreferenceUpdater');
+        $this->assertTrue($controller->isPublic());
+        $this->assertTrue($controller->isAutowired());
+        $this->assertTrue($controller->isAutoconfigured());
+        $this->assertEquals(
+            [new Reference('Teknoo\\East\\UX\\Service\\ThemeService')],
+            $controller->getArguments(),
+        );
+
+        $switcher = $container->getDefinition('Teknoo\\East\\UXBundle\\Components\\ThemeSwitcher');
+        $this->assertEquals(
+            [new Reference('Teknoo\\East\\UX\\Service\\ThemeService')],
+            $switcher->getArguments(),
+        );
+
+        // The menu generator is tagged by the application
+        $generator = $container->getDefinition('Teknoo\\East\\UX\\Service\\Menu\\ThemeMenuGenerator');
+        $this->assertEquals('Teknoo\\East\\UX\\Service\\Menu\\ThemeMenuGenerator', $generator->getClass());
+        $this->assertFalse($generator->hasTag('teknoo.east.ux.menu.generator'));
+    }
+
+    public function testLoadRegistersTheThemeWithTheBrowserStorage(): void
+    {
+        $container = new ContainerBuilder();
+        $this->buildExtension()->load(
+            [['theme' => ['style' => 'modern', 'mode' => 'dark', 'storage' => 'browser']]],
+            $container,
+        );
+
+        $this->assertSame('modern', $container->getParameter('teknoo_east_ux.theme.style'));
+        $this->assertSame('dark', $container->getParameter('teknoo_east_ux.theme.mode'));
+        $this->assertSame('browser', $container->getParameter('teknoo_east_ux.theme.storage'));
+        $this->assertSame(
+            [Style::Modern, Mode::Dark],
+            $container->getDefinition('teknoo.east.ux.theme.default_preference')->getArguments(),
+        );
+
+        // Without storage, the theme service renders the default preference
+        $this->assertFalse(
+            $container->hasAlias('Teknoo\\East\\UX\\Contracts\\Theme\\ThemePreferenceStorageInterface')
+        );
+    }
+
+    public function testTheStorageOfTheApplicationWinsOverTheSessionStorage(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.bundles_metadata', []);
+        $container->registerExtension($this->buildExtension());
+        $container->loadFromExtension('teknoo_east_ux', []);
+
+        // A storage of the application, for example in the account of the user
+        $container->register('app.theme_storage', SessionThemePreferenceStorage::class)
+            ->setArguments([new Reference('request_stack')]);
+        $container->setAlias(ThemePreferenceStorageInterface::class, 'app.theme_storage');
+
+        // The extension is loaded as in a kernel, after the services of the application
+        new MergeExtensionConfigurationPass()->process($container);
+
+        $this->assertTrue($container->hasDefinition('Teknoo\\East\\UX\\Service\\ThemeService'));
+        $this->assertEquals(
+            'app.theme_storage',
+            (string) $container->getAlias(ThemePreferenceStorageInterface::class),
+        );
+    }
+
+    public function testTheSessionStorageIsTheDefaultOneOfTheKernel(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.bundles_metadata', []);
+        $container->registerExtension($this->buildExtension());
+        $container->loadFromExtension('teknoo_east_ux', []);
+
+        new MergeExtensionConfigurationPass()->process($container);
+
+        $this->assertEquals(
+            SessionThemePreferenceStorage::class,
+            (string) $container->getAlias(ThemePreferenceStorageInterface::class),
         );
     }
 

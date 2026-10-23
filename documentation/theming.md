@@ -21,6 +21,8 @@ display without a theme. Colours come from the Bootstrap 5.3 CSS variables, with
 | `.form-window-subforms`, `.east-ux-fieldset`              | Sub-form fieldsets of `FormWindow`                                      |
 | `.window.draggable .title-bar`, `.window.draggable.dragging` | Cursor and state while dragging                                      |
 | `.modal .window.confirm-modal`                            | Window rendering of `ConfirmModal`                                      |
+| `.dropdown-item[data-theme-target~="menuOption"]`         | Check mark of the current theme entries of the menu bar                 |
+| `html.east-ux-theme-switching *`                          | No transition while the `theme` controller switches the theme           |
 
 With AssetMapper, the stylesheet is an entry of the importmap (`@teknoo/east-ux/styles/east-ux.css`, written by Flex)
 imported by the application's `assets/app.js`, after Bootstrap and before its own stylesheet:
@@ -66,6 +68,11 @@ background images:
 .window.form-window,
 .modal .window.confirm-modal { box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5); }
 ```
+
+### The System.css x Bootstrap theme
+
+East UX ships the System.css x Bootstrap theme, with its fonts and the helpers that let visitors switch its style and
+its mode: see [theme.md](theme.md). The theme draws the windows itself; the reset of the previous section applies.
 
 ## Form theme
 
@@ -138,8 +145,20 @@ application translates them in another language, or changes the English texts, i
 | `teknoo.east.ux.pagination.action.previous`        | Previous                                                                 |
 | `teknoo.east.ux.pagination.action.next`            | Next                                                                     |
 | `teknoo.east.ux.menu_bar.brand.title`              | Home                                                                     |
+| `teknoo.east.ux.theme_switcher.group.theme`        | Theme                                                                    |
+| `teknoo.east.ux.theme_switcher.group.mode`         | Appearance                                                               |
+| `teknoo.east.ux.theme_switcher.group.style`        | Style                                                                    |
+| `teknoo.east.ux.theme_switcher.mode.light`         | Day                                                                      |
+| `teknoo.east.ux.theme_switcher.mode.dark`          | Night                                                                    |
+| `teknoo.east.ux.theme_switcher.mode.auto`          | Automatic                                                                |
+| `teknoo.east.ux.theme_switcher.style.legacy`       | Classic                                                                  |
+| `teknoo.east.ux.theme_switcher.style.modern`       | Modern                                                                   |
 
-Labels supplied by the application keep **its default domain**: the entries of the menu, the headers of `ObjectList`
+The `teknoo.east.ux.theme_switcher.*` keys label `ThemeSwitcher` and the entries added to the menu bar by
+`ThemeMenuGenerator`.
+
+Labels supplied by the application keep **its default domain**: the entries of the menu (unless their
+`translationDomain` is set), the headers of `ObjectList`
 and `ListWindow` (`tableHeaders`), the labels of the sub-forms of `FormWindow`, `newButtonLabel` and `newFormTitle` of
 `ListWindow`. The authentication errors of `LoginWindow` are translated in Symfony's `security` domain. The other
 texts given as props (titles, ARIA labels, texts of `ConfirmModal` and `Card`) are rendered as given: the application

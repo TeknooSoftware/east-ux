@@ -1,14 +1,20 @@
 {% macro menu_section(section, dropdownId) %}
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="{{ dropdownId }}" role="button" data-bs-toggle="dropdown">
-            {% if section.icon %}<span class="menu-icon {{ section.icon }}" aria-hidden="true"></span> {% endif %}{% if section.rawLabel %}{{ section.name }}{% else %}{{ section.name|trans }}{% endif %}
+            {% if section.icon %}<span class="menu-icon {{ section.icon }}" aria-hidden="true"></span> {% endif %}{% if section.rawLabel %}{{ section.name }}{% else %}{{ section.name|trans({}, section.translationDomain) }}{% endif %}
         </a>
         <ul class="dropdown-menu">
             {% for item in section.items %}
                 {% if item.divider %}
             <li><hr class="dropdown-divider"></li>
                 {% else %}
-            <li><a class="dropdown-item" href="{{ path(item.route, item.routeParameters) }}">{% if item.icon %}<span class="menu-icon {{ item.icon }}" aria-hidden="true"></span> {% endif %}{% if item.rawLabel %}{{ item.name }}{% else %}{{ item.name|trans }}{% endif %}</a></li>
+                    {% set itemAttributes %}{% for name, value in item.attributes %} {{ name|e('html_attr') }}="{{ value }}"{% endfor %}{% endset %}
+                    {% set itemLabel %}{% if item.icon %}<span class="menu-icon {{ item.icon }}" aria-hidden="true"></span> {% endif %}{% if item.rawLabel %}{{ item.name }}{% else %}{{ item.name|trans({}, item.translationDomain) }}{% endif %}{% endset %}
+                    {% if item.route is empty %}
+            <li><button type="button" class="dropdown-item"{{ itemAttributes }}>{{ itemLabel }}</button></li>
+                    {% else %}
+            <li><a class="dropdown-item" href="{{ path(item.route, item.routeParameters) }}"{{ itemAttributes }}>{{ itemLabel }}</a></li>
+                    {% endif %}
                 {% endif %}
             {% endfor %}
         </ul>

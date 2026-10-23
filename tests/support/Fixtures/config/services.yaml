@@ -50,6 +50,12 @@ services:
     tags:
       - { name: 'teknoo.east.ux.menu.generator' }
 
+  # The theme switcher of East UX, in its own section after the user dropdown
+  Teknoo\East\UX\Service\Menu\ThemeMenuGenerator:
+    class: 'Teknoo\East\UX\Service\Menu\ThemeMenuGenerator'
+    tags:
+      - { name: 'teknoo.east.ux.menu.generator', priority: -10 }
+
   Teknoo\Tests\East\UX\Support\Fixtures\Security\CurrentUser:
     class: 'Teknoo\Tests\East\UX\Support\Fixtures\Security\CurrentUser'
     arguments:

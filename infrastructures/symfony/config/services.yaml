@@ -1,6 +1,6 @@
-# The parameters `teknoo_east_ux.home_route`, `teknoo_east_ux.form_theme` and
-# `teknoo_east_ux.component_rendering.allow_unreferenced_components` are set by `TeknooEastUXExtension` from the
-# `teknoo_east_ux` configuration.
+# The parameters `teknoo_east_ux.home_route`, `teknoo_east_ux.form_theme`,
+# `teknoo_east_ux.component_rendering.allow_unreferenced_components` and `teknoo_east_ux.theme.*` are set by
+# `TeknooEastUXExtension` from the `teknoo_east_ux` configuration.
 
 services:
     ########################
@@ -13,6 +13,54 @@ services:
             - !tagged_iterator 'teknoo.east.ux.menu.generator'
         tags:
             - { name: 'kernel.reset', method: 'reset' }
+
+    # Menu generator of the theme switcher, not tagged: the application tags it `teknoo.east.ux.menu.generator` (own
+    # section, on the right of the menu bar by default) or injects it in one of its generators (`addItemsTo()`)
+    Teknoo\East\UX\Service\Menu\ThemeMenuGenerator:
+        class: 'Teknoo\East\UX\Service\Menu\ThemeMenuGenerator'
+
+    ########################
+    # Theme (System.css x Bootstrap)
+    # Default preference of the configuration (`teknoo_east_ux.theme.style` and `teknoo_east_ux.theme.mode`), its
+    # arguments are set by `TeknooEastUXExtension`.
+    teknoo.east.ux.theme.default_preference:
+        class: 'Teknoo\East\UX\Object\DTO\Theme\ThemePreference'
+
+    # The storage is the alias `Teknoo\East\UX\Contracts\Theme\ThemePreferenceStorageInterface`, set by
+    # `TeknooEastUXExtension` to the session storage with `teknoo_east_ux.theme.storage: session`, or by the
+    # application to its own storage. Without storage (`browser`), the default preference is rendered.
+    Teknoo\East\UX\Service\ThemeService:
+        class: 'Teknoo\East\UX\Service\ThemeService'
+        arguments:
+            - '@teknoo.east.ux.theme.default_preference'
+            - '@?Teknoo\East\UX\Contracts\Theme\ThemePreferenceStorageInterface'
+        tags:
+            - { name: 'kernel.reset', method: 'reset' }
+
+    Teknoo\East\UXBundle\Theme\SessionThemePreferenceStorage:
+        class: 'Teknoo\East\UXBundle\Theme\SessionThemePreferenceStorage'
+        arguments:
+            - '@request_stack'
+
+    Teknoo\East\UXBundle\Twig\ThemeExtension:
+        class: 'Teknoo\East\UXBundle\Twig\ThemeExtension'
+        arguments:
+            - '@Teknoo\East\UX\Service\ThemeService'
+            - '@router'
+            - '%teknoo_east_ux.theme.storage%'
+            - '%teknoo_east_ux.theme.update_route%'
+        tags:
+            - { name: 'twig.extension' }
+
+    # Route `_teknoo_east_ux_theme_update` (`POST /theme`, file `theme_routes.yaml`), a Symfony controller like the
+    # component renderer
+    Teknoo\East\UXBundle\Controller\ThemePreferenceUpdater:
+        class: 'Teknoo\East\UXBundle\Controller\ThemePreferenceUpdater'
+        autowire: true
+        autoconfigure: true
+        public: true
+        arguments:
+            - '@Teknoo\East\UX\Service\ThemeService'
 
     ########################
     # Components
@@ -63,6 +111,12 @@ services:
         autoconfigure: true
         arguments:
             - '@request_stack'
+
+    Teknoo\East\UXBundle\Components\ThemeSwitcher:
+        class: 'Teknoo\East\UXBundle\Components\ThemeSwitcher'
+        autoconfigure: true
+        arguments:
+            - '@Teknoo\East\UX\Service\ThemeService'
 
     Teknoo\East\UXBundle\Components\Window:
         class: 'Teknoo\East\UXBundle\Components\Window'

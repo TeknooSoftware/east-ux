@@ -3,6 +3,11 @@ teknoo_east_ux:
   resource: '@TeknooEastUXBundle/config/routes.yaml'
   prefix: '/component'
 
+# The theme chosen by the visitor is sent to `POST /east-ux/theme`, a public path (anonymous visitors choose too)
+teknoo_east_ux_theme:
+  resource: '@TeknooEastUXBundle/config/theme_routes.yaml'
+  prefix: '/east-ux'
+
 # Live Component endpoint (`/_components/<Name>`), re-routed by East Foundation to the recipe of `originalPath`
 ux_live_component_routes:
   resource: '@LiveComponentBundle/config/routes.php'

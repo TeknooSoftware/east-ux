@@ -51,7 +51,16 @@ class MenuSectionTest extends TestCase
         $this->assertSame(5, $section->position);
         $this->assertSame('', $section->icon);
         $this->assertFalse($section->rawLabel);
+        $this->assertNull($section->translationDomain);
         $this->assertSame([], $section->getItems());
+    }
+
+    public function testTranslationDomain(): void
+    {
+        $section = new MenuSection(name: 'app.menu.theme', position: 1, translationDomain: 'app_domain');
+
+        $this->assertSame('app_domain', $section->translationDomain);
+        $this->assertFalse($section->rawLabel);
     }
 
     public function testRawLabel(): void

@@ -33,3 +33,13 @@ teknoo.east.ux.pagination.action.next: 'Next'
 
 # MenuBar
 teknoo.east.ux.menu_bar.brand.title: 'Home'
+
+# ThemeSwitcher (also the labels of the entries added to the menu bar by ThemeMenuGenerator)
+teknoo.east.ux.theme_switcher.group.theme: 'Theme'
+teknoo.east.ux.theme_switcher.group.mode: 'Appearance'
+teknoo.east.ux.theme_switcher.group.style: 'Style'
+teknoo.east.ux.theme_switcher.mode.light: 'Day'
+teknoo.east.ux.theme_switcher.mode.dark: 'Night'
+teknoo.east.ux.theme_switcher.mode.auto: 'Automatic'
+teknoo.east.ux.theme_switcher.style.legacy: 'Classic'
+teknoo.east.ux.theme_switcher.style.modern: 'Modern'

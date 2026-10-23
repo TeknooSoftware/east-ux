@@ -34,7 +34,8 @@ use Symfony\Component\Routing\RouteCollection;
 use function dirname;
 
 /**
- * Checks the routes file of the bundle, `infrastructures/symfony/config/routes.yaml`.
+ * Checks the routes files of the bundle, `infrastructures/symfony/config/routes.yaml` and
+ * `infrastructures/symfony/config/theme_routes.yaml`.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -44,11 +45,11 @@ use function dirname;
 #[CoversNothing]
 class RoutingTest extends TestCase
 {
-    private function loadRoutes(): RouteCollection
+    private function loadRoutes(string $file = 'routes.yaml'): RouteCollection
     {
         $loader = new YamlFileLoader(new FileLocator(dirname(__DIR__, 3) . '/infrastructures/symfony/config'));
 
-        return $loader->load('routes.yaml');
+        return $loader->load($file);
     }
 
     public function testComponentRendererRoute(): void
@@ -74,5 +75,30 @@ class RoutingTest extends TestCase
         $routes->addPrefix('/component');
 
         $this->assertEquals('/component/render', $routes->get('_teknoo_east_ux_component_render')?->getPath());
+    }
+
+    public function testThemeUpdateRoute(): void
+    {
+        $routes = $this->loadRoutes('theme_routes.yaml');
+
+        $this->assertCount(1, $routes);
+
+        $route = $routes->get('_teknoo_east_ux_theme_update');
+        $this->assertNotNull($route);
+        $this->assertEquals('/theme', $route->getPath());
+        $this->assertEquals(['POST'], $route->getMethods());
+        $this->assertEquals([], $route->getSchemes());
+        $this->assertEquals(
+            'Teknoo\\East\\UXBundle\\Controller\\ThemePreferenceUpdater',
+            $route->getDefault('_controller'),
+        );
+    }
+
+    public function testThemeUpdateRouteWithPrefix(): void
+    {
+        $routes = $this->loadRoutes('theme_routes.yaml');
+        $routes->addPrefix('/east-ux');
+
+        $this->assertEquals('/east-ux/theme', $routes->get('_teknoo_east_ux_theme_update')?->getPath());
     }
 }

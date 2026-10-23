@@ -1,12 +1,15 @@
-{# Layout of the test application: the menu bar, the page and the container of the windows loaded dynamically #}
+{# Layout of the test application: the theme on <html>, the menu bar, the theme switcher, the page and the container of
+   the windows loaded dynamically #}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="{{ east_ux_theme_class() }}" {{ east_ux_theme_attributes() }}>
     <head>
         <meta charset="UTF-8">
         <title>{% block title %}East UX{% endblock %}</title>
+        {{ east_ux_theme_script() }}
     </head>
     <body>
         <twig:MenuBar :user="fixtures_user.user" />
+        <twig:ThemeSwitcher id="theme-switcher" />
         <main id="content">
             {% block body %}{% endblock %}
         </main>

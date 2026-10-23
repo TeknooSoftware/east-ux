@@ -1,6 +1,6 @@
 # Components
 
-East UX ships nine Symfony UX components. Their classes are in `infrastructures/symfony/Components/`
+East UX ships ten Symfony UX components. Their classes are in `infrastructures/symfony/Components/`
 (namespace `Teknoo\East\UXBundle\Components\`), their templates in `infrastructures/symfony/templates/components/`
 (Twig namespace `@TeknooEastUX`).
 
@@ -24,6 +24,7 @@ methods of `this`, no default values of the props, no live behaviour). Always us
 | `Pagination`   | Twig | `Pagination`                  | Page buttons driving the `page` prop of the enclosing Live Component |
 | `ConfirmModal` | Twig | `ConfirmModal`                | Bootstrap confirmation modal styled as a window                     |
 | `Card`         | Twig | `Card`                        | Bootstrap card with a title, a content and up to two links         |
+| `ThemeSwitcher` | Twig | `ThemeSwitcher`              | Buttons choosing the style and the mode of the System.css x Bootstrap theme ([theme.md](theme.md)) |
 
 `AbstractWindow` is not a component: it holds the props shared by the windows and the helpers `isClosable()`,
 `isResizable()`, `isDraggable()` and `isFixed()` (draggable **and** closable).
@@ -211,7 +212,7 @@ alert-danger" role="alert">`: the id is a stable hook for the tests of the appli
   renders `teknoo.east.ux.menu_bar.brand.title` by default.
 - The `Location::TopLeft` sections are rendered on the left (block `left_sections`), the `Location::TopRight` ones on
   the right (block `right_sections`), as Bootstrap dropdowns. See [menu.md](menu.md) for the generators, the
-  dividers and the labels that are not translation keys.
+  dividers, the buttons and the labels that are not translation keys.
 
 ## ObjectList
 
@@ -299,3 +300,18 @@ caller. The confirm button carries `data-confirm-button`, which the `delete-item
 | `leftActionText`  | `string` | `''`    |                                                           |
 | `rightActionPath` | `string` | `''`    | Right link, rendered with `rightActionText` when both are set |
 | `rightActionText` | `string` | `''`    |                                                           |
+
+## ThemeSwitcher
+
+```twig
+<twig:ThemeSwitcher class="ms-lg-3" />
+```
+
+| Prop        | Type   | Default | Use                                                     |
+|-------------|--------|---------|---------------------------------------------------------|
+| `showMode`  | `bool` | `true`  | Renders the buttons of the modes (Day, Night, Automatic) |
+| `showStyle` | `bool` | `true`  | Renders the buttons of the styles (Classic, Modern)     |
+
+Two groups of buttons handled by the `theme` Stimulus controller, which `east_ux_theme_attributes()` sets on `<html>`.
+The buttons of the preference of the visitor (`ThemeService`) are pressed (`active`, `aria-pressed="true"`). The labels
+are keys of the `east_ux` domain. It is rendered for anonymous visitors too. See [theme.md](theme.md).

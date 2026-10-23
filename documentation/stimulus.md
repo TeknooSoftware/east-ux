@@ -1,6 +1,6 @@
 # Stimulus controllers
 
-East UX ships seven Stimulus controllers, hand-written ES modules without build step, in `assets/dist/controllers/`.
+East UX ships eight Stimulus controllers, hand-written ES modules without build step, in `assets/dist/controllers/`.
 They work next to the `live` controller of Symfony UX (see [live-components.md](live-components.md)). Every text shown
 to the user and every protocol name is a Stimulus value with an English default, so an application translates or
 adapts them from its templates.
@@ -30,7 +30,8 @@ the library and commit the entries Flex adds):
             "window-close": {"enabled": true, "fetch": "eager"},
             "window-drag": {"enabled": true, "fetch": "eager"},
             "delete-item": {"enabled": true, "fetch": "eager"},
-            "clipboard": {"enabled": true, "fetch": "eager"}
+            "clipboard": {"enabled": true, "fetch": "eager"},
+            "theme": {"enabled": true, "fetch": "eager"}
         }
     },
     "entrypoints": []
@@ -57,7 +58,7 @@ The same `assets/package.json` is a valid npm package. An application still on n
 
 Symfony Flex writes this line when the library is installed or updated: in `devDependencies` when the key is
 missing, and it keeps the key where it already is. Move it to `dependencies`: the browser loads the controllers at
-runtime, and an `npm install --omit=dev` would skip them. Flex also writes the seven controllers into
+runtime, and an `npm install --omit=dev` would skip them. Flex also writes the eight controllers into
 `assets/controllers.json` if that file exists; they only matter to a front end that reads it (StimulusBundle or
 `@symfony/stimulus-bridge`). Run `npm install` after Composer, since the package is a link into `vendor/`.
 
@@ -101,6 +102,7 @@ The identifiers must stay the ones of this page: the templates of the components
 | `window-drag`                | `window_drag_controller.js`                  | `startDrag`    | -                                | -                                                                                                                 |
 | `delete-item`                | `delete_item_controller.js`                  | `delete`       | -                                | `url`, `modal-id`, `csrf-token`, `csrf-field` (`_token`), `csrf-header` (`X-CSRF-Token`)                         |
 | `clipboard`                  | `clipboard_controller.js`                    | `copy`         | -                                | `text`, `success-text` (`✓ Copied!`), `error-text` (`✗ Error`), `button-class` (`btn-primary`), `success-class` (`btn-success`), `error-class` (`btn-danger`) |
+| `theme`                      | `theme_controller.js`                        | `select`, `toggleStyle`, `toggleMode` | `option`, `menuOption` | `style` (`legacy`), `mode` (`auto`), `storage` (`session`), `url`, `storage-key` (`east-ux-theme`), `modern-class` (`system-modern`), `switching-class` (`east-ux-theme-switching`) |
 
 A value is set with `data-<identifier>-<value>-value`, for example
 `data-form-window-error-text-value="{{ 'app.form.error'|trans }}"`. The templates of the bundle already set the
@@ -201,6 +203,16 @@ place of the `button-class` value. Each class value may hold several classes sep
         data-action="click->clipboard#copy">{{ 'app.copy'|trans }}</button>
 ```
 
+### theme
+
+Set on `<html>` by `east_ux_theme_attributes()`, with the values of the preference of the visitor. It switches the
+style (class `system-modern`) and the mode (`data-bs-theme`) of the System.css x Bootstrap theme without reloading the
+page. It keeps the choice in the localStorage (`browser` storage), sends it as JSON to the `url` value when it is set,
+and dispatches `theme:changed` on `<html>`. The buttons of `ThemeSwitcher` and of `ThemeMenuGenerator` call `select`
+with a `style` or `mode` param (`data-theme-mode-param="dark"`); they are its `option` targets (pressed buttons) and
+`menuOption` targets (checked menu entries). See
+[theme.md](theme.md#the-theme-controller).
+
 ## Contract with the page
 
 The controllers expect the page to provide:
@@ -215,11 +227,14 @@ The controllers expect the page to provide:
 | `X-Requested-With: XMLHttpRequest`           | sent by `form-window-dynamic-loader` and `delete-item` | The application may require it on its routes |
 | CSRF token in the field `csrf-field` and the header `csrf-header` | sent by `delete-item` | The application generates the token (`csrf-token` value) and checks it on its delete routes (East Common: the route default `csrfTokenId`) |
 | Bootstrap's JavaScript (`Modal`)             | `delete-item`                  | The `bootstrap` entry of the importmap                                      |
+| `<html {{ east_ux_theme_attributes() }}>`    | `theme`                        | The application's layout (see [theme.md](theme.md#the-page))                |
+| The rule of `html.east-ux-theme-switching`   | `theme` (no fade while switching) | `east-ux.css`                                                            |
 
 | Event                 | Dispatched on                    | By                           | Listened by (on)                       |
 |-----------------------|----------------------------------|------------------------------|----------------------------------------|
 | `form-window:open`    | the `[data-form-window]` element | `form-window-dynamic-loader` | `form-window` (its own element)        |
 | `list-window:refresh` | `document`                       | `form-window` after a save   | `list-window-refresh` (`document`)     |
+| `theme:changed`       | `<html>`                         | `theme` after a change       | The application, to persist the choice itself |
 
 ## Rules for the templates and new controllers
 

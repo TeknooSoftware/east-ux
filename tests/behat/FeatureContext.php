@@ -60,9 +60,10 @@ use const PHP_URL_PATH;
  * by the kernel test) with HTTP requests, as a browser and the Stimulus controllers of East UX do: pages rendered by
  * East Common's recipes, Live Component re-renders (`POST /_components/<Name>` with the props of the rendered
  * component, re-routed by East Foundation to the recipe of `originalPath`) and requests to the component renderer
- * (`POST /component/render`).
+ * (`POST /component/render`), and the theme chosen by the visitor (`POST /east-ux/theme`, as the `theme` controller).
  *
- * A scenario uses one kernel, so the items it creates are kept between its requests.
+ * A scenario uses one kernel, so the items it creates are kept between its requests, and the cookies of the
+ * responses are sent back with the next requests, as a browser does (the session holds the theme of the visitor).
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -99,6 +100,11 @@ class FeatureContext implements Context
     private ?Response $response = null;
 
     /**
+     * @var array<string, string>
+     */
+    private array $cookies = [];
+
+    /**
      * Props of the last rendered component, per component name, as `live_controller.js` reads them from the HTML
      *
      * @var array<string, array<string, mixed>>
@@ -112,6 +118,7 @@ class FeatureContext implements Context
         $this->kernel = null;
         $this->credentials = [];
         $this->response = null;
+        $this->cookies = [];
         $this->liveProps = [];
     }
 
@@ -156,6 +163,7 @@ class FeatureContext implements Context
             uri: self::BASE_URL . $path,
             method: $method,
             parameters: $parameters,
+            cookies: $this->cookies,
             server: $this->credentials + $server,
             content: $content,
         );
@@ -163,6 +171,10 @@ class FeatureContext implements Context
         $kernel = $this->getKernel();
         $this->response = $kernel->handle($request);
         $kernel->terminate($request, $this->response);
+
+        foreach ($this->response->headers->getCookies() as $cookie) {
+            $this->cookies[$cookie->getName()] = (string) $cookie->getValue();
+        }
 
         $this->rememberLiveProps();
     }
@@ -502,13 +514,74 @@ class FeatureContext implements Context
         );
         Assert::assertCount(1, $sections, "The section $section is not rendered once");
 
-        // A divider is written `---`
+        // A divider is written `---`, a button (an entry handled by a Stimulus controller) `<label> (button)`
         Assert::assertSame(
             $this->splitList($entries),
             $sections->filter('ul.dropdown-menu > li')->each(
-                static fn (Crawler $entry): string => $entry->filter('hr.dropdown-divider')->count() > 0
-                    ? '---'
-                    : $entry->text() . ' (' . $entry->filter('a')->attr('href') . ')',
+                static fn (Crawler $entry): string => match (true) {
+                    $entry->filter('hr.dropdown-divider')->count() > 0 => '---',
+                    $entry->filter('button')->count() > 0 => $entry->text() . ' (button)',
+                    default => $entry->text() . ' (' . $entry->filter('a')->attr('href') . ')',
+                },
+            ),
+        );
+    }
+
+    #[When('I choose the theme :body')]
+    public function iChooseTheTheme(string $body): void
+    {
+        $this->iSendTheThemeAs($body, 'application/json');
+    }
+
+    /**
+     * Sends the request of the `theme` Stimulus controller, with another content type to check the refusals
+     */
+    #[When('I send the theme :body as :contentType')]
+    public function iSendTheThemeAs(string $body, string $contentType): void
+    {
+        $this->sendRequest(
+            method: 'POST',
+            path: '/east-ux/theme',
+            server: ['CONTENT_TYPE' => $contentType, 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'],
+            content: $body,
+        );
+    }
+
+    #[Then('the page must be rendered with the style :style and the mode :mode')]
+    public function thePageMustBeRenderedWithTheStyleAndTheMode(string $style, string $mode): void
+    {
+        $html = $this->getCrawler()->filter('html');
+
+        Assert::assertSame('theme', $html->attr('data-controller'));
+        Assert::assertSame($style, $html->attr('data-theme-style-value'));
+        Assert::assertSame($mode, $html->attr('data-theme-mode-value'));
+    }
+
+    /**
+     * An empty Bootstrap theme means no `data-bs-theme` attribute (set by the browser in the auto mode)
+     */
+    #[Then('the page must have the classes :classes and the Bootstrap theme :theme')]
+    public function thePageMustHaveTheClassesAndTheBootstrapTheme(string $classes, string $theme): void
+    {
+        $html = $this->getCrawler()->filter('html');
+
+        Assert::assertSame($classes, trim((string) $html->attr('class')));
+        Assert::assertSame('' === $theme ? null : $theme, $html->attr('data-bs-theme'));
+    }
+
+    #[Then('the choice of the theme must be sent to :url')]
+    public function theChoiceOfTheThemeMustBeSentTo(string $url): void
+    {
+        Assert::assertSame($url, $this->getCrawler()->filter('html')->attr('data-theme-url-value'));
+    }
+
+    #[Then('the theme switcher must press the buttons :labels')]
+    public function theThemeSwitcherMustPressTheButtons(string $labels): void
+    {
+        Assert::assertSame(
+            $this->splitList($labels),
+            $this->getCrawler()->filter('#theme-switcher button[aria-pressed="true"]')->each(
+                static fn (Crawler $button): string => $button->text(),
             ),
         );
     }

@@ -71,6 +71,12 @@ class ConfigurationTest extends TestCase
                 'home_route' => null,
                 'form_theme' => null,
                 'component_rendering' => ['allow_unreferenced_components' => false],
+                'theme' => [
+                    'style' => 'legacy',
+                    'mode' => 'auto',
+                    'storage' => 'session',
+                    'update_route' => '_teknoo_east_ux_theme_update',
+                ],
             ],
             $this->process([]),
         );
@@ -83,12 +89,24 @@ class ConfigurationTest extends TestCase
                 'home_route' => 'app_home',
                 'form_theme' => '@App/fields.html.twig',
                 'component_rendering' => ['allow_unreferenced_components' => true],
+                'theme' => [
+                    'style' => 'modern',
+                    'mode' => 'dark',
+                    'storage' => 'browser',
+                    'update_route' => 'app_theme',
+                ],
             ],
             $this->process([
                 [
                     'home_route' => 'app_home',
                     'form_theme' => '@App/fields.html.twig',
                     'component_rendering' => ['allow_unreferenced_components' => true],
+                    'theme' => [
+                        'style' => 'modern',
+                        'mode' => 'dark',
+                        'storage' => 'browser',
+                        'update_route' => 'app_theme',
+                    ],
                 ],
             ]),
         );
@@ -127,6 +145,48 @@ class ConfigurationTest extends TestCase
     {
         $this->expectException(InvalidTypeException::class);
         $this->process([['component_rendering' => ['allow_unreferenced_components' => 'yes']]]);
+    }
+
+    public function testThemeValuesAreMergedOneByOne(): void
+    {
+        $config = $this->process([
+            ['theme' => ['style' => 'modern', 'storage' => 'browser']],
+            ['theme' => ['mode' => 'light']],
+        ]);
+
+        $this->assertEquals(
+            [
+                'style' => 'modern',
+                'mode' => 'light',
+                'storage' => 'browser',
+                'update_route' => '_teknoo_east_ux_theme_update',
+            ],
+            $config['theme'],
+        );
+    }
+
+    public function testUnknownThemeStyleIsRejected(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->process([['theme' => ['style' => 'retro']]]);
+    }
+
+    public function testUnknownThemeModeIsRejected(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->process([['theme' => ['mode' => 'sepia']]]);
+    }
+
+    public function testUnknownThemeStorageIsRejected(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->process([['theme' => ['storage' => 'cookie']]]);
+    }
+
+    public function testEmptyThemeUpdateRouteIsRejected(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->process([['theme' => ['update_route' => '']]]);
     }
 
     public function testUnknownKeyIsRejected(): void

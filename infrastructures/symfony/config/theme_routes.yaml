@@ -1,0 +1,8 @@
+# Imported by the application with a prefix, e.g. `/east-ux`, the route then answers on `POST /east-ux/theme`.
+# Needed only with the `session` storage of the theme (`teknoo_east_ux.theme.storage`). The theme switcher is used by
+# anonymous visitors too (the login page): the prefix must stay public in the application's firewall access map.
+_teknoo_east_ux_theme_update:
+    path: '/theme'
+    methods: ['POST']
+    defaults:
+        _controller: 'Teknoo\East\UXBundle\Controller\ThemePreferenceUpdater'

@@ -29,6 +29,9 @@ namespace Teknoo\East\UX\Object\DTO\Menu;
  * Data transfer object for menu item data.
  * `divider` marks a separator between two entries (its name and route are not rendered), `rawLabel` a name
  * displayed as is instead of being translated as a translation key (the name is still escaped).
+ * An item without route (and not a divider) is rendered as a button, for an entry handled by a Stimulus controller.
+ * `attributes` are HTML attributes added to the link or the button (escaped), for example `data-action`, and
+ * `translationDomain` the domain of the name (the default domain of the application when it is null).
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -39,6 +42,7 @@ readonly class MenuItem
 {
     /**
      * @param array<string, mixed> $routeParameters
+     * @param array<string, string> $attributes
      */
     public function __construct(
         public string $name,
@@ -47,6 +51,8 @@ readonly class MenuItem
         public string $icon = '',
         public bool $divider = false,
         public bool $rawLabel = false,
+        public array $attributes = [],
+        public ?string $translationDomain = null,
     ) {
     }
 }

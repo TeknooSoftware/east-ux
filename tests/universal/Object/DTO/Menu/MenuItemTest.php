@@ -74,6 +74,8 @@ class MenuItemTest extends TestCase
         $this->assertSame('', $item->icon);
         $this->assertFalse($item->divider);
         $this->assertFalse($item->rawLabel);
+        $this->assertSame([], $item->attributes);
+        $this->assertNull($item->translationDomain);
     }
 
     public function testIcon(): void
@@ -109,6 +111,24 @@ class MenuItemTest extends TestCase
 
         $this->assertSame('John Doe', $item->name);
         $this->assertTrue($item->rawLabel);
+        $this->assertFalse($item->divider);
+    }
+
+    public function testAttributesAndTranslationDomain(): void
+    {
+        $item = new MenuItem(
+            name: 'app.menu.night',
+            route: '',
+            attributes: ['data-action' => 'click->theme#select', 'data-theme-mode-param' => 'dark'],
+            translationDomain: 'app_domain',
+        );
+
+        $this->assertSame('', $item->route);
+        $this->assertSame(
+            ['data-action' => 'click->theme#select', 'data-theme-mode-param' => 'dark'],
+            $item->attributes,
+        );
+        $this->assertSame('app_domain', $item->translationDomain);
         $this->assertFalse($item->divider);
     }
 }

@@ -1,8 +1,8 @@
 {
     "name": "@teknoo/east-ux",
-    "description": "Components, Stimulus controllers and stylesheet of Teknoo East UX",
+    "description": "Components, Stimulus controllers, stylesheet and System.css x Bootstrap theme of Teknoo East UX",
     "license": "BSD-3-Clause",
-    "version": "1.0.0",
+    "version": "0.2.0",
     "type": "module",
     "files": [
         "dist"
@@ -50,12 +50,19 @@
                 "name": "clipboard",
                 "fetch": "eager",
                 "enabled": true
+            },
+            "theme": {
+                "main": "dist/controllers/theme_controller.js",
+                "name": "theme",
+                "fetch": "eager",
+                "enabled": true
             }
         },
         "importmap": {
             "@hotwired/stimulus": "^3.0.0",
             "bootstrap": "^5.3",
-            "@teknoo/east-ux/styles/east-ux.css": "path:%PACKAGE%/dist/styles/east-ux.css"
+            "@teknoo/east-ux/styles/east-ux.css": "path:%PACKAGE%/dist/styles/east-ux.css",
+            "@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css": "path:%PACKAGE%/dist/system-theme/css/bootstrap-system-theme.min.css"
         }
     },
     "peerDependencies": {
