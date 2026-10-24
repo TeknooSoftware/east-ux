@@ -1,5 +1,16 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.2.1] - 2026-10-24
+### Alpha Release
+
+- `east-ux.css`: the neutral shadows of `FormWindow` and `ConfirmModal` without specificity (`:where()`): the shadow of
+  a theme wins, the contour of the modern windows of the System.css theme included (`.modal .window.confirm-modal`
+  hid it).
+- `documentation/theming.md`: with the System.css theme, the offset shadow of the application only on the classic
+  windows (`:root:not(.system-modern)`, in the ink of the palette); `documentation/theme.md`: the `ThemeSwitcher` in
+  the `MenuBar` for the anonymous visitors.
+- `assets/package.json`: version `0.2.1`.
+
 ## [0.2.0] - 2026-10-23
 ### Alpha Release
 

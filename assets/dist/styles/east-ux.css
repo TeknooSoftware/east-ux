@@ -124,7 +124,8 @@
     max-width: 1200px;
 }
 
-.window.form-window {
+/* Neutral shadow without specificity: the shadow of a theme wins, whatever its selector */
+:where(.window.form-window) {
     box-shadow: var(--bs-box-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
 }
 
@@ -159,8 +160,11 @@
 }
 
 /* Confirm modal */
-.modal .window.confirm-modal {
+:where(.modal .window.confirm-modal) {
     box-shadow: var(--bs-box-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
+}
+
+.modal .window.confirm-modal {
     max-width: 500px;
     width: 90%;
 }

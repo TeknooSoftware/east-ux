@@ -2,7 +2,7 @@
     "name": "@teknoo/east-ux",
     "description": "Components, Stimulus controllers, stylesheet and System.css x Bootstrap theme of Teknoo East UX",
     "license": "BSD-3-Clause",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "type": "module",
     "files": [
         "dist"

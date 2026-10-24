@@ -179,7 +179,20 @@ The `option` targets get the class `active` and `aria-pressed="true"` when their
 
 It renders a group of buttons for the modes (`showMode`, `true`) and a group for the styles (`showStyle`, `true`),
 with the buttons of the current preference pressed. Unlike the menu bar, it is rendered for anonymous visitors too,
-for example on the login page.
+for example on the login page. To keep it where the "Theme" section of the connected users is, render it in the
+`right_sections` block of the `MenuBar` when there is no user:
+
+```twig
+<twig:MenuBar :user="user">
+    <twig:block name="right_sections">
+        {% if user %}
+            {{ parent() }}
+        {% else %}
+            <twig:ThemeSwitcher class="ms-auto" />
+        {% endif %}
+    </twig:block>
+</twig:MenuBar>
+```
 
 ### In the menu bar
 

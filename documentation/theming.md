@@ -52,7 +52,7 @@ stylesheet those its theme does not want:
 | `.title-bar .title`                                       | `flex: 1 1 auto` (the title fills the bar), `white-space: nowrap` with an ellipsis | `flex: 0 1 auto`, `white-space: normal` |
 | `.title-bar button`                                       | `opacity: 0.6` (`1` on hover and focus), `border-radius`, `font-size`, `width` and `height` | `opacity: 1`, the theme's sizes |
 | `.title-bar button.close::before`, `.title-bar button.resize::before` | `content: "×"` and `content: "□"` (the glyphs of the buttons) | `content: none` when the theme draws the buttons with a background |
-| `.window.form-window`, `.modal .window.confirm-modal`     | `box-shadow: var(--bs-box-shadow, …)` (a soft shadow)      | The theme's shadow                             |
+| `:where(.window.form-window)`, `:where(.modal .window.confirm-modal)` | `box-shadow: var(--bs-box-shadow, …)` (a soft shadow), without specificity: any shadow of the theme wins | The shadow wanted, when the theme sets none |
 | `.window.form-window.form-fixed`                          | `max-height: calc(100vh - 2rem)`                           | The theme's limit                              |
 
 For example, a retro theme whose title bar has stripes on both sides of the title and whose buttons are drawn with
@@ -72,7 +72,19 @@ background images:
 ### The System.css x Bootstrap theme
 
 East UX ships the System.css x Bootstrap theme, with its fonts and the helpers that let visitors switch its style and
-its mode: see [theme.md](theme.md). The theme draws the windows itself; the reset of the previous section applies.
+its mode: see [theme.md](theme.md). The theme draws the windows itself; the reset of the previous section applies,
+except the shadow: the modern style draws the contour of its windows with its `box-shadow` (a highlight, an offset
+ring and a soft shadow), which a shadow of the application would hide. Give the classic windows their offset shadow
+only, in the ink of the palette (white in Classic Night):
+
+```css
+:root:not(.system-modern) .window.form-window,
+:root:not(.system-modern) .modal .window.confirm-modal {
+    box-shadow: 4px 4px 0 color-mix(in srgb, var(--sc-ink, #000) 50%, transparent);
+}
+```
+
+The other resets do not reach the modern style, whose selectors are more specific.
 
 ## Form theme
 
