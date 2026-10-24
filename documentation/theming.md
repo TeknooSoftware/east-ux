@@ -36,8 +36,7 @@ import '@teknoo/east-ux/styles/east-ux.css';
 import './styles/app.css';
 ```
 
-With npm, import `@teknoo/east-ux/dist/styles/east-ux.css` from the application's entry point. The application restyles
-the components in its own stylesheet, loaded after this one.
+The application restyles the components in its own stylesheet, loaded after this one.
 
 ### With a window theme
 

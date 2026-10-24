@@ -12,8 +12,7 @@ providing the application-level UI pieces of an East application:
 
 * Symfony UX Twig and Live Components, with their templates: windows (`Window`, `FormWindow`, `ListWindow`,
   `LoginWindow`), `ObjectList`, `Pagination`, `ConfirmModal`, `Card`, `MenuBar` and `ThemeSwitcher`;
-* their Stimulus controllers and a structural stylesheet, served by AssetMapper without build step (or consumed with
-  npm);
+* their Stimulus controllers and a structural stylesheet, served by AssetMapper without build step;
 * a component renderer endpoint, to load a `FormWindow` dynamically;
 * a menu service, fed by the menu generators of the application;
 * the [System.css x Bootstrap](https://github.com/TeknooSoftware/system.css-x-bootstrap) theme with its fonts, the Twig
@@ -308,19 +307,6 @@ import './styles/app.css';
 
 `bin/console debug:asset-map` lists the assets of the library under `@teknoo/east-ux/` (for example
 `@teknoo/east-ux/controllers/form_window_controller.js` and `@teknoo/east-ux/styles/east-ux.css`).
-
-### npm
-
-The same `assets/package.json` is a valid npm package. In an application still on npm (a `package.json` and no
-`importmap.php`), Flex adds `"@teknoo/east-ux": "file:vendor/teknoo/east-ux/assets"` to `package.json` when the
-library is installed or updated (in `devDependencies`, or where the key already is: move it to `dependencies`, the
-browser loads the package at runtime), and writes the eight controllers into `assets/controllers.json` if that file
-exists. Run `npm install` after Composer. The application imports the controllers from
-`@teknoo/east-ux/dist/controllers/`, registers them with their identifiers (`form-window`,
-`form-window-dynamic-loader`, `list-window-refresh`, `window-close`, `window-drag`, `delete-item`, `clipboard`,
-`theme`) and loads `@teknoo/east-ux/dist/styles/east-ux.css`. The theme is served from the whole
-`@teknoo/east-ux/dist/system-theme/` directory (its stylesheet loads `../fonts/`). Without a bundler, its import map needs the prefix entry
-`"@teknoo/east-ux/": "<public URL of node_modules>/@teknoo/east-ux/"`.
 
 See [documentation/stimulus.md](documentation/stimulus.md) for the controllers and the contract with the page
 (`#dynamic-modals`, `delete-confirm-modal`, the `list-window:refresh` event, the `X-Requested-With` header and the CSRF

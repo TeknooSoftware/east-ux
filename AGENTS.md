@@ -8,7 +8,7 @@ application:
 
 - Symfony UX Twig and Live Components (`Window`, `FormWindow`, `ListWindow`, `LoginWindow`, `MenuBar`, `ObjectList`,
   `Pagination`, `ConfirmModal`, `Card`, `ThemeSwitcher`) and their templates
-- Eight Stimulus controllers and a structural stylesheet, served by AssetMapper (or consumed with npm)
+- Eight Stimulus controllers and a structural stylesheet, served by AssetMapper
 - A component renderer endpoint (`POST /render`) rendering the component and the props of its JSON body, used to load a
   `FormWindow` dynamically; the props are validated by the validator of the component (tag
   `teknoo.east.ux.component_rendering.validation`), a component without validator is refused by default
@@ -27,7 +27,7 @@ re-implements them.
 - **Framework**: Symfony 7.4+ or 8.1+ (FrameworkBundle, Form, Security HTTP; SecurityBundle in the application)
 - **UI**: Symfony UX TwigComponent 3 and LiveComponent 3, Twig 3, Bootstrap 5 classes
 - **Front-end**: Stimulus controllers as hand-written ES modules (no build step), AssetMapper and StimulusBundle
-  (optional), `assets/package.json` read by Symfony Flex and valid for npm
+  (optional), `assets/package.json` read by Symfony Flex. No Node.js, no npm
 - **Dependency Injection**: Symfony Dependency Injection (`services.yaml`); PHP-DI files (`di.php`, `twig.php`) are
   empty today
 - **Core Principles**: universal code (`src/`) separated from the Symfony implementation (`infrastructures/symfony/`);
@@ -52,7 +52,7 @@ re-implements them.
       `di.php`, `twig.php`.
     - `templates/`: Twig namespace `@TeknooEastUX` (`components/<Name>.html.twig`, `component_renderer.html.twig`).
     - `translations/`: catalogue of the `east_ux` domain.
-- `assets/`: npm and Symfony UX package `@teknoo/east-ux` (`package.json`, `dist/controllers/*.js`,
+- `assets/`: Symfony UX package `@teknoo/east-ux` (`package.json`, `dist/controllers/*.js`,
   `dist/styles/east-ux.css`, `dist/system-theme/` copied from the theme repository by `make system-theme`, never edited
   here), mapped in AssetMapper as `@teknoo/east-ux`.
 - `documentation/`: components, Live Components and the East bridge, Stimulus, menu, theming, System.css theme.

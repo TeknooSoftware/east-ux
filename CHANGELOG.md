@@ -1,5 +1,17 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.2.2] - 2026-10-24
+### Alpha Release
+
+- System.css theme (`assets/dist/system-theme/css/`, copied by `make system-theme`): in the modern style, no
+  `backdrop-filter` on a `.window` while a modal or an offcanvas nested in it is shown (`aria-modal="true"`). The blur
+  made the window the containing block of the `ConfirmModal` of `ListWindow`: the modal stayed under the
+  `.modal-backdrop`, not clickable.
+- Documentation: AssetMapper is the only way to serve the assets of the library; the npm instructions are removed
+  (`README.md`, `documentation/stimulus.md`, `documentation/theming.md`, `documentation/theme.md`, `AGENTS.md`).
+  `documentation/theme.md`: preload of the legacy font with its AssetMapper path.
+- `assets/package.json`: version `0.2.2`, read by Symfony Flex and StimulusBundle.
+
 ## [0.2.1] - 2026-10-24
 ### Alpha Release
 

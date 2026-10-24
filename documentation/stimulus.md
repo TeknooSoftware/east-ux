@@ -43,52 +43,6 @@ StimulusBundle registers them under their short identifiers (`form-window`, not 
 `@symfony/ux-live-component` and `delete-item` imports `bootstrap`: both are entries of the importmap (the first one
 from Symfony UX, the second one from East UX's `package.json`).
 
-### With npm
-
-The same `assets/package.json` is a valid npm package. An application still on npm (it has a `package.json` and no
-`importmap.php`) depends on it and registers the controllers itself:
-
-```json
-{
-    "dependencies": {
-        "@teknoo/east-ux": "file:vendor/teknoo/east-ux/assets"
-    }
-}
-```
-
-Symfony Flex writes this line when the library is installed or updated: in `devDependencies` when the key is
-missing, and it keeps the key where it already is. Move it to `dependencies`: the browser loads the controllers at
-runtime, and an `npm install --omit=dev` would skip them. Flex also writes the eight controllers into
-`assets/controllers.json` if that file exists; they only matter to a front end that reads it (StimulusBundle or
-`@symfony/stimulus-bridge`). Run `npm install` after Composer, since the package is a link into `vendor/`.
-
-```js
-import { Application } from '@hotwired/stimulus';
-import LiveController from '@symfony/ux-live-component';
-import FormWindowController from '@teknoo/east-ux/dist/controllers/form_window_controller.js';
-import FormWindowDynamicLoaderController from '@teknoo/east-ux/dist/controllers/form_window_dynamic_loader_controller.js';
-// ... one import per controller
-
-const application = Application.start();
-application.register('live', LiveController);
-application.register('form-window', FormWindowController);
-application.register('form-window-dynamic-loader', FormWindowDynamicLoaderController);
-// ...
-```
-
-Without a bundler, an application serving `node_modules` through a native import map adds a prefix entry for the
-package, next to `@hotwired/stimulus`, `@symfony/ux-live-component` and `bootstrap` (imported by the controllers):
-
-```html
-<script type="importmap">
-{
-    "imports": {
-        "@teknoo/east-ux/": "/js/node_modules/@teknoo/east-ux/"
-    }
-}
-</script>
-```
-
 The identifiers must stay the ones of this page: the templates of the components use them.
 
 ## Controllers

@@ -9,7 +9,7 @@ Apple System OS theme for Bootstrap 5.3, and everything a page needs to let its 
 
 The pieces:
 
-- the stylesheet and fonts of the theme, served by AssetMapper or npm;
+- the stylesheet and fonts of the theme, served by AssetMapper;
 - Twig functions that write the class and attributes of `<html>`, plus a script that applies the theme before the first
   paint;
 - the `theme` Stimulus controller, which switches the theme without reloading the page and notifies the server;
@@ -25,8 +25,8 @@ The pieces:
 | `fonts/{ChicagoFLF,monaco,ChiKareGo2}.{woff,woff2}` | `@teknoo/east-ux/system-theme/fonts/...`                      |
 | `LICENSE`                                    | The MIT license of the theme                                         |
 
-The theme is an overlay of Bootstrap 5.3 (built for 5.3.8). Bootstrap itself is not shipped: it remains a peer
-dependency of `@teknoo/east-ux`, as for the components. Load the stylesheets in this order: Bootstrap, `east-ux.css`,
+The theme is an overlay of Bootstrap 5.3 (built for 5.3.8). Bootstrap itself is not shipped: the application provides
+it (an entry of its importmap), as for the components. Load the stylesheets in this order: Bootstrap, `east-ux.css`,
 the theme, then the stylesheet of the application.
 
 ### With AssetMapper
@@ -46,23 +46,11 @@ import './styles/app.css';
 ```
 
 The stylesheet loads its fonts with relative URLs (`url(../fonts/...)`), which AssetMapper rewrites to the versioned
-files.
-
-### With npm, without a build step
-
-Serve the whole `system-theme` directory, so that `css/` and `fonts/` stay siblings. A link to one stylesheet only
-would break the fonts, because `/css/../fonts/` resolves to `/fonts/`:
-
-```sh
-ln -s ../node_modules/@teknoo/east-ux/dist/system-theme public/system-theme
-```
+files. The layout may preload the legacy font, ready when the visitor switches back from the modern style:
 
 ```twig
-<link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
-<link rel="stylesheet" href="{{ asset('css/east-ux.css') }}">
-<link rel="stylesheet" href="{{ asset('system-theme/css/bootstrap-system-theme.min.css') }}">
-{# Optional: the legacy font, ready when the visitor switches back from the modern style #}
-<link rel="preload" href="{{ asset('system-theme/fonts/ChiKareGo2.woff2') }}" as="font" type="font/woff2" crossorigin>
+{{ importmap('app') }}
+<link rel="preload" href="{{ asset('@teknoo/east-ux/system-theme/fonts/ChiKareGo2.woff2') }}" as="font" type="font/woff2" crossorigin>
 ```
 
 An application that served an older copy of the theme replaces it with this one. Before the version shipped here,
