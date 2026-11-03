@@ -17,7 +17,10 @@ display without a theme. Colours come from the Bootstrap 5.3 CSS variables, with
 | `.separator`                                              | Line between the title bar and the pane                                 |
 | `.window-pane`                                            | Content of the window, scrolling when the window is height-constrained  |
 | `.menu-icon`                                              | Size and alignment of the menu icons (the icon set stays in the application) |
-| `.window.form-window`, `.form-fixed`, `.form-window-wide` | `FormWindow` overlay: centred, fixed, wide when the form has sub-forms   |
+| `.window.form-window`, `.form-fixed`, `.form-window-wide` | `FormWindow` overlay: fixed, centred under the menu bar, wide when the form has sub-forms |
+| `.window.window-floating`                                 | Floating `ListWindow`: fixed under the menu bar, without `transform`    |
+| `.window.window-floating`, `.window.form-window.form-fixed` | Shared stacking order of the floating windows (see below)             |
+| `.window.window-floating:has([aria-modal="true"])`        | A floating window holding a shown modal goes above the modal backdrop   |
 | `.form-window-subforms`, `.east-ux-fieldset`              | Sub-form fieldsets of `FormWindow`                                      |
 | `.window.draggable .title-bar`, `.window.draggable.dragging` | Cursor and state while dragging                                      |
 | `.modal .window.confirm-modal`                            | Window rendering of `ConfirmModal`                                      |
@@ -38,6 +41,41 @@ import './styles/app.css';
 
 The application restyles the components in its own stylesheet, loaded after this one.
 
+### Floating windows
+
+A floating `ListWindow` (prop `floating`) and a `FormWindow` overlay (closable and draggable, class `form-fixed`) are
+`position: fixed` over the page. Three CSS custom properties place them:
+
+| Property                  | Set by                                  | Use                                                            |
+|---------------------------|-----------------------------------------|----------------------------------------------------------------|
+| `--east-ux-window-top`    | The application (default `4rem`)        | Height kept free for the fixed menu bar: the top of a floating `ListWindow`, the space where a `FormWindow` overlay is centred, and their `max-height` |
+| `--east-ux-window-offset` | The application (default `0rem`)        | Shift of the window to the bottom and to the right, so that the windows opened one after the other do not cover each other; the `max-height` of the window is reduced so that it stays in the viewport |
+| `--east-ux-window-order`  | `window-drag` (default `1`)             | Stacking order of the window, rewritten from 1 to n on the shown windows when a window is brought to the front ([stimulus.md](stimulus.md#window-drag)) |
+
+The floating windows share one `z-index` scale, `calc(1000 + min(var(--east-ux-window-order, 1), 29))`, from 1001
+to 1029:
+
+- above the content of the page;
+- under the fixed menu bar (Bootstrap's `.fixed-top`, 1030) and its dropdowns, which open inside the menu bar;
+- under the modals of Bootstrap (backdrop 1050, modal 1055) and their backdrop.
+
+A modal nested in a floating window, as the `ConfirmModal` of `ListWindow`, paints in the stacking context of its
+window: while it is shown (Bootstrap sets `aria-modal="true"` on it), the window goes to 1055, so that the modal is
+above its `.modal-backdrop`. A floating `ListWindow` has no `transform`, so the nested modal keeps the viewport as its
+containing block (the `FormWindow` overlay keeps its `transform: translate(-50%, -50%)` centring and must not hold a
+modal). A theme must not add a `transform`, a `filter` or a `backdrop-filter` to a `.window` that holds a shown modal:
+the System.css theme removes its blur in this case.
+
+The `FormWindow` overlay was above everything with `z-index: 9999` before East UX 0.3: it is now under the menu bar and
+the modals of the application.
+
+```css
+/* A taller menu bar */
+:root {
+    --east-ux-window-top: 5rem;
+}
+```
+
 ### With a window theme
 
 A theme that draws the windows itself (it styles `.window`, `.title-bar`, `.title`, `.close`, `.resize`, `.separator`
@@ -52,7 +90,7 @@ stylesheet those its theme does not want:
 | `.title-bar button`                                       | `opacity: 0.6` (`1` on hover and focus), `border-radius`, `font-size`, `width` and `height` | `opacity: 1`, the theme's sizes |
 | `.title-bar button.close::before`, `.title-bar button.resize::before` | `content: "×"` and `content: "□"` (the glyphs of the buttons) | `content: none` when the theme draws the buttons with a background |
 | `:where(.window.form-window)`, `:where(.modal .window.confirm-modal)` | `box-shadow: var(--bs-box-shadow, …)` (a soft shadow), without specificity: any shadow of the theme wins | The shadow wanted, when the theme sets none |
-| `.window.form-window.form-fixed`                          | `max-height: calc(100vh - 2rem)`                           | The theme's limit                              |
+| `.window.form-window.form-fixed`, `.window.window-floating` | `max-height` of the space under the menu bar (`--east-ux-window-top`), less the offset (`--east-ux-window-offset`) | The theme's limit |
 
 For example, a retro theme whose title bar has stripes on both sides of the title and whose buttons are drawn with
 background images:

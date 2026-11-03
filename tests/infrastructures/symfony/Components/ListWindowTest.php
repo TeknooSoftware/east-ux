@@ -49,6 +49,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\ComponentWithFormTrait;
+use Symfony\UX\LiveComponent\Metadata\UrlMapping;
 use Symfony\UX\TwigComponent\ComponentAttributes;
 use Symfony\UX\TwigComponent\Twig\ComponentLexer;
 use Teknoo\East\UXBundle\Components\AbstractWindow;
@@ -301,6 +302,65 @@ class ListWindowTest extends TestCase
                 $property->getDefaultValue(),
             );
         }
+    }
+
+    public function testHiddenIsAWritableLiveProp(): void
+    {
+        $property = new ReflectionProperty(ListWindow::class, 'hidden');
+
+        $this->assertTrue($property->isPublic());
+        $this->assertCount(1, $property->getAttributes(LiveProp::class));
+        // Writable: the browser shows the window by setting it to false when it opens it
+        $this->assertEquals(['writable' => true], $property->getAttributes(LiveProp::class)[0]->getArguments());
+        $this->assertFalse($property->getDefaultValue());
+    }
+
+    public function testFloatingIsALiveProp(): void
+    {
+        $property = new ReflectionProperty(ListWindow::class, 'floating');
+
+        $this->assertTrue($property->isPublic());
+        $this->assertCount(1, $property->getAttributes(LiveProp::class));
+        // Not writable: the browser cannot bind the page of a floating window to the URL
+        $this->assertEquals([], $property->getAttributes(LiveProp::class)[0]->getArguments());
+        $this->assertFalse($property->getDefaultValue());
+    }
+
+    public function testPageIsBoundToTheUrlThroughItsModifier(): void
+    {
+        $attributes = (new ReflectionProperty(ListWindow::class, 'page'))->getAttributes(LiveProp::class);
+
+        $this->assertCount(1, $attributes);
+        $this->assertEquals(
+            ['writable' => true, 'url' => true, 'modifier' => 'modifyPage'],
+            $attributes[0]->getArguments(),
+        );
+        $this->assertSame('modifyPage', $attributes[0]->newInstance()->modifier());
+    }
+
+    public function testModifyPageKeepsTheUrlMappingOfAWindowInAPage(): void
+    {
+        $window = $this->buildListWindow();
+        $liveProp = new LiveProp(writable: true, url: true);
+
+        $modified = $window->modifyPage($liveProp);
+
+        $this->assertSame($liveProp, $modified);
+        $this->assertInstanceOf(UrlMapping::class, $modified->url());
+    }
+
+    public function testModifyPageUnbindsTheUrlOfAFloatingWindow(): void
+    {
+        $window = $this->buildListWindow();
+        $window->floating = true;
+        $liveProp = new LiveProp(writable: true, url: true);
+
+        $modified = $window->modifyPage($liveProp);
+
+        $this->assertFalse($modified->url());
+        $this->assertTrue($modified->isIdentityWritable());
+        // The attribute of the class is not changed
+        $this->assertInstanceOf(UrlMapping::class, $liveProp->url());
     }
 
     public function testOriginalPathComesFromTheCurrentRequest(): void
@@ -610,6 +670,42 @@ class ListWindowTest extends TestCase
             $output,
         );
         $this->assertStringContainsString('data-action="mousedown->window-drag#startDrag"', $output);
+    }
+
+    public function testRenderFloatingWindowIsNotHeightConstrainedByItsParent(): void
+    {
+        $window = $this->buildRenderableListWindow();
+        $window->floating = true;
+        $window->draggable = true;
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString('<div class="window draggable window-floating d-flex flex-column"', $output);
+        $this->assertStringNotContainsString('h-100', $output);
+        $this->assertStringNotContainsString('d-none', $output);
+    }
+
+    public function testRenderHiddenWindowIsHidden(): void
+    {
+        $window = $this->buildRenderableListWindow();
+        $window->hidden = true;
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString('<div class="window h-100 d-flex flex-column d-none"', $output);
+        $this->assertStringNotContainsString('window-floating', $output);
+    }
+
+    public function testRenderHiddenFloatingWindow(): void
+    {
+        $window = $this->buildRenderableListWindow();
+        $window->floating = true;
+        $window->hidden = true;
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString('<div class="window window-floating d-flex flex-column d-none"', $output);
+        $this->assertStringNotContainsString('h-100', $output);
     }
 
     public function testRenderNewButtonOpensAWindowNamedAfterTheListWindow(): void

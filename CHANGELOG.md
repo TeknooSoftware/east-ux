@@ -11,6 +11,14 @@
   `window-drag` like `Window`; its "New" button opens `<windowId>-new-object-form` (`new-object-form` without
   `windowId`), and `delete-item` looks for its modal in its own window first.
 
+#### Evolutions
+- `ListWindow`: prop `floating`, a window floating over the page whose page is not bound to the URL, and writable prop
+  `hidden`: the window stays hidden until `window:open` loads its list. `form-window` also opens on `window:open`, and
+  the Live windows keep their `style` (position, offset, order) across their re-renders.
+- `east-ux.css`: floating windows under the menu bar (`--east-ux-window-top`, `--east-ux-window-offset`), brought to the
+  front by `window-drag`; a modal nested in a floating window goes above its backdrop. BC: the fixed `FormWindow` is
+  at z-index 1001-1029 instead of 9999, under the menu bar and the modals, and its top under the menu bar.
+
 ## [0.2.2] - 2026-10-24
 ### Alpha Release
 

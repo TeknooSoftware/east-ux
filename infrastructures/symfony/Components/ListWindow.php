@@ -50,6 +50,9 @@ use function iterator_count;
  * `newFormRoute` is set, its label and the title of the form window it opens come from the `newButtonLabel` and
  * `newFormTitle` props (translated in the application's default domain), or else from the library's catalogue.
  * The window props of `AbstractWindow` are redeclared as LiveProps, so a Live re-render keeps them.
+ * A floating window (`floating`, a window loaded by the component renderer) is positioned over the page, and its page
+ * is not bound to the URL: the URL stays the one of the page. `hidden` is writable, the browser shows the window by
+ * setting it to false when it opens it.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -87,12 +90,18 @@ final class ListWindow extends AbstractWindow
     #[LiveProp]
     public string $windowId = '';
 
+    #[LiveProp(writable: true)]
+    public bool $hidden = false;
+
+    #[LiveProp]
+    public bool $floating = false;
+
     /**
      * @var iterable<object>
      */
     public iterable $objectsCollection = [];
     public int $pageCount = 0;
-    #[LiveProp(writable: true, url: true)]
+    #[LiveProp(writable: true, url: true, modifier: 'modifyPage')]
     public int $page = 1;
     #[LiveProp]
     public string $itemComponent = '';
@@ -139,6 +148,20 @@ final class ListWindow extends AbstractWindow
         }
 
         return $this->formFactory->create($this->searchFormName);
+    }
+
+    /**
+     * Modifier of the LiveProp `page`, a contract of Symfony UX (`LivePropMetadata::withModifier()`), which needs the
+     * modified LiveProp as returned value: the page of a floating window is not bound to the URL, the URL of the page
+     * holding it stays unchanged.
+     */
+    public function modifyPage(LiveProp $liveProp): LiveProp
+    {
+        if ($this->floating) {
+            return $liveProp->withUrl(false);
+        }
+
+        return $liveProp;
     }
 
     public function hasSearchForm(): bool

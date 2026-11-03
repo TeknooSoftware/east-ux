@@ -108,16 +108,40 @@
     padding-left: var(--bs-dropdown-item-padding-x);
 }
 
-/* FormWindow overlay */
+/* Floating windows (floating ListWindow, FormWindow overlay): under the fixed menu bar (z-index 1030) and its
+   dropdowns, under the modals (backdrop 1050, modal 1055); window-drag brings one to the front by rewriting
+   --east-ux-window-order on the shown windows of the page */
+.window.window-floating,
+.window.form-window.form-fixed {
+    z-index: calc(1000 + min(var(--east-ux-window-order, 1), 29));
+}
+
+/* A modal nested in a floating window paints in the stacking context of the window: the window goes above the
+   .modal-backdrop of <body> while the modal is shown (Bootstrap sets aria-modal) */
+.window.window-floating:has([aria-modal="true"]) {
+    z-index: 1055;
+}
+
+/* Floating ListWindow, under the menu bar (--east-ux-window-top), shifted by --east-ux-window-offset (the cascade of
+   the opened windows). No transform: a nested modal keeps the viewport as containing block */
+.window.window-floating {
+    position: fixed;
+    top: calc(var(--east-ux-window-top, 4rem) + var(--east-ux-window-offset, 0rem));
+    left: calc(max(1rem, (100vw - 1100px) / 2) + var(--east-ux-window-offset, 0rem));
+    width: min(1100px, calc(100vw - 2rem));
+    max-height: calc(100vh - var(--east-ux-window-top, 4rem) - var(--east-ux-window-offset, 0rem) - 1rem);
+}
+
+/* FormWindow overlay: centred in the space under the menu bar, its title bar never under the menu bar. The offset
+   moves its centre: its max-height loses twice the offset, so its bottom stays in the viewport whatever the offset */
 .window.form-window.form-fixed {
     position: fixed !important;
-    top: 50%;
-    left: 50%;
+    top: calc(50% + var(--east-ux-window-top, 4rem) / 2 + var(--east-ux-window-offset, 0rem));
+    left: calc(50% + var(--east-ux-window-offset, 0rem));
     transform: translate(-50%, -50%);
-    z-index: 9999;
     width: 100%;
     max-width: 600px;
-    max-height: calc(100vh - 2rem);
+    max-height: calc(100vh - var(--east-ux-window-top, 4rem) - 1rem - 2 * var(--east-ux-window-offset, 0rem));
 }
 
 .window.form-window.form-window-wide.form-fixed {

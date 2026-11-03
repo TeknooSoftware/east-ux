@@ -161,7 +161,9 @@ A window holding a Symfony form, in two modes:
 | window props        |                  | yes  |         | All the props of `AbstractWindow`, redeclared as LiveProps |
 | `objectsCollection` | `iterable<object>` | no | `[]`    | View parameter of `RenderList`, copied by the East bridge                   |
 | `pageCount`         | `int`            | no   | `0`     | View parameter of `RenderList`; the pagination is rendered when it is above 1 |
-| `page`              | `int`            | yes (writable, `url: true`) | `1` | Current page, updated by the `Pagination` buttons                  |
+| `page`              | `int`            | yes (writable, `url: true`) | `1` | Current page, updated by the `Pagination` buttons; bound to the URL (`?page=`) only when the window is not floating |
+| `floating`          | `bool`           | yes  | `false` | The window floats over the page (`window-floating`), for a window loaded by the component renderer |
+| `hidden`            | `bool`           | yes (writable) | `false` | The window is rendered hidden (`d-none`) until it is opened by `window:open` |
 | `itemComponent`     | `string`         | yes  | `''`    | Component rendering a row, given `object` (usually an anonymous component)  |
 | `tableHeaders`      | `array<string>`  | yes  | `[]`    | Translation keys of the headers, translated in the default domain          |
 | `searchFormName`    | `?class-string`  | yes  | `null`  | Form type of the search form; no search form when empty                    |
@@ -185,8 +187,16 @@ A window holding a Symfony form, in two modes:
   looks for it first in its own window: each list window of a page uses its own modal.
 - The root element gets `data-controller="list-window-refresh window-close[ window-drag]"` (merged with `live`),
   `data-form-window` and `data-window-close-redirect-url-value`, as `Window`: `list-window-refresh` re-renders the
-  list on the `list-window:refresh` event, `window-close` handles the close button, `window-drag` the title bar of a
-  draggable window.
+  list on the `list-window:refresh` event and opens the window on `window:open`, `window-close` handles the close
+  button, `window-drag` the title bar of a draggable window.
+- A window in a page fills the height of its container (`h-100`). A floating window (`floating`) gets the class
+  `window-floating` instead: it is fixed over the page, under the menu bar, and brought to the front by `window-drag`
+  ([theming.md](theming.md#floating-windows)), so it should be `draggable`. Its page is not bound to the URL: the
+  `modifyPage()` modifier of the LiveProp `page` removes its URL mapping, so its pagination never changes the URL of
+  the page holding it (`modifyPage()` returns the modified LiveProp, a contract of Symfony UX).
+- A hidden window (`hidden`) gets the class `d-none`. `window:open` shows it: `list-window-refresh` sets `hidden` to
+  `false` and re-renders the window, which loads its list from the recipe of `originalPath`
+  ([stimulus.md](stimulus.md#list-window-refresh)).
 - Helpers: `hasObjects()`, `hasPagination()`, `hasSearchForm()`, `getCurrentRequest()`.
 - Blocks: `search_form`, `search_form_container_classes`, `objects_list`, `pagination`, `confirm_modals` (in
   `window_modals`), plus those of `Window`.

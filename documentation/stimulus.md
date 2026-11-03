@@ -51,9 +51,9 @@ The identifiers must stay the ones of this page: the templates of the components
 |------------------------------|----------------------------------------------|----------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------|
 | `form-window`                | `form_window_controller.js`                  | `open`, `close`, `submit` | `form`, `errors`, `submitButton` | `error-text` (`An error occurred while saving.`), `network-error-text` (`A network error occurred.`)      |
 | `form-window-dynamic-loader` | `form_window_dynamic_loader_controller.js`   | `open`         | -                                | `url`, `window-id`, `form-path`, `form-name`, `title`, `closable` (`true`), `draggable` (`true`), `close-aria-label` (`Close`), `object-id`, `load-error-text` (`An error occurred while loading the form.`) |
-| `list-window-refresh`        | `list_window_refresh_controller.js`          | `refresh`      | -                                | -                                                                                                                 |
+| `list-window-refresh`        | `list_window_refresh_controller.js`          | `refresh`, `open` | -                             | -                                                                                                                 |
 | `window-close`               | `window_close_controller.js`                 | `close`        | -                                | `redirect-url`                                                                                                    |
-| `window-drag`                | `window_drag_controller.js`                  | `startDrag`    | -                                | -                                                                                                                 |
+| `window-drag`                | `window_drag_controller.js`                  | `startDrag`, `bringToFront` | -                   | -                                                                                                                 |
 | `delete-item`                | `delete_item_controller.js`                  | `delete`       | -                                | `url`, `modal-id`, `csrf-token`, `csrf-field` (`_token`), `csrf-header` (`X-CSRF-Token`)                         |
 | `clipboard`                  | `clipboard_controller.js`                    | `copy`         | -                                | `text`, `success-text` (`✓ Copied!`), `error-text` (`✗ Error`), `button-class` (`btn-primary`), `success-class` (`btn-success`), `error-class` (`btn-danger`) |
 | `theme`                      | `theme_controller.js`                        | `select`, `toggleStyle`, `toggleMode` | `option`, `menuOption` | `style` (`legacy`), `mode` (`auto`), `storage` (`session`), `url`, `storage-key` (`east-ux-theme`), `modern-class` (`system-modern`), `switching-class` (`east-ux-theme-switching`) |
@@ -72,10 +72,14 @@ Attached by `FormWindow.html.twig` when the window is live (`data-controller="fo
 `teknoo.east.ux.form_window.text.network_error`: an attribute given to `<twig:FormWindow>` by the application wins,
 and a window loaded by the component renderer gets the translated messages too.
 
-- `connect()` listens to the event `form-window:open` **on its own element** and calls `open()`.
+- `connect()` listens to the events `form-window:open` and `window:open` **on its own element** and calls `open()`;
+  it also keeps the `style` of the window across the Live re-renders (see
+  [the style of a Live window](#the-style-of-a-live-window)). `disconnect()` removes the listeners and the hooks.
 - `open()`: re-renders the window (`getComponent(this.element)` then `component.render()`: the East recipe of
-  `formPath` loads the object and builds the form), then removes `d-none` and hides the errors. If the re-render fails,
-  the window is shown as it is.
+  `formPath` loads the object and builds the form), then removes `d-none` and hides the errors. If the response of
+  this render is not `ok` or is a redirection (such as the login page of an expired session, followed by `fetch`) and
+  the window has never been shown, the browser navigates to `originalPath`, the page of the form. If the re-render
+  throws, the window is shown as it is.
 - `close()`: adds `d-none`, resets every `form` target and hides the errors. Bound to the close button of the title bar
   and to the Cancel button (`click->form-window#close`).
 - `submit()` (bound on the form, `submit->form-window#submit`): sends the form with `fetch(form.action, {method,
@@ -112,9 +116,19 @@ On the "New" button of `ListWindow`, whose `load-error-text` is translated from
 ### list-window-refresh
 
 Added to `ListWindow` (`attributes.defaults()`, with `window-close`, and `window-drag` when the window is draggable).
-`connect()` awaits `getComponent(this.element)`, then listens to `list-window:refresh` on `document`; `refresh()` calls
-`component.render()` (the list is re-rendered by its East recipe, so a created or edited object appears).
-`disconnect()` removes the listener.
+
+- `connect()` listens, before any `await`, to `list-window:refresh` on `document` and to `window:open` on its own
+  element; it also keeps the `style` of the window across the Live re-renders (see
+  [the style of a Live window](#the-style-of-a-live-window)). `disconnect()` removes the listeners and the hooks.
+- `refresh()` gets the Live Component on demand and calls `component.render()` (the list is re-rendered by its East
+  recipe, so a created or edited object appears). A window hidden with `d-none` (closed by the user, or not opened
+  yet) is not refreshed: it stays closed, and is rendered again when it is opened.
+- `open()` (on `window:open`) sets the writable LiveProp `hidden` to `false` (`component.set('hidden', false)`, without
+  re-render) and calls `component.render()`, a single request: the East recipe of `originalPath` loads the list, and the
+  window is rendered shown from now on. Then it removes `d-none`. If the response of this render is not `ok` (refused
+  by the access rules of the route, server error, ...) or is a redirection (such as the login page of an expired
+  session, followed by `fetch`) and the window has never been shown, the browser navigates to `originalPath`, the
+  page of the window, instead of showing an empty window.
 
 ### window-close
 
@@ -128,7 +142,31 @@ The default close action of `Window.html.twig` (`click->window-close#close`), al
 Added when the window is draggable; `startDrag` is bound on the title bar (`mousedown->window-drag#startDrag`). It
 ignores the clicks on `.close` and `.resize`, converts the centred position of the window into absolute `left` and
 `top` on the first drag, adds the class `dragging`, follows `mousemove` on `document` within the viewport and stops on
-`mouseup`. `disconnect()` removes the listeners of `document`.
+`mouseup`. The top of the window never goes above the bottom of the fixed menu bar (`.navbar.fixed-top`, the
+`MenuBar`), or of the viewport without menu bar, even when the window is higher than the viewport: its title bar stays
+reachable.
+
+`connect()` also binds `bringToFront()` on the `mousedown`, `focusin`, `window:open` and `form-window:open` events of
+the window. `bringToFront()` only acts on a floating window (`.window.window-floating` or
+`.window.form-window.form-fixed`): it sorts the shown floating windows of the page by their `--east-ux-window-order`,
+puts this one last and rewrites their orders from 1 to n (nothing is written when the window is already on top). The
+closed windows (`d-none`) are not counted, so n stays under the cap of the `z-index` scale; the window itself is
+counted even while it is still hidden, on `window:open`. The
+`z-index` of `east-ux.css` follows the order ([theming.md](theming.md#floating-windows)). A floating window without
+`window-drag` is never brought to the front: a floating `ListWindow` opened from a menu must be `draggable`, as a
+`FormWindow` overlay is. `disconnect()` removes the listeners of the window and of `document`.
+
+### The style of a Live window
+
+A Live re-render morphs the root element of the component with the HTML of the server, without re-applying the
+changes made by JavaScript on this root element: its `style` (the position after a drag, the offset of the cascade,
+the stacking order of `window-drag`) would be lost at each render (pagination, search, deletion, refresh, opening).
+`form-window` and `list-window-refresh` keep it: in `connect()`, they register on the Live Component the hooks
+`render:started` (saves the `style` attribute of the root element, before the morph) and `render:finished` (sets it
+back, or removes it when there was none). They are registered in `connect()`, never when the window is opened, so the
+first render keeps the offset set before `window:open`; `disconnect()` removes them with
+`component.off()`. The other changes made by JavaScript on the root element are not kept: the class `d-none` follows
+the server (`hidden`) and `open()`, the class `dragging` only lives during a drag.
 
 ### delete-item
 
@@ -189,6 +227,8 @@ The controllers expect the page to provide:
 | The modal `#delete-confirm-modal` and its `[data-confirm-button]` | `delete-item` (`modal-id` value) | `ListWindow` (a `ConfirmModal`); another modal can be named with `modal-id` |
 | The event `list-window:refresh` on `document` | `list-window-refresh`         | `form-window` after a save; the application may dispatch it too             |
 | The event `form-window:open` on a window element | `form-window`               | `form-window-dynamic-loader`; the application may dispatch it to open a window |
+| The event `window:open` on a window element  | `form-window`, `list-window-refresh` | The application may dispatch it to open a Live window (`FormWindow` when it is live, `ListWindow`) |
+| The fixed menu bar `.navbar.fixed-top`       | `window-drag` (top limit of a drag) | `MenuBar`; without it, the limit is the top of the viewport          |
 | The URL of the component renderer            | `form-window-dynamic-loader` (`url` value) | The bundle's route `_teknoo_east_ux_component_render`, imported by the application |
 | `X-Requested-With: XMLHttpRequest`           | sent by `form-window-dynamic-loader` and `delete-item` | The application may require it on its routes |
 | CSRF token in the field `csrf-field` and the header `csrf-header` | sent by `delete-item` | The application generates the token (`csrf-token` value) and checks it on its delete routes (East Common: the route default `csrfTokenId`) |
@@ -198,7 +238,8 @@ The controllers expect the page to provide:
 
 | Event                 | Dispatched on                    | By                           | Listened by (on)                       |
 |-----------------------|----------------------------------|------------------------------|----------------------------------------|
-| `form-window:open`    | the `[data-form-window]` element | `form-window-dynamic-loader` | `form-window` (its own element)        |
+| `form-window:open`    | the `[data-form-window]` element | `form-window-dynamic-loader` | `form-window` and `window-drag` (its own element) |
+| `window:open`         | the `[data-form-window]` element | The application              | `form-window`, `list-window-refresh` and `window-drag` (its own element) |
 | `list-window:refresh` | `document`                       | `form-window` after a save   | `list-window-refresh` (`document`)     |
 | `theme:changed`       | `<html>`                         | `theme` after a change       | The application, to persist the choice itself |
 
@@ -209,6 +250,9 @@ The controllers expect the page to provide:
 - Wait one frame after `insertAdjacentHTML()` before dispatching an event to an injected element: Stimulus connects
   the new controllers through a `MutationObserver`.
 - Get a Live Component on demand (`await getComponent(element)` in the action): an event fired while
-  `connect()` awaits it would be lost. `list-window-refresh` is the exception, guarded by `if (this.component)`.
+  `connect()` awaits it would be lost. Register its hooks in `connect()` (`getComponent(element).then(...)`, after
+  the listeners) and remove them in `disconnect()`.
+- `window:open` is handled only by the Live windows (`form-window`, `list-window-refresh`): dispatched on a `Window` or
+  on a `FormWindow` that is not live, it opens nothing.
 - Bind the listeners of `document` or `window` in `connect()` and remove them in `disconnect()`.
 - Keep the texts out of the JavaScript: use values with an English default.

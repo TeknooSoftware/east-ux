@@ -1,7 +1,8 @@
 {% extends '@TeknooEastUX/components/Window.html.twig' %}
 
-{# Override the classes of the containers #}
-{% block window_classes %} h-100 d-flex flex-column{% endblock %}
+{# Override the classes of the containers: a floating window is positioned over the page, a hidden one waits for
+   `window:open` #}
+{% block window_classes %}{% if this.floating %} window-floating{% else %} h-100{% endif %} d-flex flex-column{% if this.hidden %} d-none{% endif %}{% endblock %}
 {% block window_pane_classes %} flex-grow-1 overflow-auto p-3{% endblock %}
 {%- block window_attributes -%}
     {%- set window_controllers = 'list-window-refresh window-close' -%}

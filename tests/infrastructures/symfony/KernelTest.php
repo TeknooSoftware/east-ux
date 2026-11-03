@@ -549,6 +549,55 @@ class KernelTest extends TestCase
         self::assertArrayNotHasKey('objectsCollection', $props);
     }
 
+    public function testRenderFloatingListWindowDoesNotBindItsPageToTheUrl(): void
+    {
+        $this->pushRequest('https://localhost/items/');
+
+        $crawler = $this->render(
+            'ListWindow',
+            [
+                'title' => 'Items',
+                'windowId' => 'kernel-floating-list',
+                'itemComponent' => 'ItemRow',
+                'floating' => true,
+                'hidden' => true,
+                'closable' => true,
+                'draggable' => true,
+                'id' => 'kernel-floating-list-window',
+            ],
+        );
+
+        $window = $crawler->filter('div.window.window-floating.d-none[data-live-name-value="ListWindow"]');
+        self::assertCount(1, $window);
+        self::assertStringNotContainsString('h-100', (string) $window->attr('class'));
+        self::assertSame('list-window-refresh window-close window-drag live', $window->attr('data-controller'));
+        self::assertSame('kernel-floating-list', $window->attr('data-form-window'));
+        // The page of a floating window is not bound to the URL (`modifyPage()`)
+        self::assertNull($window->attr('data-live-query-mapping-value'));
+
+        $props = $this->getLiveProps($crawler, 'ListWindow');
+        self::assertTrue($props['floating']);
+        self::assertTrue($props['hidden']);
+        self::assertSame(1, $props['page']);
+
+        // The page of a window in a page stays bound to the URL
+        $crawler = $this->render(
+            'ListWindow',
+            [
+                'title' => 'Items',
+                'itemComponent' => 'ItemRow',
+                'id' => 'kernel-list-window',
+            ],
+        );
+
+        $window = $crawler->filter('div.window.h-100[data-live-name-value="ListWindow"]');
+        self::assertCount(1, $window);
+        self::assertStringNotContainsString('window-floating', (string) $window->attr('class'));
+        self::assertStringNotContainsString('d-none', (string) $window->attr('class'));
+        $mapping = json_decode((string) $window->attr('data-live-query-mapping-value'), true);
+        self::assertSame(['page' => ['name' => 'page']], $mapping);
+    }
+
     public function testDebugAssetMapListsTheAssetsOfTheLibrary(): void
     {
         $application = new Application($this->getKernel());
