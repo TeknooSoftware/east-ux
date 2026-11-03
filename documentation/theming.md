@@ -44,7 +44,8 @@ The application restyles the components in its own stylesheet, loaded after this
 ### Floating windows
 
 A floating `ListWindow` (prop `floating`) and a `FormWindow` overlay (closable and draggable, class `form-fixed`) are
-`position: fixed` over the page. Three CSS custom properties place them:
+`position: fixed` over the page, without margin (a margin of a theme, such as `.window { margin: 1rem }` of System.css,
+would shift them and make them jump on their first drag). Three CSS custom properties place them:
 
 | Property                  | Set by                                  | Use                                                            |
 |---------------------------|-----------------------------------------|----------------------------------------------------------------|

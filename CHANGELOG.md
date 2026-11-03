@@ -10,6 +10,8 @@
 - `ListWindow`: a Live re-render keeps its window props (title, ...), and the window carries `window-close` and
   `window-drag` like `Window`; its "New" button opens `<windowId>-new-object-form` (`new-object-form` without
   `windowId`), and `delete-item` looks for its modal in its own window first.
+- `east-ux.css`: no margin on the floating windows. With the System.css theme (`.window { margin: 1rem }`), a fixed
+  `FormWindow` was shifted by 1rem and jumped by 1rem on its first drag.
 
 #### Evolutions
 - `ListWindow`: prop `floating`, a window floating over the page whose page is not bound to the URL, and writable prop

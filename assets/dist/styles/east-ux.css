@@ -110,9 +110,11 @@
 
 /* Floating windows (floating ListWindow, FormWindow overlay): under the fixed menu bar (z-index 1030) and its
    dropdowns, under the modals (backdrop 1050, modal 1055); window-drag brings one to the front by rewriting
-   --east-ux-window-order on the shown windows of the page */
+   --east-ux-window-order on the shown windows of the page. No margin: a margin of a theme (`.window { margin: 1rem }`
+   of System.css) would shift the window from its position and make it jump on its first drag */
 .window.window-floating,
 .window.form-window.form-fixed {
+    margin: 0;
     z-index: calc(1000 + min(var(--east-ux-window-order, 1), 29));
 }
 
