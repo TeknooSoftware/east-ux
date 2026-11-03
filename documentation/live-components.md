@@ -75,11 +75,18 @@ Symfony UX exist (`TwigComponentBundle` and `LiveComponentBundle` registered).
 - `#[PostMount]` runs once per instance and not on a re-render: never keep derived data in a property filled there;
   compute it from the inputs (`hasObjects()`, `hasSubForms()`) or in `__invoke()`.
 
-## Dynamic form windows
+## Dynamic windows
 
 A Live Component inserted by JavaScript needs its `data-live-props-value` with the server's checksum, which JavaScript
-can not compute. The "New" button of `ListWindow` and the "Edit" buttons of the rows therefore ask the server to render
-the window: the `form-window-dynamic-loader` controller ([stimulus.md](stimulus.md)) sends
+can not compute. A window opened in the current page is therefore rendered by the server, through the component
+renderer, and JavaScript appends the returned HTML to `<div id="dynamic-modals">`. No recipe runs in the renderer: the
+window is rendered hidden and empty. Its live re-render, when it is opened, runs the recipe of its path, which loads
+the objects and renders them through the East bridge.
+
+### Form windows
+
+The "New" button of `ListWindow` and the "Edit" buttons of the rows open a `FormWindow`: the
+`form-window-dynamic-loader` controller ([stimulus.md](stimulus.md)) sends
 
 ```http
 POST /component/render
@@ -91,9 +98,33 @@ X-Requested-With: XMLHttpRequest
  "draggable": true, "closeAriaLabel": "Close", "hidden": true, "objectId": "42"}}
 ```
 
-and appends the returned HTML to `<div id="dynamic-modals">`. The window is rendered hidden and without form. The
-`form-window` controller then opens it with `component.render()`, a live re-render: East Foundation re-routes it to the recipe of `formPath` (the creation or edition recipe), which loads
-the object, builds the form and renders it through the East bridge.
+The window is rendered hidden and without form. The `form-window` controller then opens it with `component.render()`,
+a live re-render: East Foundation re-routes it to the recipe of `formPath` (the creation or edition recipe), which
+loads the object, builds the form and renders it through the East bridge.
+
+### List windows
+
+A `ListWindow` loaded by the renderer floats over the current page (`floating`), so several lists are open together.
+Its body names the path of its list recipe in `originalPath`: in the renderer, the current request is
+`POST /component/render`, the path that `LiveTrait` would keep otherwise.
+
+```http
+POST /component/render
+Content-Type: application/json
+X-Requested-With: XMLHttpRequest
+
+{"component": "ListWindow", "props": {"windowId": "items", "originalPath": "/items/", "itemComponent": "ItemRow",
+ "floating": true, "hidden": true, "title": "Items", "closable": true, "draggable": true,
+ "tableHeaders": ["app.item.table.name", "app.item.table.actions"],
+ "searchFormName": "App\\Form\\Type\\ItemSearchType", "newFormName": "App\\Form\\Type\\ItemType",
+ "newFormRoute": "app_item_new"}}
+```
+
+The window is rendered hidden and without list. The `list-window-refresh` controller opens it on `window:open`: it sets
+`hidden` to false and re-renders the window, and East Foundation re-routes this re-render to the recipe of
+`originalPath` (the list recipe), which loads the page of objects. The page of a floating window is not bound to the
+URL: its pagination re-renders it through the same recipe without changing the URL of the page holding it
+([components.md](components.md#listwindow)).
 
 ### The component renderer
 
@@ -116,9 +147,20 @@ The props are validated before the rendering:
   `fail()` with an `UnreferencedComponentException`.
 - The controller throws the error passed to `fail()`: invalid props get a 400 (`InvalidPropsException`), a component
   without validator a 403 (`UnreferencedComponentException`); props that are not an object get a 400.
-- The library references `FormWindow` with `FormWindowPropsValidator`: `windowId`, `formPath` and `formName` (a form
-  type) are required, `originalPath`, `objectId`, `title`, `closeAriaLabel` (strings) and `closable`, `draggable`,
-  `hidden` (booleans) are optional, any other prop (`objectInstance`, `formTheme`, `isLive`, ...) is refused.
+- The library references two components, with validators built on Symfony's validator (`Assert\Collection`, no
+  extra field):
+    - `FormWindow`, with `FormWindowPropsValidator`: `windowId`, `formPath` and `formName` (a form type) are
+      required, `originalPath`, `objectId`, `title`, `closeAriaLabel` (strings) and `closable`, `draggable`, `hidden`
+      (booleans) are optional, any other prop (`objectInstance`, `formTheme`, `isLive`, ...) is refused.
+    - `ListWindow`, with `ListWindowPropsValidator`: `windowId` and `originalPath` (non-empty strings),
+      `itemComponent` (a component known by Symfony UX, anonymous components included) and `floating` (`true`: a list
+      window loaded by the renderer always floats) are required. The window props `title`, `closeAriaLabel`,
+      `resizeAriaLabel` (strings) and `closable`, `resizable`, `draggable`, `hidden` (booleans), `tableHeaders` (an
+      array of strings), `searchFormName` and `newFormName` (form types), `newFormRoute` (a route generated without
+      parameters, as the template calls `path(newFormRoute)`), `newButtonLabel`, `newFormTitle` (strings) and `page`
+      (a positive integer) are optional. Any other prop is refused: `closeRedirectUrl`, the view parameters of the
+      recipes (`objectsCollection`, `pageCount`, `formView`), the LiveProps of the search form (`formValues`,
+      `isValidated`, `validatedFields`), `@checksum`, ...
 - An application renders another component through the renderer by registering a validator for it:
 
   ```yaml
@@ -143,6 +185,14 @@ The props are validated before the rendering:
   authentication of an anonymous user). The checksum prevents a client from changing `originalPath`; a recipe that
   needs more than its URL rules (an owner check, ...) does it in its own steps, as East Common's access control steps
   do.
+- The component renderer only validates the props: it does not check `originalPath` or `formPath` against the access
+  rules of their routes. These rules apply to the re-render that opens the window: a user who may not open the route
+  of `originalPath` gets a 403, and the window shows nothing of the recipe.
+- A `ListWindow` with a `searchFormName` builds its search form in the renderer (Symfony UX's `ComponentWithFormTrait`)
+  and renders it in the response, before any recipe or access rule of `originalPath`. So any authenticated user may
+  render any form type of the application this way, with the choices it loads (from a database, ...). The renderer
+  keeps no list of the allowed paths or form types: a form type must not render data that an authenticated user may
+  not see.
 
 ## Morphing and Stimulus
 

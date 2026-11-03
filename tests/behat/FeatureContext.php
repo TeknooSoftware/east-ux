@@ -231,7 +231,8 @@ class FeatureContext implements Context
     }
 
     /**
-     * Sends the request of the `form-window-dynamic-loader` Stimulus controller to the component renderer.
+     * Sends the request of a loader of windows (the `form-window-dynamic-loader` Stimulus controller, ...) to the
+     * component renderer.
      */
     private function callComponentRenderer(string $body): void
     {
@@ -280,6 +281,50 @@ class FeatureContext implements Context
         Assert::assertCount(1, $form, "The form $name is not rendered once");
 
         return $form;
+    }
+
+    private function findFloatingListWindow(string $windowId): Crawler
+    {
+        $window = $this->getCrawler()->filter(
+            'div.window.window-floating[data-live-name-value="ListWindow"][data-form-window="' . $windowId . '"]',
+        );
+        Assert::assertCount(1, $window, "The floating list window $windowId is not rendered");
+
+        return $window;
+    }
+
+    /**
+     * Props of a floating list window of the items, as a menu entry opening a window sends them to the component
+     * renderer: the window props, the list props, `originalPath` (the route of the list recipe) and `hidden`
+     *
+     * @return array<string, mixed>
+     */
+    private function buildListWindowProps(string $windowId, string $title, string $path): array
+    {
+        return [
+            'windowId' => $windowId,
+            'originalPath' => $path,
+            'itemComponent' => 'ItemRow',
+            'floating' => true,
+            'hidden' => true,
+            'title' => $title,
+            'closable' => true,
+            'draggable' => true,
+            'tableHeaders' => ['fixtures.items.name', 'fixtures.items.actions'],
+            'newFormRoute' => 'fixtures_item_new',
+            'newFormName' => ItemType::class,
+            'newButtonLabel' => 'fixtures.items.new',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    private function callComponentRendererForAListWindow(array $props): void
+    {
+        $this->callComponentRenderer(
+            (string) json_encode(['component' => 'ListWindow', 'props' => $props], JSON_THROW_ON_ERROR),
+        );
     }
 
     #[Given('a Symfony application with East UX')]
@@ -351,6 +396,13 @@ class FeatureContext implements Context
         $this->reRender('FormWindow');
     }
 
+    #[When('the list window is opened')]
+    public function theListWindowIsOpened(): void
+    {
+        // `list-window-refresh#open` sets `hidden` to false (`component.set()`), then re-renders the window
+        $this->reRender('ListWindow', ['hidden' => false]);
+    }
+
     #[When('the component renderer is asked for a :component with the props:')]
     public function theComponentRendererIsAskedForAWithTheProps(string $component, TableNode $props): void
     {
@@ -386,6 +438,48 @@ class FeatureContext implements Context
                 JSON_THROW_ON_ERROR,
             ),
         );
+    }
+
+    #[When('the component renderer is asked for the list window :windowId titled :title of the path :path')]
+    public function theComponentRendererIsAskedForTheListWindowTitledOfThePath(
+        string $windowId,
+        string $title,
+        string $path,
+    ): void {
+        $this->callComponentRendererForAListWindow($this->buildListWindowProps($windowId, $title, $path));
+    }
+
+    #[When(
+        'the component renderer is asked for the list window :windowId titled :title of the path :path with the prop '
+        . ':prop set to :value'
+    )]
+    public function theComponentRendererIsAskedForTheListWindowTitledOfThePathWithThePropSetTo(
+        string $windowId,
+        string $title,
+        string $path,
+        string $prop,
+        string $value,
+    ): void {
+        $props = $this->buildListWindowProps($windowId, $title, $path);
+        $props[$prop] = $this->convertPropValue($value);
+
+        $this->callComponentRendererForAListWindow($props);
+    }
+
+    #[When(
+        'the component renderer is asked for the list window :windowId titled :title of the path :path without the '
+        . 'prop :prop'
+    )]
+    public function theComponentRendererIsAskedForTheListWindowTitledOfThePathWithoutTheProp(
+        string $windowId,
+        string $title,
+        string $path,
+        string $prop,
+    ): void {
+        $props = $this->buildListWindowProps($windowId, $title, $path);
+        unset($props[$prop]);
+
+        $this->callComponentRendererForAListWindow($props);
     }
 
     #[When('the component renderer receives the body :body')]
@@ -449,6 +543,40 @@ class FeatureContext implements Context
         Assert::assertSame($title, $listWindow->filter('.title-bar h1.title')->text());
     }
 
+    #[Then('the list window :windowId must be hidden and floating')]
+    public function theListWindowMustBeHiddenAndFloating(string $windowId): void
+    {
+        $window = $this->findFloatingListWindow($windowId);
+
+        Assert::assertStringContainsString('d-none', (string) $window->attr('class'));
+        // `list-window-refresh` opens the window on `window:open`
+        Assert::assertSame('list-window-refresh window-close window-drag live', $window->attr('data-controller'));
+        Assert::assertTrue($this->getLiveProps('ListWindow')['floating'] ?? null);
+        Assert::assertTrue($this->getLiveProps('ListWindow')['hidden'] ?? null);
+    }
+
+    #[Then('the list window :windowId must be shown and floating')]
+    public function theListWindowMustBeShownAndFloating(string $windowId): void
+    {
+        $window = $this->findFloatingListWindow($windowId);
+
+        Assert::assertStringNotContainsString('d-none', (string) $window->attr('class'));
+        Assert::assertTrue($this->getLiveProps('ListWindow')['floating'] ?? null);
+        Assert::assertFalse($this->getLiveProps('ListWindow')['hidden'] ?? null);
+    }
+
+    /**
+     * The page of a floating list window is not mapped in the URL of the page holding it (`modifyPage()`)
+     */
+    #[Then('the page of the list window must not be bound to the URL')]
+    public function thePageOfTheListWindowMustNotBeBoundToTheUrl(): void
+    {
+        $listWindow = $this->getCrawler()->filter('div.window[data-live-name-value="ListWindow"]');
+        Assert::assertCount(1, $listWindow);
+
+        Assert::assertNull($listWindow->attr('data-live-query-mapping-value'));
+    }
+
     #[Then('the :component must be re-rendered by the route :path')]
     public function theMustBeReRenderedByTheRoute(string $component, string $path): void
     {
@@ -475,6 +603,18 @@ class FeatureContext implements Context
         Assert::assertCount(1, $button);
         Assert::assertSame('/component/render', $button->attr('data-form-window-dynamic-loader-url-value'));
         Assert::assertSame('click->form-window-dynamic-loader#open', $button->attr('data-action'));
+    }
+
+    #[Then('the list window must provide a button opening the form window :windowId of :path')]
+    public function theListWindowMustProvideAButtonOpeningTheFormWindowIdOf(string $windowId, string $path): void
+    {
+        $button = $this->getCrawler()->filter(
+            'button[data-controller="form-window-dynamic-loader"][data-form-window-dynamic-loader-form-path-value="'
+            . $path . '"]',
+        );
+
+        Assert::assertCount(1, $button);
+        Assert::assertSame($windowId, $button->attr('data-form-window-dynamic-loader-window-id-value'));
     }
 
     #[Then('the form window :windowId must be hidden and without form')]

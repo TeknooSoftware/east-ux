@@ -84,7 +84,7 @@ A window holding a Symfony form, in two modes:
 
 - `isLive` true (default): a modal driven by the `form-window` Stimulus controller, opened and closed in the page,
   saved with `fetch()`, re-rendered by its East recipe. This is the window that the "New" and "Edit" buttons load
-  through the component renderer ([live-components.md](live-components.md#dynamic-form-windows)).
+  through the component renderer ([live-components.md](live-components.md#dynamic-windows)).
 - `isLive` false: a full page (the `new` and `edit` pages of a CRUD), closed by `window-close`, which navigates to
   `closeRedirectUrl`.
 
@@ -197,6 +197,11 @@ A window holding a Symfony form, in two modes:
 - A hidden window (`hidden`) gets the class `d-none`. `window:open` shows it: `list-window-refresh` sets `hidden` to
   `false` and re-renders the window, which loads its list from the recipe of `originalPath`
   ([stimulus.md](stimulus.md#list-window-refresh)).
+- A floating window is loadable by the component renderer, which validates its props with
+  `ListWindowPropsValidator`: `windowId`, `originalPath` (the path of the list recipe), `itemComponent` and `floating`
+  (`true`) are required; `closeRedirectUrl`, the view parameters of the recipes (`objectsCollection`, `pageCount`,
+  ...) and the LiveProps of the search form (`formValues`, ...) are refused; `searchFormName` is accepted, see the
+  Security part of [live-components.md](live-components.md#dynamic-windows).
 - Helpers: `hasObjects()`, `hasPagination()`, `hasSearchForm()`, `getCurrentRequest()`.
 - Blocks: `search_form`, `search_form_container_classes`, `objects_list`, `pagination`, `confirm_modals` (in
   `window_modals`), plus those of `Window`.

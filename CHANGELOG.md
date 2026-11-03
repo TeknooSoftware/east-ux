@@ -18,6 +18,9 @@
 - `east-ux.css`: floating windows under the menu bar (`--east-ux-window-top`, `--east-ux-window-offset`), brought to the
   front by `window-drag`; a modal nested in a floating window goes above its backdrop. BC: the fixed `FormWindow` is
   at z-index 1001-1029 instead of 9999, under the menu bar and the modals, and its top under the menu bar.
+- `ListWindow` loadable by the component renderer (`ListWindowPropsValidator`): `windowId`, `originalPath`,
+  `itemComponent` (a known component) and `floating` (`true`) required, the window and list props optional; any other
+  prop (`closeRedirectUrl`, the view parameters of the recipes, ...) is refused (400).
 
 ## [0.2.2] - 2026-10-24
 ### Alpha Release
