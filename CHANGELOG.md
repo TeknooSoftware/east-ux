@@ -1,5 +1,12 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.3.1] - Release pending
+### Alpha Release
+
+#### Fixes
+- `MenuBar`: the props `closeAriaLabel` and `resizeAriaLabel` of the window of a menu entry are translation keys,
+  translated in the domain of the entry as its title; they were sent as they were.
+
 ## [0.3.0] - 2026-11-03
 ### Alpha Release
 

@@ -16,3 +16,6 @@ fixtures:
     new: 'Add an item'
     edit: 'Edit'
     delete: 'Delete'
+  aria:
+    close: 'Close the window'
+    resize: 'Resize the window'

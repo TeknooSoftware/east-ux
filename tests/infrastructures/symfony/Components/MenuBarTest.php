@@ -560,6 +560,54 @@ class MenuBarTest extends TestCase
         $this->assertSame(2, substr_count($html, 'data-window-dynamic-loader-url-value='));
     }
 
+    public function testTranslateTheAriaLabelsOfTheWindowLikeItsTitle(): void
+    {
+        $content = new MenuSection(name: 'app.menu.content', position: 1);
+        $content->addItem(
+            new MenuItem(
+                name: 'app.menu.items',
+                route: 'app_items',
+                translationDomain: 'app_domain',
+                window: new MenuWindow(
+                    component: 'ListWindow',
+                    title: 'app.item.title.list',
+                    props: [
+                        'windowId' => 'items',
+                        'closeAriaLabel' => 'app.aria.close',
+                        'resizeAriaLabel' => 'app.aria.resize',
+                        'newButtonLabel' => 'app.item.new',
+                    ],
+                ),
+            )
+        );
+        // Without ARIA labels in its props, the window gets none
+        $content->addItem(
+            new MenuItem(
+                name: 'app.menu.settings',
+                route: 'app_settings',
+                window: new MenuWindow(component: 'FormWindow', title: 'app.menu.settings', props: ['windowId' => 'me']),
+            )
+        );
+
+        $menuBar = $this->buildMenuBar($this->buildMenuServiceWithLeftSection($content));
+        $menuBar->user = new User();
+
+        $html = $this->render($menuBar);
+
+        // Only the ARIA labels are translated, the other props are given as they are
+        $this->assertStringContainsString(
+            'data-window-dynamic-loader-props-value="{&quot;windowId&quot;:&quot;items&quot;,'
+            . '&quot;closeAriaLabel&quot;:&quot;app.aria.close|app_domain&quot;,'
+            . '&quot;resizeAriaLabel&quot;:&quot;app.aria.resize|app_domain&quot;,'
+            . '&quot;newButtonLabel&quot;:&quot;app.item.new&quot;}"',
+            $html,
+        );
+        $this->assertStringContainsString(
+            'data-window-dynamic-loader-props-value="{&quot;windowId&quot;:&quot;me&quot;}"',
+            $html,
+        );
+    }
+
     public function testRenderAnEntryWithAWindowButWithoutRouteAsAButton(): void
     {
         $theme = new MenuSection(name: 'app.menu.theme', position: 1);

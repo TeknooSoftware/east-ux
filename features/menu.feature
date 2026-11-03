@@ -68,6 +68,7 @@ Feature: Menu bar built from the menu generators of the application
     And the list window must show the items "Item 1, Item 2, Item 3, Item 4, Item 5"
     And the list window must be on the page 1 of 2
     And the list window "items" must be titled "All items"
+    And the close button of the list window "items" must be labelled "Close the window"
     And the page of the list window must not be bound to the URL
 
   Scenario: An entry of the menu opens its form window through the component renderer

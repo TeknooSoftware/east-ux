@@ -168,7 +168,8 @@ new MenuItem(
 - A `FormWindow` needs `formPath` (required by `FormWindowPropsValidator`), and the `href` of its item should equal
   `formPath`: the window is re-rendered by the recipe of `formPath`, which is also the page opened when this render
   fails. A generator of the infrastructure gets it from Symfony's `UrlGeneratorInterface`.
-- `title` is a translation key, translated in the `translationDomain` of the item (the default domain when null).
+- `title` is a translation key, translated in the `translationDomain` of the item (the default domain when null), and
+  so are the props `closeAriaLabel` and `resizeAriaLabel` when given. The other props are sent as they are.
 - `windowId` names the window in the page: a second click opens the window already loaded instead of loading it again.
 - `MenuWindow` is universal (`src/`): a generator of the domain can build it, with its form types written as strings.
 - The window of an item without route is ignored: the item is a button, without loader.
