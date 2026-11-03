@@ -107,7 +107,7 @@ A window holding a Symfony form, in two modes:
 | Prop                 | Type                     | Live | Default                         | Use                                                            |
 |----------------------|--------------------------|------|---------------------------------|----------------------------------------------------------------|
 | window props         |                          | yes  |                                 | All the props of `AbstractWindow`, redeclared as LiveProps      |
-| `objectId`           | `?string`                | yes (`url: true`) | `null`             | Identifier of the edited object, mapped in the URL of the re-renders |
+| `objectId`           | `?string`                | yes  | `null`                          | Identifier of the edited object, not written in the page URL   |
 | `formName`           | `?class-string`          | yes  | `null`                          | Form type, used to build the form when `formView` is not given |
 | `formPath`           | `string`                 | yes  | `''`                            | `action` of the form, and the `originalPath` of the re-renders |
 | `hidden`             | `bool`                   | yes (writable) | `true`                | Adds `d-none`; set `hidden="0"` on a full page                 |

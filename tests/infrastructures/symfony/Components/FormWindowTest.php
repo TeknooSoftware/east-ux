@@ -276,6 +276,15 @@ class FormWindowTest extends TestCase
         $this->assertEquals([], $property->getAttributes(LiveProp::class)[0]->getArguments());
     }
 
+    public function testObjectIdIsALivePropNotBoundToTheUrl(): void
+    {
+        $property = new ReflectionProperty(FormWindow::class, 'objectId');
+
+        $this->assertCount(1, $property->getAttributes(LiveProp::class));
+        // Not `url: true`: nothing reads the object id from the URL, a re-render must not write it there
+        $this->assertEquals([], $property->getAttributes(LiveProp::class)[0]->getArguments());
+    }
+
     public function testFormThemeCanBeOverriddenByAProp(): void
     {
         $window = $this->buildFormWindow('@App/form/fields.html.twig');

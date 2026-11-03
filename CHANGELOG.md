@@ -3,9 +3,15 @@
 ## [0.3.1] - Release pending
 ### Alpha Release
 
+
+#### Fixes
+- `FormWindow`: the re-render of an "Edit" window no longer writes `?objectId=<id>` in the URL of the page; nothing
+  read it there (`objectId` is no longer `url: true`).
+
 #### Documentation
 - `AGENTS.md`: a `ListWindow` may be placed in a page rendered by `RenderForm` (East Common 4.8); the entry of 0.3.0
   lists two more behaviours of the windows opened in the page.
+
 
 ## [0.3.0] - 2026-11-03
 ### Alpha Release
