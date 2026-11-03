@@ -108,6 +108,11 @@ Feature: Form windows loaded dynamically through the component renderer
       | closable | yes        |
     Then the response status must be 400
 
+  Scenario: Refuse a null prop of the FormWindow, which its property does not accept
+    Given I am authenticated as "user"
+    When the component renderer receives the body '{"component": "FormWindow", "props": {"windowId": "new-item", "formPath": "/items/new", "formName": "Teknoo\\Tests\\East\\UX\\Support\\Fixtures\\Form\\Type\\ItemType", "title": null}}'
+    Then the response status must be 400
+
   Scenario Outline: Refuse a malformed request
     Given I am authenticated as "user"
     When the component renderer receives the body '<body>'

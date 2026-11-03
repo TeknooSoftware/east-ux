@@ -9,6 +9,8 @@
   read it there (`objectId` is no longer `url: true`).
 - `window-drag`: a window moved by a drag stays in the viewport when its content grows (a re-render, a longer page);
   a short list moved to the bottom of the screen went past it.
+- Component renderer: a `null` prop of `FormWindow` or `ListWindow` whose property is not nullable (`title`,
+  `closable`, `page`, ...) gets a 400 instead of a 500.
 
 #### Documentation
 - `AGENTS.md`: a `ListWindow` may be placed in a page rendered by `RenderForm` (East Common 4.8); the entry of 0.3.0

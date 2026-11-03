@@ -50,7 +50,7 @@ use function is_string;
  * array of strings), `searchFormName` and `newFormName` (form types), `newFormRoute` (a route generable without
  * parameters, as the template calls `path(newFormRoute)`), `newButtonLabel`, `newFormTitle` and `page` (a positive
  * integer) are optional, any other prop (`closeRedirectUrl`, `objectsCollection`, `pageCount`, `formView`, ...) is
- * refused.
+ * refused. Only `searchFormName`, whose property is nullable, may be `null`.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -120,21 +120,25 @@ final class ListWindowPropsValidator implements PropsValidatorInterface
                         new Assert\Callback($isKnownComponent),
                     ],
                     'floating' => [new Assert\NotNull(), new Assert\Type('bool'), new Assert\IsTrue()],
-                    'hidden' => new Assert\Optional(new Assert\Type('bool')),
-                    'closable' => new Assert\Optional(new Assert\Type('bool')),
-                    'resizable' => new Assert\Optional(new Assert\Type('bool')),
-                    'draggable' => new Assert\Optional(new Assert\Type('bool')),
-                    'title' => new Assert\Optional(new Assert\Type('string')),
-                    'closeAriaLabel' => new Assert\Optional(new Assert\Type('string')),
-                    'resizeAriaLabel' => new Assert\Optional(new Assert\Type('string')),
+                    'hidden' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('bool')]),
+                    'closable' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('bool')]),
+                    'resizable' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('bool')]),
+                    'draggable' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('bool')]),
+                    'title' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('string')]),
+                    'closeAriaLabel' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('string')]),
+                    'resizeAriaLabel' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('string')]),
                     'tableHeaders' => new Assert\Optional(
-                        [new Assert\Type('array'), new Assert\All([new Assert\Type('string')])]
+                        [
+                            new Assert\NotNull(),
+                            new Assert\Type('array'),
+                            new Assert\All([new Assert\NotNull(), new Assert\Type('string')]),
+                        ]
                     ),
                     'searchFormName' => new Assert\Optional(
                         [new Assert\Type('string'), new Assert\Callback($isFormType)]
                     ),
                     'newFormName' => new Assert\Optional(
-                        [new Assert\Type('string'), new Assert\Callback($isFormType)]
+                        [new Assert\NotNull(), new Assert\Type('string'), new Assert\Callback($isFormType)]
                     ),
                     'newFormRoute' => new Assert\Optional(
                         [
@@ -143,9 +147,11 @@ final class ListWindowPropsValidator implements PropsValidatorInterface
                             new Assert\Callback($isRouteWithoutParameters),
                         ]
                     ),
-                    'newButtonLabel' => new Assert\Optional(new Assert\Type('string')),
-                    'newFormTitle' => new Assert\Optional(new Assert\Type('string')),
-                    'page' => new Assert\Optional([new Assert\Type('int'), new Assert\Positive()]),
+                    'newButtonLabel' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('string')]),
+                    'newFormTitle' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('string')]),
+                    'page' => new Assert\Optional(
+                        [new Assert\NotNull(), new Assert\Type('int'), new Assert\Positive()]
+                    ),
                 ],
                 allowExtraFields: false,
                 allowMissingFields: false,
