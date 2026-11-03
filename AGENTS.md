@@ -98,8 +98,9 @@ All verification must be performed via the provided `Makefile`.
 - **Components**: no non-public property named like a view parameter of the East recipes (`objectInstance`,
   `objectsCollection`, `pageCount`, `formView`, ...), except the private `form` and `formView` that `ListWindow`
   inherits from Symfony UX's `ComponentWithFormTrait` (a `ListWindow` can therefore not be placed in a page rendered
-  by `RenderForm`, see [documentation/live-components.md](documentation/live-components.md#limitations)); LiveProps
-  only on serializable values.
+  by `RenderForm`, see
+  [documentation/live-components.md](documentation/live-components.md#how-a-re-render-reaches-the-east-recipe));
+  LiveProps only on serializable values.
 - **Translations**: keys `teknoo.east.ux.<component>.<group>.<id>` in the `east_ux` domain, always passed explicitly to
   the `trans` filter; labels supplied by the application keep its default domain.
 - **Stimulus**: user-facing texts and protocol names are values with an English default; identifiers are the short

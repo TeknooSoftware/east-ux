@@ -49,6 +49,7 @@ use function iterator_count;
  * `ComponentWithFormTrait` still needs a form object, an empty form is used). The "New" button is rendered only when
  * `newFormRoute` is set, its label and the title of the form window it opens come from the `newButtonLabel` and
  * `newFormTitle` props (translated in the application's default domain), or else from the library's catalogue.
+ * The window props of `AbstractWindow` are redeclared as LiveProps, so a Live re-render keeps them.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -61,6 +62,30 @@ final class ListWindow extends AbstractWindow
     use LiveTrait;
     use DefaultActionTrait;
     use ComponentWithFormTrait;
+
+    #[LiveProp]
+    public string $title = '';
+
+    #[LiveProp]
+    public bool $closable = false;
+
+    #[LiveProp]
+    public bool $resizable = false;
+
+    #[LiveProp]
+    public bool $draggable = false;
+
+    #[LiveProp]
+    public string $closeRedirectUrl = '';
+
+    #[LiveProp]
+    public string $closeAriaLabel = 'Close';
+
+    #[LiveProp]
+    public string $resizeAriaLabel = 'Resize';
+
+    #[LiveProp]
+    public string $windowId = '';
 
     /**
      * @var iterable<object>

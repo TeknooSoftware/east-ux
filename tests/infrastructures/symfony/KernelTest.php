@@ -527,7 +527,7 @@ class KernelTest extends TestCase
 
         $window = $crawler->filter('div.window[data-live-name-value="ListWindow"]');
         self::assertCount(1, $window);
-        self::assertSame('list-window-refresh live', $window->attr('data-controller'));
+        self::assertSame('list-window-refresh window-close live', $window->attr('data-controller'));
         self::assertCount(2, $crawler->filter('tr.item-row'));
         self::assertCount(1, $crawler->filter('ul.pagination'));
 

@@ -7,6 +7,9 @@
 - `FormWindow`: a form refused by the server (East Common answers 200 with the page) stays open with its errors, also
   the errors of the form itself when it has sub-forms; it closes and refreshes the lists only after a save. The page
   of `formPath` must give `formView` to its `FormWindow`.
+- `ListWindow`: a Live re-render keeps its window props (title, ...), and the window carries `window-close` and
+  `window-drag` like `Window`; its "New" button opens `<windowId>-new-object-form` (`new-object-form` without
+  `windowId`), and `delete-item` looks for its modal in its own window first.
 
 ## [0.2.2] - 2026-10-24
 ### Alpha Release

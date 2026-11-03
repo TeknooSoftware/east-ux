@@ -30,7 +30,7 @@ Documentation
 
 * [Components](documentation/components.md): props, blocks and behaviour of each component.
 * [Live Components and the East bridge](documentation/live-components.md): re-renders through the recipes, the
-  component renderer, security, limitations.
+  component renderer, security.
 * [Stimulus controllers](documentation/stimulus.md): values of each controller and contract with the page.
 * [Menu](documentation/menu.md): menu generators, sections, items and the menu service.
 * [Theming](documentation/theming.md): stylesheet, form theme, template overrides and translations.

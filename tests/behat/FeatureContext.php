@@ -436,6 +436,19 @@ class FeatureContext implements Context
         Assert::assertSame($page, $this->getLiveProps('ListWindow')['page'] ?? null);
     }
 
+    /**
+     * The window props of the list window come back with the re-rendered HTML only when they are LiveProps
+     */
+    #[Then('the list window :windowId must be titled :title')]
+    public function theListWindowMustBeTitled(string $windowId, string $title): void
+    {
+        $listWindow = $this->getCrawler()->filter('div.window[data-live-name-value="ListWindow"]');
+        Assert::assertCount(1, $listWindow);
+
+        Assert::assertSame($windowId, $listWindow->attr('data-form-window'));
+        Assert::assertSame($title, $listWindow->filter('.title-bar h1.title')->text());
+    }
+
     #[Then('the :component must be re-rendered by the route :path')]
     public function theMustBeReRenderedByTheRoute(string $component, string $path): void
     {

@@ -3,7 +3,17 @@
 {# Override the classes of the containers #}
 {% block window_classes %} h-100 d-flex flex-column{% endblock %}
 {% block window_pane_classes %} flex-grow-1 overflow-auto p-3{% endblock %}
-{% block window_attributes %}{{ attributes.defaults({'data-controller': 'list-window-refresh'}) }}{% endblock %}
+{%- block window_attributes -%}
+    {%- set window_controllers = 'list-window-refresh window-close' -%}
+    {%- if this.isDraggable() -%}
+        {%- set window_controllers = window_controllers ~ ' window-drag' -%}
+    {%- endif -%}
+    {{ attributes.defaults({
+        'data-controller': window_controllers,
+        'data-form-window': this.windowId,
+        'data-window-close-redirect-url-value': this.closeRedirectUrl
+    }) }}
+{%- endblock -%}
 
 {% block window %}
     {{ parent() }}
@@ -36,11 +46,16 @@
                 {% set new_form_title = this.newFormTitle is not empty
                     ? this.newFormTitle|trans
                     : new_button_label %}
+                {# The window opened by the button is named after the list window: one per list window of the page #}
+                {% set new_window_id = 'new-object-form' %}
+                {% if this.windowId is not empty %}
+                    {% set new_window_id = this.windowId ~ '-new-object-form' %}
+                {% endif %}
                 <button type="button"
                         class="btn btn-primary ms-auto"
                         data-controller="form-window-dynamic-loader"
                         data-form-window-dynamic-loader-url-value="{{ path('_teknoo_east_ux_component_render') }}"
-                        data-form-window-dynamic-loader-window-id-value="new-object-form"
+                        data-form-window-dynamic-loader-window-id-value="{{ new_window_id }}"
                         data-form-window-dynamic-loader-form-path-value="{{ path(this.newFormRoute) }}"
                         data-form-window-dynamic-loader-form-name-value="{{ this.newFormName }}"
                         data-form-window-dynamic-loader-title-value="{{ new_form_title }}"

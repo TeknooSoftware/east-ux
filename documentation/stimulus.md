@@ -111,16 +111,17 @@ On the "New" button of `ListWindow`, whose `load-error-text` is translated from
 
 ### list-window-refresh
 
-Added to `ListWindow` (`attributes.defaults({'data-controller': 'list-window-refresh'})`). `connect()` awaits
-`getComponent(this.element)`, then listens to `list-window:refresh` on `document`; `refresh()` calls
+Added to `ListWindow` (`attributes.defaults()`, with `window-close`, and `window-drag` when the window is draggable).
+`connect()` awaits `getComponent(this.element)`, then listens to `list-window:refresh` on `document`; `refresh()` calls
 `component.render()` (the list is re-rendered by its East recipe, so a created or edited object appears).
 `disconnect()` removes the listener.
 
 ### window-close
 
-The default close action of `Window.html.twig` (`click->window-close#close`), also used by `FormWindow` when it is not
-live. `close()` navigates to the `redirect-url` value (`data-window-close-redirect-url-value`, filled from the
-`closeRedirectUrl` prop) or, without it, hides the element with `d-none`.
+The default close action of `Window.html.twig` (`click->window-close#close`), also used by `ListWindow` and by
+`FormWindow` when it is not live. `close()` navigates to the `redirect-url` value
+(`data-window-close-redirect-url-value`, filled from the `closeRedirectUrl` prop) or, without it, hides the element with
+`d-none`.
 
 ### window-drag
 
@@ -142,7 +143,9 @@ On the "Delete" buttons of the rows:
         data-action="click->delete-item#delete">
 ```
 
-`delete()` opens the Bootstrap modal named by `modal-id` (`import { Modal } from 'bootstrap'`). When it is shown, a
+`delete()` opens the Bootstrap modal named by `modal-id` (`import { Modal } from 'bootstrap'`). `findModal()` looks for
+it first in the closest `.window` of the button, then in the whole document: each `ListWindow` renders its own
+`delete-confirm-modal`, so a row uses the modal of its window when several list windows are open. When it is shown, a
 one-shot listener on its `[data-confirm-button]` element runs the deletion and hides the modal: a `POST` to `url`
 carrying the `csrf-token` value in the form field named by `csrf-field` (`_token` by default) and in the header named by
 `csrf-header` (`X-CSRF-Token` by default), with `X-Requested-With: XMLHttpRequest`. The field is the one East Common's

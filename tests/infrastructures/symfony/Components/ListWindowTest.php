@@ -275,6 +275,34 @@ class ListWindowTest extends TestCase
         }
     }
 
+    public function testWindowPropsAreLivePropsKeptAcrossReRenders(): void
+    {
+        foreach (
+            [
+                'title',
+                'closable',
+                'resizable',
+                'draggable',
+                'windowId',
+                'closeRedirectUrl',
+                'closeAriaLabel',
+                'resizeAriaLabel',
+            ] as $name
+        ) {
+            $property = new ReflectionProperty(ListWindow::class, $name);
+
+            $this->assertSame(ListWindow::class, $property->getDeclaringClass()->getName());
+            $this->assertTrue($property->isPublic());
+            $this->assertCount(1, $property->getAttributes(LiveProp::class));
+            // Not writable: the browser cannot change the window props of a rendered window
+            $this->assertEquals([], $property->getAttributes(LiveProp::class)[0]->getArguments());
+            $this->assertSame(
+                (new ReflectionProperty(AbstractWindow::class, $name))->getDefaultValue(),
+                $property->getDefaultValue(),
+            );
+        }
+    }
+
     public function testOriginalPathComesFromTheCurrentRequest(): void
     {
         $requestStack = new RequestStack();
@@ -549,9 +577,68 @@ class ListWindowTest extends TestCase
         $output = $this->render($window);
 
         $this->assertStringContainsString('<h1 class="title">Objects</h1>', $output);
-        $this->assertStringContainsString('data-controller="list-window-refresh"', $output);
+        $this->assertStringContainsString('data-controller="list-window-refresh window-close"', $output);
         $this->assertStringNotContainsString('<form', $output);
         $this->assertStringNotContainsString('live#action:prevent', $output);
+    }
+
+    public function testRenderCarriesTheControllersAndTheIdentifierOfTheWindow(): void
+    {
+        $window = $this->buildRenderableListWindow();
+        $window->windowId = 'objects';
+        $window->closeRedirectUrl = '/home';
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString('<div class="window h-100 d-flex flex-column"', $output);
+        $this->assertStringContainsString('data-controller="list-window-refresh window-close"', $output);
+        $this->assertStringContainsString('data-form-window="objects"', $output);
+        $this->assertStringContainsString('data-window-close-redirect-url-value="/home"', $output);
+        $this->assertStringNotContainsString('window-drag', $output);
+    }
+
+    public function testRenderDraggableWindowCarriesTheDragController(): void
+    {
+        $window = $this->buildRenderableListWindow();
+        $window->draggable = true;
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString('<div class="window draggable h-100 d-flex flex-column"', $output);
+        $this->assertStringContainsString(
+            'data-controller="list-window-refresh window-close window-drag"',
+            $output,
+        );
+        $this->assertStringContainsString('data-action="mousedown->window-drag#startDrag"', $output);
+    }
+
+    public function testRenderNewButtonOpensAWindowNamedAfterTheListWindow(): void
+    {
+        $window = $this->buildRenderableListWindow();
+        $window->windowId = 'objects';
+        $window->newFormRoute = 'app_object_new';
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString(
+            'data-form-window-dynamic-loader-window-id-value="objects-new-object-form"',
+            $output,
+        );
+    }
+
+    public function testRenderNewButtonWithoutWindowIdKeepsTheDefaultWindowId(): void
+    {
+        $window = $this->buildRenderableListWindow();
+        $window->windowId = '';
+        $window->newFormRoute = 'app_object_new';
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString(
+            'data-form-window-dynamic-loader-window-id-value="new-object-form"',
+            $output,
+        );
+        $this->assertStringNotContainsString('-new-object-form', $output);
     }
 
     public function testRenderWithSearchForm(): void

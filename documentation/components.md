@@ -158,7 +158,7 @@ A window holding a Symfony form, in two modes:
 
 | Prop                | Type             | Live | Default | Use                                                                         |
 |---------------------|------------------|------|---------|-----------------------------------------------------------------------------|
-| window props        |                  | no   |         | Rendered once; `closeAriaLabel` is also given to the windows the "New" button opens |
+| window props        |                  | yes  |         | All the props of `AbstractWindow`, redeclared as LiveProps |
 | `objectsCollection` | `iterable<object>` | no | `[]`    | View parameter of `RenderList`, copied by the East bridge                   |
 | `pageCount`         | `int`            | no   | `0`     | View parameter of `RenderList`; the pagination is rendered when it is above 1 |
 | `page`              | `int`            | yes (writable, `url: true`) | `1` | Current page, updated by the `Pagination` buttons                  |
@@ -178,9 +178,15 @@ A window holding a Symfony form, in two modes:
   `searchFormName` that is not a class throws a `LogicException`.
 - The "New" button carries the `form-window-dynamic-loader` controller with the URL of the component renderer
   (`path('_teknoo_east_ux_component_render')`: the application must import the bundle's routes), the window id
-  `new-object-form`, `formPath` = `path(newFormRoute)` and `formName` = `newFormName`.
-- The window renders the `ConfirmModal` `delete-confirm-modal` used by the `delete-item` controller of the rows, and
-  carries the `list-window-refresh` controller (re-render on the `list-window:refresh` event).
+  `<windowId>-new-object-form` (`new-object-form` when `windowId` is empty), `formPath` = `path(newFormRoute)` and
+  `formName` = `newFormName`; the opened window gets the `closeAriaLabel` of the list. Two list windows of a page
+  with their own `windowId` open two distinct windows.
+- The window renders the `ConfirmModal` `delete-confirm-modal` used by the `delete-item` controller of the rows, which
+  looks for it first in its own window: each list window of a page uses its own modal.
+- The root element gets `data-controller="list-window-refresh window-close[ window-drag]"` (merged with `live`),
+  `data-form-window` and `data-window-close-redirect-url-value`, as `Window`: `list-window-refresh` re-renders the
+  list on the `list-window:refresh` event, `window-close` handles the close button, `window-drag` the title bar of a
+  draggable window.
 - Helpers: `hasObjects()`, `hasPagination()`, `hasSearchForm()`, `getCurrentRequest()`.
 - Blocks: `search_form`, `search_form_container_classes`, `objects_list`, `pagination`, `confirm_modals` (in
   `window_modals`), plus those of `Window`.

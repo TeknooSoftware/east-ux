@@ -35,7 +35,8 @@ Consequences:
   LiveProps.
 - A property named like a view parameter of a recipe must be public and writable (see
   [components.md](components.md#convention-public-properties-for-the-view-parameters-of-the-recipes)).
-- The access rules of the recipe's route are not applied to the re-render (see [Security](#security)).
+- The access rules of the route of `originalPath` apply to the re-render: East Foundation checks them before running
+  its recipe (see [Security](#security)).
 
 ## Application setup
 
@@ -153,11 +154,6 @@ The props are validated before the rendering:
   `data-controller` attribute next to `{{ attributes }}`: the browser keeps only one.
 - The `Pagination` buttons update the `page` prop of `ListWindow` (`data-model="page"`, `live#update`); the search
   form calls `live#action:prevent` with the action parameter `save`, the form being resubmitted on the re-render.
-
-## Limitations
-
-- **Window props of `ListWindow`.** They are not LiveProps: a re-render shows the window with their default values
-  (an empty title, the default ARIA labels). `FormWindow` redeclares them as LiveProps and keeps them.
 
 ## Anti-patterns
 
