@@ -7,6 +7,8 @@
 #### Fixes
 - `FormWindow`: the re-render of an "Edit" window no longer writes `?objectId=<id>` in the URL of the page; nothing
   read it there (`objectId` is no longer `url: true`).
+- `window-drag`: a window moved by a drag stays in the viewport when its content grows (a re-render, a longer page);
+  a short list moved to the bottom of the screen went past it.
 
 #### Documentation
 - `AGENTS.md`: a `ListWindow` may be placed in a page rendered by `RenderForm` (East Common 4.8); the entry of 0.3.0
