@@ -11,6 +11,8 @@
   a short list moved to the bottom of the screen went past it.
 - Component renderer: a `null` prop of `FormWindow` or `ListWindow` whose property is not nullable (`title`,
   `closable`, `page`, ...) gets a 400 instead of a 500.
+- `MenuBar`: the props `closeAriaLabel` and `resizeAriaLabel` of the window of a menu entry are translation keys,
+  translated in the domain of the entry as its title; they were sent as they were.
 
 #### Documentation
 - `AGENTS.md`: a `ListWindow` may be placed in a page rendered by `RenderForm` (East Common 4.8); the entry of 0.3.0
