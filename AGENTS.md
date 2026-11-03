@@ -101,7 +101,7 @@ All verification must be performed via the provided `Makefile`.
   `objectsCollection`, `pageCount`, `formView`, ...), except the private `form` and `formView` that `ListWindow`
   inherits from Symfony UX's `ComponentWithFormTrait`: East Common's `LiveComponentBuilder` (4.8) writes only the
   public properties, so a `ListWindow` may also be placed in a page rendered by `RenderForm`, see
-  [documentation/components.md](documentation/components.md#convention-public-properties-for-the-view-parameters-of-the-recipes);
+  [components.md](documentation/components.md#convention-public-properties-for-the-view-parameters-of-the-recipes);
   LiveProps only on serializable values.
 - **Translations**: keys `teknoo.east.ux.<component>.<group>.<id>` in the `east_ux` domain, always passed explicitly to
   the `trans` filter; labels supplied by the application keep its default domain.
