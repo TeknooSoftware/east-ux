@@ -29,14 +29,18 @@ use Teknoo\East\Common\Contracts\User\UserInterface;
 use Teknoo\East\UX\Contracts\Menu\MenuGeneratorInterface;
 use Teknoo\East\UX\Contracts\Enum\Menu\Location;
 use Teknoo\East\UX\Object\DTO\Menu\MenuItem;
+use Teknoo\East\UX\Object\DTO\Menu\MenuWindow;
 use Teknoo\East\UX\Service\MenuService;
+use Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType;
 
 use function in_array;
 
 /**
  * Menu generator of the test application for `Location::TopLeft`: a "content" section for every user and an
  * "administration" section for the users granted `ROLE_ADMIN`. Labels are translation keys of the application
- * (default domain).
+ * (default domain). The entries of the "content" section open their window in the page (`MenuWindow`): a floating
+ * `ListWindow` of the items, with the window id of the list page, and a `FormWindow` of a new item, whose `formPath` is
+ * the path of the route of the entry; their pages stay the fallback.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -52,8 +56,45 @@ class ContentMenu implements MenuGeneratorInterface
         }
 
         $menuService->getSection('fixtures.menu.content', $location, 'icon-content')
-            ->addItem(new MenuItem(name: 'fixtures.menu.items', route: 'fixtures_item_list', icon: 'icon-list'))
-            ->addItem(new MenuItem(name: 'fixtures.menu.new_item', route: 'fixtures_item_new'));
+            ->addItem(
+                new MenuItem(
+                    name: 'fixtures.menu.items',
+                    route: 'fixtures_item_list',
+                    icon: 'icon-list',
+                    window: new MenuWindow(
+                        component: 'ListWindow',
+                        title: 'fixtures.menu.items',
+                        props: [
+                            'windowId' => 'items',
+                            'floating' => true,
+                            'closable' => true,
+                            'draggable' => true,
+                            'itemComponent' => 'ItemRow',
+                            'tableHeaders' => ['fixtures.items.name', 'fixtures.items.actions'],
+                            'newFormRoute' => 'fixtures_item_new',
+                            'newFormName' => ItemType::class,
+                            'newButtonLabel' => 'fixtures.items.new',
+                        ],
+                    ),
+                )
+            )
+            ->addItem(
+                new MenuItem(
+                    name: 'fixtures.menu.new_item',
+                    route: 'fixtures_item_new',
+                    window: new MenuWindow(
+                        component: 'FormWindow',
+                        title: 'fixtures.menu.new_item',
+                        props: [
+                            'windowId' => 'menu-new-item',
+                            'formPath' => '/items/new',
+                            'formName' => ItemType::class,
+                            'closable' => true,
+                            'draggable' => true,
+                        ],
+                    ),
+                )
+            );
 
         if (in_array('ROLE_ADMIN', $roles, true)) {
             $menuService->getSection('fixtures.menu.administration', $location)

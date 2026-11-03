@@ -152,3 +152,14 @@ services:
             - '@validator'
         tags:
             - { name: 'teknoo.east.ux.component_rendering.validation', component: 'Teknoo\East\UXBundle\Components\FormWindow' }
+
+    # A `ListWindow` loaded by the component renderer is a floating window: the router checks its `newFormRoute`, the
+    # component factory of Symfony UX its `itemComponent`
+    Teknoo\East\UXBundle\ComponentRendering\Validator\ListWindowPropsValidator:
+        class: 'Teknoo\East\UXBundle\ComponentRendering\Validator\ListWindowPropsValidator'
+        arguments:
+            - '@validator'
+            - '@router'
+            - '@ux.twig_component.component_factory'
+        tags:
+            - { name: 'teknoo.east.ux.component_rendering.validation', component: 'Teknoo\East\UXBundle\Components\ListWindow' }

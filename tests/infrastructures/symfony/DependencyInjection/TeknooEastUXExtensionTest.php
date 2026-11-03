@@ -490,6 +490,32 @@ class TeknooEastUXExtensionTest extends TestCase
         );
     }
 
+    public function testLoadRegistersTheValidationOfTheListWindowProps(): void
+    {
+        $container = new ContainerBuilder();
+        $this->buildExtension()->load([], $container);
+
+        $validator = $container->getDefinition(
+            'Teknoo\\East\\UXBundle\\ComponentRendering\\Validator\\ListWindowPropsValidator'
+        );
+        $this->assertEquals(
+            'Teknoo\\East\\UXBundle\\ComponentRendering\\Validator\\ListWindowPropsValidator',
+            $validator->getClass(),
+        );
+        $this->assertEquals(
+            [
+                new Reference('validator'),
+                new Reference('router'),
+                new Reference('ux.twig_component.component_factory'),
+            ],
+            $validator->getArguments(),
+        );
+        $this->assertEquals(
+            [['component' => 'Teknoo\\East\\UXBundle\\Components\\ListWindow']],
+            $validator->getTag('teknoo.east.ux.component_rendering.validation'),
+        );
+    }
+
     public function testLoadRegistersTheThemeWithTheSessionStorage(): void
     {
         $container = new ContainerBuilder();

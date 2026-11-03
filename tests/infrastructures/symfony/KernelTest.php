@@ -405,6 +405,69 @@ class KernelTest extends TestCase
         );
     }
 
+    public function testRenderMenuBarEntryOpeningAWindow(): void
+    {
+        $this->pushRequest();
+
+        $user = (new User())
+            ->setEmail('jane@teknoo.test')
+            ->setFirstName('Jane')
+            ->setLastName('Tester')
+            ->setRoles(['ROLE_USER', 'ROLE_ADMIN']);
+
+        $crawler = $this->render('MenuBar', ['user' => $user]);
+
+        // A ListWindow: the link is kept, the loader posts to the component renderer imported by the application
+        $items = $crawler->filter('ul.me-auto a.dropdown-item[href="/items/"]');
+        self::assertCount(1, $items);
+        self::assertSame('window-dynamic-loader', $items->attr('data-controller'));
+        self::assertSame('click->window-dynamic-loader#open', $items->attr('data-action'));
+        self::assertSame('/component/render', $items->attr('data-window-dynamic-loader-url-value'));
+        self::assertSame('ListWindow', $items->attr('data-window-dynamic-loader-component-value'));
+        // The title is translated in the domain of the item (the default domain of the application)
+        self::assertSame('All items', $items->attr('data-window-dynamic-loader-title-value'));
+        self::assertSame(
+            [
+                'windowId' => 'items',
+                'floating' => true,
+                'closable' => true,
+                'draggable' => true,
+                'itemComponent' => 'ItemRow',
+                'tableHeaders' => ['fixtures.items.name', 'fixtures.items.actions'],
+                'newFormRoute' => 'fixtures_item_new',
+                'newFormName' => ItemType::class,
+                'newButtonLabel' => 'fixtures.items.new',
+            ],
+            json_decode((string) $items->attr('data-window-dynamic-loader-props-value'), true),
+        );
+
+        // A FormWindow, whose formPath is the href of its link
+        $newItem = $crawler->filter('ul.me-auto a.dropdown-item[href="/items/new"]');
+        self::assertCount(1, $newItem);
+        self::assertSame('window-dynamic-loader', $newItem->attr('data-controller'));
+        self::assertSame('click->window-dynamic-loader#open', $newItem->attr('data-action'));
+        self::assertSame('/component/render', $newItem->attr('data-window-dynamic-loader-url-value'));
+        self::assertSame('FormWindow', $newItem->attr('data-window-dynamic-loader-component-value'));
+        self::assertSame('New item', $newItem->attr('data-window-dynamic-loader-title-value'));
+        self::assertSame(
+            [
+                'windowId' => 'menu-new-item',
+                'formPath' => '/items/new',
+                'formName' => ItemType::class,
+                'closable' => true,
+                'draggable' => true,
+            ],
+            json_decode((string) $newItem->attr('data-window-dynamic-loader-props-value'), true),
+        );
+
+        // The entries without window stay plain links
+        $adminNewItem = $crawler->filter('ul.me-auto a.dropdown-item[href="/admin/items/new"]');
+        self::assertCount(1, $adminNewItem);
+        self::assertNull($adminNewItem->attr('data-controller'));
+        self::assertNull($adminNewItem->attr('data-action'));
+        self::assertCount(2, $crawler->filter('a.dropdown-item[data-controller="window-dynamic-loader"]'));
+    }
+
     public function testRenderThemeSwitcher(): void
     {
         $this->pushRequest();
@@ -527,7 +590,7 @@ class KernelTest extends TestCase
 
         $window = $crawler->filter('div.window[data-live-name-value="ListWindow"]');
         self::assertCount(1, $window);
-        self::assertSame('list-window-refresh live', $window->attr('data-controller'));
+        self::assertSame('list-window-refresh window-close live', $window->attr('data-controller'));
         self::assertCount(2, $crawler->filter('tr.item-row'));
         self::assertCount(1, $crawler->filter('ul.pagination'));
 
@@ -549,6 +612,55 @@ class KernelTest extends TestCase
         self::assertArrayNotHasKey('objectsCollection', $props);
     }
 
+    public function testRenderFloatingListWindowDoesNotBindItsPageToTheUrl(): void
+    {
+        $this->pushRequest('https://localhost/items/');
+
+        $crawler = $this->render(
+            'ListWindow',
+            [
+                'title' => 'Items',
+                'windowId' => 'kernel-floating-list',
+                'itemComponent' => 'ItemRow',
+                'floating' => true,
+                'hidden' => true,
+                'closable' => true,
+                'draggable' => true,
+                'id' => 'kernel-floating-list-window',
+            ],
+        );
+
+        $window = $crawler->filter('div.window.window-floating.d-none[data-live-name-value="ListWindow"]');
+        self::assertCount(1, $window);
+        self::assertStringNotContainsString('h-100', (string) $window->attr('class'));
+        self::assertSame('list-window-refresh window-close window-drag live', $window->attr('data-controller'));
+        self::assertSame('kernel-floating-list', $window->attr('data-form-window'));
+        // The page of a floating window is not bound to the URL (`modifyPage()`)
+        self::assertNull($window->attr('data-live-query-mapping-value'));
+
+        $props = $this->getLiveProps($crawler, 'ListWindow');
+        self::assertTrue($props['floating']);
+        self::assertTrue($props['hidden']);
+        self::assertSame(1, $props['page']);
+
+        // The page of a window in a page stays bound to the URL
+        $crawler = $this->render(
+            'ListWindow',
+            [
+                'title' => 'Items',
+                'itemComponent' => 'ItemRow',
+                'id' => 'kernel-list-window',
+            ],
+        );
+
+        $window = $crawler->filter('div.window.h-100[data-live-name-value="ListWindow"]');
+        self::assertCount(1, $window);
+        self::assertStringNotContainsString('window-floating', (string) $window->attr('class'));
+        self::assertStringNotContainsString('d-none', (string) $window->attr('class'));
+        $mapping = json_decode((string) $window->attr('data-live-query-mapping-value'), true);
+        self::assertSame(['page' => ['name' => 'page']], $mapping);
+    }
+
     public function testDebugAssetMapListsTheAssetsOfTheLibrary(): void
     {
         $application = new Application($this->getKernel());
@@ -562,6 +674,7 @@ class KernelTest extends TestCase
 
         self::assertSame(0, $exitCode, $content);
         self::assertStringContainsString('@teknoo/east-ux/controllers/form_window_controller.js', $content);
+        self::assertStringContainsString('@teknoo/east-ux/controllers/window_dynamic_loader_controller.js', $content);
         self::assertStringContainsString('@teknoo/east-ux/styles/east-ux.css', $content);
         self::assertStringContainsString('@teknoo/east-ux/controllers/theme_controller.js', $content);
         self::assertStringContainsString('@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css', $content);
@@ -601,6 +714,7 @@ class KernelTest extends TestCase
             [
                 'form-window' => 'form_window_controller.js',
                 'form-window-dynamic-loader' => 'form_window_dynamic_loader_controller.js',
+                'window-dynamic-loader' => 'window_dynamic_loader_controller.js',
                 'list-window-refresh' => 'list_window_refresh_controller.js',
                 'window-close' => 'window_close_controller.js',
                 'window-drag' => 'window_drag_controller.js',

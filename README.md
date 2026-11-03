@@ -13,7 +13,7 @@ providing the application-level UI pieces of an East application:
 * Symfony UX Twig and Live Components, with their templates: windows (`Window`, `FormWindow`, `ListWindow`,
   `LoginWindow`), `ObjectList`, `Pagination`, `ConfirmModal`, `Card`, `MenuBar` and `ThemeSwitcher`;
 * their Stimulus controllers and a structural stylesheet, served by AssetMapper without build step;
-* a component renderer endpoint, to load a `FormWindow` dynamically;
+* a component renderer endpoint, to load windows dynamically;
 * a menu service, fed by the menu generators of the application;
 * the [System.css x Bootstrap](https://github.com/TeknooSoftware/system.css-x-bootstrap) theme with its fonts, the Twig
   functions writing its style (legacy, modern) and its mode (light, dark, auto) on `<html>`, and the switch of the
@@ -30,7 +30,7 @@ Documentation
 
 * [Components](documentation/components.md): props, blocks and behaviour of each component.
 * [Live Components and the East bridge](documentation/live-components.md): re-renders through the recipes, the
-  component renderer, security, limitations.
+  component renderer, security.
 * [Stimulus controllers](documentation/stimulus.md): values of each controller and contract with the page.
 * [Menu](documentation/menu.md): menu generators, sections, items and the menu service.
 * [Theming](documentation/theming.md): stylesheet, form theme, template overrides and translations.
@@ -289,7 +289,7 @@ Assets
 
 `assets/package.json` is read by Symfony Flex (the package has the `symfony-ux` keyword) and by StimulusBundle. When
 the library is installed or updated, Flex writes the `@teknoo/east-ux` entries into the application's
-`assets/controllers.json` (the eight controllers) and `importmap.php` (`@teknoo/east-ux/styles/east-ux.css`,
+`assets/controllers.json` (the nine controllers) and `importmap.php` (`@teknoo/east-ux/styles/east-ux.css`,
 `@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css`, and `@hotwired/stimulus` and `bootstrap` when they
 are missing), each file only if it already exists: commit both files
 first, then require the library and commit the entries Flex adds. A later `composer install` leaves them unchanged.

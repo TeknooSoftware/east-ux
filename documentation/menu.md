@@ -13,7 +13,8 @@ The menu classes are universal (`src/`, namespace `Teknoo\East\UX\`), only the c
 | `Contracts\Enum\Menu\Location`                    | `TopLeft` (`top-left`), `TopRight` (`top-right`)                        |
 | `Contracts\Enum\Menu\Sorting`                     | `Append` (`append`), `Prepend` (`prepend`)                              |
 | `Object\DTO\Menu\MenuSection`                     | A section: `name`, `position`, `icon`, `rawLabel`, `translationDomain`, its items |
-| `Object\DTO\Menu\MenuItem`                        | An entry: `name`, `route`, `routeParameters`, `icon`, `divider`, `rawLabel`, `attributes`, `translationDomain` |
+| `Object\DTO\Menu\MenuItem`                        | An entry: `name`, `route`, `routeParameters`, `icon`, `divider`, `rawLabel`, `attributes`, `translationDomain`, `window` |
+| `Object\DTO\Menu\MenuWindow`                      | The window opened in the page by an entry: `component`, `title`, `props` |
 | `Service\Menu\ThemeMenuGenerator`                 | The generator of the theme switcher (see [theme.md](theme.md#in-the-menu-bar)) |
 
 ## Writing a generator
@@ -94,6 +95,7 @@ new MenuItem(
     rawLabel: false,                // name displayed as is instead of being translated
     attributes: [],                 // HTML attributes of the link or the button, escaped
     translationDomain: null,        // domain of the name, the default domain of the application when null
+    window: null,                   // MenuWindow: the window opened in the page instead of following the link
 );
 ```
 
@@ -118,6 +120,58 @@ new MenuItem(
   `<li><hr class="dropdown-divider"></li>`.
 - Icons: `icon` holds the CSS classes of an icon of the application's icon set, rendered as
   `<span class="menu-icon <icon>" aria-hidden="true"></span>`; East UX's stylesheet only sizes and aligns `.menu-icon`.
+
+### Entries opening a window
+
+An item with a route and a `window` (`Teknoo\East\UX\Object\DTO\Menu\MenuWindow`) opens its window in the current
+page, rendered by the component renderer ([live-components.md](live-components.md#dynamic-windows)), instead of
+leaving the page:
+
+```php
+new MenuItem(
+    name: 'app.menu.items',
+    route: 'app_item_list',
+    window: new MenuWindow(
+        component: 'ListWindow',            // a component accepted by the component renderer
+        title: 'app.item.title.list',       // translation key, translated in the domain of the item
+        props: [                            // props of the component, a JSON object (none by default)
+            'windowId' => 'app-items',
+            'floating' => true,
+            'closable' => true,
+            'draggable' => true,
+            'itemComponent' => 'ItemRow',
+            'tableHeaders' => ['app.item.table.name', 'app.item.table.actions'],
+            'newFormRoute' => 'app_item_new',
+            'newFormName' => 'App\\Form\\Type\\ItemType',
+        ],
+    ),
+);
+```
+
+- The link keeps its `href`: it is the fallback, followed without JavaScript, on a click with the middle button or a
+  modifier key, and when the window can not be loaded. `MenuBar` adds the `window-dynamic-loader` controller to the
+  link, merged with the `data-controller` and the `data-action` of its `attributes`, and its values `url`
+  (`path('_teknoo_east_ux_component_render')`), `component`, `title` (translated) and `props` (JSON, `{}` when
+  empty). The loader adds `originalPath` (the path and the query of the `href`), `hidden: true` and the title to the
+  props ([stimulus.md](stimulus.md#window-dynamic-loader)).
+- The application must import the routes of the bundle (`@TeknooEastUXBundle/config/routes.yaml`, see
+  [live-components.md](live-components.md#application-setup)): without them,
+  `path('_teknoo_east_ux_component_render')` throws while the menu bar is rendered, and the page is not rendered (an
+  error).
+- `window-dynamic-loader` must be enabled in the `assets/controllers.json` of the application
+  ([stimulus.md](stimulus.md#with-assetmapper-and-stimulusbundle)).
+- The layout of the application must hold `<div id="dynamic-modals"></div>` once per page
+  ([stimulus.md](stimulus.md#contract-with-the-page)): without it, the entries follow their link.
+- The props are checked by the validator of the component: a prop it refuses gives a 400, and the link is followed.
+- A `ListWindow` needs `floating: true` (required by `ListWindowPropsValidator`) and should be `closable` and
+  `draggable`: `window-drag` brings a floating window to the front ([components.md](components.md#listwindow)).
+- A `FormWindow` needs `formPath` (required by `FormWindowPropsValidator`), and the `href` of its item should equal
+  `formPath`: the window is re-rendered by the recipe of `formPath`, which is also the page opened when this render
+  fails. A generator of the infrastructure gets it from Symfony's `UrlGeneratorInterface`.
+- `title` is a translation key, translated in the `translationDomain` of the item (the default domain when null).
+- `windowId` names the window in the page: a second click opens the window already loaded instead of loading it again.
+- `MenuWindow` is universal (`src/`): a generator of the domain can build it, with its form types written as strings.
+- The window of an item without route is ignored: the item is a button, without loader.
 
 ### The user dropdown
 

@@ -8,9 +8,9 @@ application:
 
 - Symfony UX Twig and Live Components (`Window`, `FormWindow`, `ListWindow`, `LoginWindow`, `MenuBar`, `ObjectList`,
   `Pagination`, `ConfirmModal`, `Card`, `ThemeSwitcher`) and their templates
-- Eight Stimulus controllers and a structural stylesheet, served by AssetMapper
+- Nine Stimulus controllers and a structural stylesheet, served by AssetMapper
 - A component renderer endpoint (`POST /render`) rendering the component and the props of its JSON body, used to load a
-  `FormWindow` dynamically; the props are validated by the validator of the component (tag
+  `FormWindow` or a floating `ListWindow` dynamically; the props are validated by the validator of the component (tag
   `teknoo.east.ux.component_rendering.validation`), a component without validator is refused by default
 - A menu service fed by the menu generators of the application
 - The System.css x Bootstrap theme (stylesheet, fonts), its Twig functions (`east_ux_theme_*`, class and attributes of
@@ -37,7 +37,8 @@ re-implements them.
 
 - `src/`: universal code, namespace `Teknoo\East\UX\`:
     - menu: `Contracts/Menu/` (`MenuGeneratorInterface`), `Contracts/Enum/Menu/` (`Location`, `Sorting`),
-      `Object/DTO/Menu/` (`MenuSection`, `MenuItem`), `Service/MenuService`, `Service/Menu/ThemeMenuGenerator`;
+      `Object/DTO/Menu/` (`MenuSection`, `MenuItem`, `MenuWindow`), `Service/MenuService`,
+      `Service/Menu/ThemeMenuGenerator`;
     - theme: `Contracts/Enum/Theme/` (`Style`, `Mode`), `Contracts/Theme/ThemePreferenceStorageInterface`,
       `Object/DTO/Theme/ThemePreference`, `Service/ThemeService`.
 - `infrastructures/symfony/`: the bundle, namespace `Teknoo\East\UXBundle\`.
@@ -47,7 +48,8 @@ re-implements them.
     - `Controller/`: the component renderer and the theme updater (`ThemePreferenceUpdater`).
     - `Theme/`: `SessionThemePreferenceStorage`; `Twig/`: `ThemeExtension` (the `east_ux_theme_*` functions).
     - `ComponentRendering/`, `Contracts/ComponentRendering/`: the validation of the props of the rendered components
-      (`PropsValidatorInterface`, `PropsValidatorRegistry`, `FormWindowPropsValidator`, the exceptions).
+      (`PropsValidatorInterface`, `PropsValidatorRegistry`, `FormWindowPropsValidator`, `ListWindowPropsValidator`, the
+      exceptions).
     - `config/`: `services.yaml`, `routes.yaml` (component renderer), `theme_routes.yaml` (theme updater, public),
       `di.php`, `twig.php`.
     - `templates/`: Twig namespace `@TeknooEastUX` (`components/<Name>.html.twig`, `component_renderer.html.twig`).
@@ -56,7 +58,7 @@ re-implements them.
   `dist/styles/east-ux.css`, `dist/system-theme/` copied from the theme repository by `make system-theme`, never edited
   here), mapped in AssetMapper as `@teknoo/east-ux`.
 - `documentation/`: components, Live Components and the East bridge, Stimulus, menu, theming, System.css theme.
-- `features/`: Behat features (components rendered by East recipes, dynamic form windows, menu, theme).
+- `features/`: Behat features (components rendered by East recipes, dynamic form and list windows, menu, theme).
 - `tests/`: test suites:
     - `universal/`: menu and theme tests (`Teknoo\Tests\East\UX\`).
     - `infrastructures/symfony/`: components, controller, bundle, DI and kernel tests (`Teknoo\Tests\East\UXBundle\`).
@@ -98,8 +100,9 @@ All verification must be performed via the provided `Makefile`.
 - **Components**: no non-public property named like a view parameter of the East recipes (`objectInstance`,
   `objectsCollection`, `pageCount`, `formView`, ...), except the private `form` and `formView` that `ListWindow`
   inherits from Symfony UX's `ComponentWithFormTrait` (a `ListWindow` can therefore not be placed in a page rendered
-  by `RenderForm`, see [documentation/live-components.md](documentation/live-components.md#limitations)); LiveProps
-  only on serializable values.
+  by `RenderForm`, see
+  [documentation/live-components.md](documentation/live-components.md#how-a-re-render-reaches-the-east-recipe));
+  LiveProps only on serializable values.
 - **Translations**: keys `teknoo.east.ux.<component>.<group>.<id>` in the `east_ux` domain, always passed explicitly to
   the `trans` filter; labels supplied by the application keep its default domain.
 - **Stimulus**: user-facing texts and protocol names are values with an English default; identifiers are the short

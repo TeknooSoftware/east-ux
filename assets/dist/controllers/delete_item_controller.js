@@ -14,7 +14,7 @@ export default class extends Controller {
     delete(event) {
         event.preventDefault();
 
-        const modalElement = document.getElementById(this.modalIdValue);
+        const modalElement = this.findModal();
         if (!modalElement) {
             return;
         }
@@ -51,6 +51,19 @@ export default class extends Controller {
         modalElement.addEventListener('hidden.bs.modal', () => abortController.abort(), { once: true });
 
         modal.show();
+    }
+
+    // Every list window renders its own modal with the same id: the one of the window of the row comes first
+    findModal() {
+        const windowElement = this.element.closest('.window');
+        if (windowElement && this.modalIdValue) {
+            const modalElement = windowElement.querySelector(`#${CSS.escape(this.modalIdValue)}`);
+            if (modalElement) {
+                return modalElement;
+            }
+        }
+
+        return document.getElementById(this.modalIdValue);
     }
 
     async executeDelete() {

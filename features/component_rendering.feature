@@ -26,6 +26,13 @@ Feature: Components of East UX in the pages rendered by East recipes
     And the list window must be on the page 2 of 2
     And the "ListWindow" must be re-rendered by the route "/items/"
 
+  Scenario: A list window re-rendered through the recipe of its page keeps its window props
+    Given I am authenticated as "user"
+    When I open the page "/items/"
+    And the list window is re-rendered on the page 2
+    Then the response status must be 200
+    And the list window "items" must be titled "Items"
+
   Scenario: The Live Component endpoint requires an authenticated user
     Given I am authenticated as "user"
     When I open the page "/items/"

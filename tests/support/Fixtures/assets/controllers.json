@@ -9,6 +9,10 @@
                 "enabled": true,
                 "fetch": "eager"
             },
+            "window-dynamic-loader": {
+                "enabled": true,
+                "fetch": "eager"
+            },
             "list-window-refresh": {
                 "enabled": true,
                 "fetch": "eager"
