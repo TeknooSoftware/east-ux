@@ -1,5 +1,12 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.3.1] - Release pending
+### Alpha Release
+
+#### Fixes
+- `FormWindow`: the re-render of an "Edit" window no longer writes `?objectId=<id>` in the URL of the page; nothing
+  read it there (`objectId` is no longer `url: true`).
+
 ## [0.3.0] - 2026-11-03
 ### Alpha Release
 

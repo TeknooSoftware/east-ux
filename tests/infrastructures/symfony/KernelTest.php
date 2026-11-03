@@ -570,6 +570,30 @@ class KernelTest extends TestCase
         self::assertNull($crawler->filter('input[name="item[name]"]')->attr('class'));
     }
 
+    public function testRenderFormWindowDoesNotBindTheObjectIdToTheUrl(): void
+    {
+        $this->pushRequest('https://localhost/items/1/edit');
+
+        $crawler = $this->render(
+            'FormWindow',
+            [
+                'title' => 'Edit item',
+                'windowId' => 'kernel-edit-form',
+                'formName' => ItemType::class,
+                'objectInstance' => new Item('1', 'Kernel item'),
+                'objectId' => '1',
+                'formPath' => '/items/1/edit',
+                'id' => 'kernel-edit-form-window',
+            ],
+        );
+
+        $window = $crawler->filter('div.window.form-window[data-live-name-value="FormWindow"]');
+        self::assertCount(1, $window);
+        // A re-render of the window writes nothing in the URL of the page (`?objectId=`)
+        self::assertNull($window->attr('data-live-query-mapping-value'));
+        self::assertSame('1', $this->getLiveProps($crawler, 'FormWindow')['objectId']);
+    }
+
     public function testRenderListWindow(): void
     {
         $this->pushRequest('https://localhost/items/');

@@ -77,7 +77,7 @@ final class FormWindow extends AbstractWindow
     #[LiveProp]
     public string $windowId = '';
 
-    #[LiveProp(url: true)]
+    #[LiveProp]
     public ?string $objectId = null;
 
     public ?FormView $formView = null;
