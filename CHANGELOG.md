@@ -24,6 +24,8 @@
 - Stimulus controller `window-dynamic-loader`: a link loads its window through the component renderer, reuses the
   window already open with the same `windowId`, and follows its `href` on a modifier click or a failure. Applications
   add it to their `assets/controllers.json`.
+- `MenuItem::$window` (`MenuWindow`: component, title key, props): the entry opens its window in the page through
+  `window-dynamic-loader`, its link stays the fallback. Requires the routes of the bundle.
 
 ## [0.2.2] - 2026-10-24
 ### Alpha Release

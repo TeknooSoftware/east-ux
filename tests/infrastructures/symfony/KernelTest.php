@@ -405,6 +405,69 @@ class KernelTest extends TestCase
         );
     }
 
+    public function testRenderMenuBarEntryOpeningAWindow(): void
+    {
+        $this->pushRequest();
+
+        $user = (new User())
+            ->setEmail('jane@teknoo.test')
+            ->setFirstName('Jane')
+            ->setLastName('Tester')
+            ->setRoles(['ROLE_USER', 'ROLE_ADMIN']);
+
+        $crawler = $this->render('MenuBar', ['user' => $user]);
+
+        // A ListWindow: the link is kept, the loader posts to the component renderer imported by the application
+        $items = $crawler->filter('ul.me-auto a.dropdown-item[href="/items/"]');
+        self::assertCount(1, $items);
+        self::assertSame('window-dynamic-loader', $items->attr('data-controller'));
+        self::assertSame('click->window-dynamic-loader#open', $items->attr('data-action'));
+        self::assertSame('/component/render', $items->attr('data-window-dynamic-loader-url-value'));
+        self::assertSame('ListWindow', $items->attr('data-window-dynamic-loader-component-value'));
+        // The title is translated in the domain of the item (the default domain of the application)
+        self::assertSame('All items', $items->attr('data-window-dynamic-loader-title-value'));
+        self::assertSame(
+            [
+                'windowId' => 'items',
+                'floating' => true,
+                'closable' => true,
+                'draggable' => true,
+                'itemComponent' => 'ItemRow',
+                'tableHeaders' => ['fixtures.items.name', 'fixtures.items.actions'],
+                'newFormRoute' => 'fixtures_item_new',
+                'newFormName' => ItemType::class,
+                'newButtonLabel' => 'fixtures.items.new',
+            ],
+            json_decode((string) $items->attr('data-window-dynamic-loader-props-value'), true),
+        );
+
+        // A FormWindow, whose formPath is the href of its link
+        $newItem = $crawler->filter('ul.me-auto a.dropdown-item[href="/items/new"]');
+        self::assertCount(1, $newItem);
+        self::assertSame('window-dynamic-loader', $newItem->attr('data-controller'));
+        self::assertSame('click->window-dynamic-loader#open', $newItem->attr('data-action'));
+        self::assertSame('/component/render', $newItem->attr('data-window-dynamic-loader-url-value'));
+        self::assertSame('FormWindow', $newItem->attr('data-window-dynamic-loader-component-value'));
+        self::assertSame('New item', $newItem->attr('data-window-dynamic-loader-title-value'));
+        self::assertSame(
+            [
+                'windowId' => 'menu-new-item',
+                'formPath' => '/items/new',
+                'formName' => ItemType::class,
+                'closable' => true,
+                'draggable' => true,
+            ],
+            json_decode((string) $newItem->attr('data-window-dynamic-loader-props-value'), true),
+        );
+
+        // The entries without window stay plain links
+        $adminNewItem = $crawler->filter('ul.me-auto a.dropdown-item[href="/admin/items/new"]');
+        self::assertCount(1, $adminNewItem);
+        self::assertNull($adminNewItem->attr('data-controller'));
+        self::assertNull($adminNewItem->attr('data-action'));
+        self::assertCount(2, $crawler->filter('a.dropdown-item[data-controller="window-dynamic-loader"]'));
+    }
+
     public function testRenderThemeSwitcher(): void
     {
         $this->pushRequest();

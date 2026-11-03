@@ -28,6 +28,7 @@ namespace Teknoo\Tests\East\UX\Object\DTO\Menu;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Teknoo\East\UX\Object\DTO\Menu\MenuItem;
+use Teknoo\East\UX\Object\DTO\Menu\MenuWindow;
 
 /**
  * Data transfer object for menu item data.
@@ -130,5 +131,34 @@ class MenuItemTest extends TestCase
         );
         $this->assertSame('app_domain', $item->translationDomain);
         $this->assertFalse($item->divider);
+    }
+
+    public function testDefaultWindowIsNull(): void
+    {
+        $item = new MenuItem(
+            name: 'key',
+            route: 'app_route',
+        );
+
+        $this->assertNull($item->window);
+    }
+
+    public function testWindow(): void
+    {
+        $window = new MenuWindow(
+            component: 'ListWindow',
+            title: 'app.menu.items',
+            props: ['windowId' => 'items', 'floating' => true],
+        );
+
+        $item = new MenuItem(
+            name: 'app.menu.items',
+            route: 'app_item_list',
+            window: $window,
+        );
+
+        $this->assertSame($window, $item->window);
+        $this->assertSame('app_item_list', $item->route);
+        $this->assertSame([], $item->attributes);
     }
 }

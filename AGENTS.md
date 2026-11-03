@@ -37,7 +37,8 @@ re-implements them.
 
 - `src/`: universal code, namespace `Teknoo\East\UX\`:
     - menu: `Contracts/Menu/` (`MenuGeneratorInterface`), `Contracts/Enum/Menu/` (`Location`, `Sorting`),
-      `Object/DTO/Menu/` (`MenuSection`, `MenuItem`), `Service/MenuService`, `Service/Menu/ThemeMenuGenerator`;
+      `Object/DTO/Menu/` (`MenuSection`, `MenuItem`, `MenuWindow`), `Service/MenuService`,
+      `Service/Menu/ThemeMenuGenerator`;
     - theme: `Contracts/Enum/Theme/` (`Style`, `Mode`), `Contracts/Theme/ThemePreferenceStorageInterface`,
       `Object/DTO/Theme/ThemePreference`, `Service/ThemeService`.
 - `infrastructures/symfony/`: the bundle, namespace `Teknoo\East\UXBundle\`.

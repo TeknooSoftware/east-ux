@@ -54,6 +54,7 @@ use function trim;
 
 use const JSON_THROW_ON_ERROR;
 use const PHP_URL_PATH;
+use const PHP_URL_QUERY;
 
 /**
  * Behat context of East UX: drives the test application (`Teknoo\Tests\East\UX\Support\Fixtures\Kernel`, also booted
@@ -318,6 +319,24 @@ class FeatureContext implements Context
     }
 
     /**
+     * The link of an entry of a section of the menu bar of the current page
+     */
+    private function findMenuEntry(string $section, string $entry): Crawler
+    {
+        $sections = $this->getCrawler()->filter('nav.navbar li.nav-item.dropdown')->reduce(
+            static fn (Crawler $item): bool => $item->filter('a.dropdown-toggle')->text() === $section,
+        );
+        Assert::assertCount(1, $sections, "The section $section is not rendered once");
+
+        $link = $sections->filter('ul.dropdown-menu > li > a.dropdown-item')->reduce(
+            static fn (Crawler $link): bool => $link->text() === $entry,
+        );
+        Assert::assertCount(1, $link, "The entry $entry of the section $section is not a link rendered once");
+
+        return $link;
+    }
+
+    /**
      * @param array<string, mixed> $props
      */
     private function callComponentRendererForAListWindow(array $props): void
@@ -480,6 +499,48 @@ class FeatureContext implements Context
         unset($props[$prop]);
 
         $this->callComponentRendererForAListWindow($props);
+    }
+
+    /**
+     * Sends the request of the `window-dynamic-loader` Stimulus controller of an entry of the menu bar of the current
+     * page: the props of the link, `originalPath` (the path and the query of its href), `hidden` and its title
+     */
+    #[When('the component renderer is asked for the window of the entry :entry of the section :section')]
+    public function theComponentRendererIsAskedForTheWindowOfTheEntryOfTheSection(string $entry, string $section): void
+    {
+        $link = $this->findMenuEntry($section, $entry);
+
+        $props = json_decode(
+            (string) $link->attr('data-window-dynamic-loader-props-value'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        Assert::assertIsArray($props, "The props of the entry $entry must be a JSON object");
+
+        $href = (string) $link->attr('href');
+        $originalPath = (string) parse_url($href, PHP_URL_PATH);
+        $query = (string) parse_url($href, PHP_URL_QUERY);
+        if ('' !== $query) {
+            $originalPath .= '?' . $query;
+        }
+
+        $props['originalPath'] = $originalPath;
+        $props['hidden'] = true;
+
+        $title = (string) $link->attr('data-window-dynamic-loader-title-value');
+        if ('' !== $title) {
+            $props['title'] = $title;
+        }
+
+        $this->callComponentRenderer(
+            (string) json_encode(
+                [
+                    'component' => (string) $link->attr('data-window-dynamic-loader-component-value'),
+                    'props' => $props,
+                ],
+                JSON_THROW_ON_ERROR,
+            ),
+        );
     }
 
     #[When('the component renderer receives the body :body')]
@@ -719,6 +780,39 @@ class FeatureContext implements Context
                 },
             ),
         );
+    }
+
+    /**
+     * The link keeps its href (the fallback) and carries the `window-dynamic-loader` controller and its values
+     */
+    #[Then('the entry :entry of the section :section must open a :component window titled :title')]
+    public function theEntryOfTheSectionMustOpenAWindowTitled(
+        string $entry,
+        string $section,
+        string $component,
+        string $title,
+    ): void {
+        $link = $this->findMenuEntry($section, $entry);
+
+        Assert::assertNotEmpty($link->attr('href'));
+        Assert::assertSame('window-dynamic-loader', $link->attr('data-controller'));
+        Assert::assertSame('click->window-dynamic-loader#open', $link->attr('data-action'));
+        Assert::assertSame('/component/render', $link->attr('data-window-dynamic-loader-url-value'));
+        Assert::assertSame($component, $link->attr('data-window-dynamic-loader-component-value'));
+        Assert::assertSame($title, $link->attr('data-window-dynamic-loader-title-value'));
+        Assert::assertIsArray(
+            json_decode((string) $link->attr('data-window-dynamic-loader-props-value'), true),
+        );
+    }
+
+    #[Then('the entry :entry of the section :section must be a plain link')]
+    public function theEntryOfTheSectionMustBeAPlainLink(string $entry, string $section): void
+    {
+        $link = $this->findMenuEntry($section, $entry);
+
+        Assert::assertNotEmpty($link->attr('href'));
+        Assert::assertNull($link->attr('data-controller'));
+        Assert::assertNull($link->attr('data-action'));
     }
 
     #[When('I choose the theme :body')]

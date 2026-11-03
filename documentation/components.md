@@ -241,6 +241,11 @@ alert-danger" role="alert">`: the id is a stable hook for the tests of the appli
 - The `Location::TopLeft` sections are rendered on the left (block `left_sections`), the `Location::TopRight` ones on
   the right (block `right_sections`), as Bootstrap dropdowns. See [menu.md](menu.md) for the generators, the
   dividers, the buttons and the labels that are not translation keys.
+- An entry with a route and a `MenuWindow` keeps its link (the fallback) and gets the `window-dynamic-loader`
+  controller, merged with its own `data-controller` and `data-action`, and its values: the URL of the component
+  renderer (`path('_teknoo_east_ux_component_render')`: the application must import the bundle's routes), the
+  component, the title translated in the domain of the entry and the props in JSON (`{}` when empty). A click opens
+  the window in the page ([menu.md](menu.md#entries-opening-a-window)).
 
 ## ObjectList
 
