@@ -1,5 +1,12 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.3.1] - Release pending
+### Alpha Release
+
+#### Fixes
+- `window-drag`: a window moved by a drag stays in the viewport when its content grows (a re-render, a longer page);
+  a short list moved to the bottom of the screen went past it.
+
 ## [0.3.0] - 2026-11-03
 ### Alpha Release
 

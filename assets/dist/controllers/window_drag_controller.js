@@ -23,9 +23,16 @@ export default class extends Controller {
         this.element.addEventListener('focusin', this.boundBringToFront);
         this.element.addEventListener('window:open', this.boundBringToFront);
         this.element.addEventListener('form-window:open', this.boundBringToFront);
+
+        // A window moved by a drag keeps its position when its content grows (a re-render, a longer page): it is
+        // constrained to the viewport again, as during the drag
+        this.resizeObserver = new ResizeObserver(() => this.onResize());
+        this.resizeObserver.observe(this.element);
     }
 
     disconnect() {
+        this.resizeObserver.disconnect();
+
         document.removeEventListener('mousemove', this.boundMouseMove);
         document.removeEventListener('mouseup', this.boundMouseUp);
 
@@ -74,12 +81,7 @@ export default class extends Controller {
         this.startX = event.clientX;
         this.startY = event.clientY;
 
-        // The title bar never goes under the fixed menu bar of the page
-        this.minTop = 0;
-        const menuBar = document.querySelector('.navbar.fixed-top');
-        if (menuBar) {
-            this.minTop = menuBar.getBoundingClientRect().bottom;
-        }
+        this.readMinTop();
 
         // On first drag, convert from centered position to absolute position
         if (!this.hasBeenDragged) {
@@ -109,10 +111,34 @@ export default class extends Controller {
         const deltaX = event.clientX - this.startX;
         const deltaY = event.clientY - this.startY;
 
-        let newLeft = this.startLeft + deltaX;
-        let newTop = this.startTop + deltaY;
+        this.keepInViewport(this.startLeft + deltaX, this.startTop + deltaY);
+    }
 
-        // Constrain to viewport
+    // Only a window with an absolute position, set by a first drag: before, the CSS of the window keeps it in the
+    // viewport. A closed window (`d-none`) has no size to check
+    onResize() {
+        if (this.isDragging || '' === this.element.style.top || this.element.classList.contains('d-none')) {
+            return;
+        }
+
+        this.readMinTop();
+        this.keepInViewport(parseInt(this.element.style.left) || 0, parseInt(this.element.style.top) || 0);
+    }
+
+    // The title bar never goes under the fixed menu bar of the page
+    readMinTop() {
+        this.minTop = 0;
+        const menuBar = document.querySelector('.navbar.fixed-top');
+        if (menuBar) {
+            this.minTop = menuBar.getBoundingClientRect().bottom;
+        }
+    }
+
+    // Constrain to viewport
+    keepInViewport(left, top) {
+        let newLeft = left;
+        let newTop = top;
+
         const windowWidth = this.element.offsetWidth;
         const windowHeight = this.element.offsetHeight;
         const viewportWidth = window.innerWidth;

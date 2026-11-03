@@ -210,7 +210,8 @@ ignores the clicks on `.close` and `.resize`, converts the centred position of t
 `top` on the first drag, adds the class `dragging`, follows `mousemove` on `document` within the viewport and stops on
 `mouseup`. The top of the window never goes above the bottom of the fixed menu bar (`.navbar.fixed-top`, the
 `MenuBar`), or of the viewport without menu bar, even when the window is higher than the viewport: its title bar stays
-reachable.
+reachable. Once dragged, the window is constrained to the viewport again each time its size changes (a
+`ResizeObserver`): a short list moved to the bottom of the screen stays on it when a re-render makes it longer.
 
 `connect()` also binds `bringToFront()` on the `mousedown`, `focusin`, `window:open` and `form-window:open` events of
 the window. `bringToFront()` only acts on a floating window (`.window.window-floating` or
@@ -220,7 +221,8 @@ closed windows (`d-none`) are not counted, so n stays under the cap of the `z-in
 counted even while it is still hidden, on `window:open`. The
 `z-index` of `east-ux.css` follows the order ([theming.md](theming.md#floating-windows)). A floating window without
 `window-drag` is never brought to the front: a floating `ListWindow` opened from a menu must be `draggable`, as a
-`FormWindow` overlay is. `disconnect()` removes the listeners of the window and of `document`.
+`FormWindow` overlay is. `disconnect()` removes the listeners of the window and of `document`, and the
+`ResizeObserver`.
 
 ### The style of a Live window
 
