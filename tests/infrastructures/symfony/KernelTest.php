@@ -611,6 +611,7 @@ class KernelTest extends TestCase
 
         self::assertSame(0, $exitCode, $content);
         self::assertStringContainsString('@teknoo/east-ux/controllers/form_window_controller.js', $content);
+        self::assertStringContainsString('@teknoo/east-ux/controllers/window_dynamic_loader_controller.js', $content);
         self::assertStringContainsString('@teknoo/east-ux/styles/east-ux.css', $content);
         self::assertStringContainsString('@teknoo/east-ux/controllers/theme_controller.js', $content);
         self::assertStringContainsString('@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css', $content);
@@ -650,6 +651,7 @@ class KernelTest extends TestCase
             [
                 'form-window' => 'form_window_controller.js',
                 'form-window-dynamic-loader' => 'form_window_dynamic_loader_controller.js',
+                'window-dynamic-loader' => 'window_dynamic_loader_controller.js',
                 'list-window-refresh' => 'list_window_refresh_controller.js',
                 'window-close' => 'window_close_controller.js',
                 'window-drag' => 'window_drag_controller.js',

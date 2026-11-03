@@ -17,14 +17,15 @@ export default class extends Controller {
 
     connect() {
         // Listen for custom open events: `form-window:open` (form-window-dynamic-loader) and `window:open`
-        // (the application)
+        // (window-dynamic-loader or the application)
         this.boundOpen = this.open.bind(this);
         this.element.addEventListener('form-window:open', this.boundOpen);
         this.element.addEventListener('window:open', this.boundOpen);
 
         // A Live re-render morphs the root element without re-applying the changes made by JavaScript: its `style`
         // (position after a drag, cascade offset, stacking order) is kept across the renders. The hooks are
-        // registered now, so the first render, on opening, keeps the offset set before `window:open`
+        // registered now, so the first render, on opening, keeps the offset set by window-dynamic-loader before
+        // `window:open`
         this.boundKeepStyle = this.keepStyle.bind(this);
         this.boundRestoreStyle = this.restoreStyle.bind(this);
         getComponent(this.element).then((component) => {

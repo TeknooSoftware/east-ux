@@ -8,7 +8,7 @@ application:
 
 - Symfony UX Twig and Live Components (`Window`, `FormWindow`, `ListWindow`, `LoginWindow`, `MenuBar`, `ObjectList`,
   `Pagination`, `ConfirmModal`, `Card`, `ThemeSwitcher`) and their templates
-- Eight Stimulus controllers and a structural stylesheet, served by AssetMapper
+- Nine Stimulus controllers and a structural stylesheet, served by AssetMapper
 - A component renderer endpoint (`POST /render`) rendering the component and the props of its JSON body, used to load a
   `FormWindow` or a floating `ListWindow` dynamically; the props are validated by the validator of the component (tag
   `teknoo.east.ux.component_rendering.validation`), a component without validator is refused by default

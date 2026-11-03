@@ -49,7 +49,7 @@ A floating `ListWindow` (prop `floating`) and a `FormWindow` overlay (closable a
 | Property                  | Set by                                  | Use                                                            |
 |---------------------------|-----------------------------------------|----------------------------------------------------------------|
 | `--east-ux-window-top`    | The application (default `4rem`)        | Height kept free for the fixed menu bar: the top of a floating `ListWindow`, the space where a `FormWindow` overlay is centred, and their `max-height` |
-| `--east-ux-window-offset` | The application (default `0rem`)        | Shift of the window to the bottom and to the right, so that the windows opened one after the other do not cover each other; the `max-height` of the window is reduced so that it stays in the viewport |
+| `--east-ux-window-offset` | `window-dynamic-loader`, or the application (default `0rem`) | Shift of the window to the bottom and to the right, so that the windows opened one after the other do not cover each other (the cascade of `window-dynamic-loader`, [stimulus.md](stimulus.md#window-dynamic-loader)); the `max-height` of the window is reduced so that it stays in the viewport |
 | `--east-ux-window-order`  | `window-drag` (default `1`)             | Stacking order of the window, rewritten from 1 to n on the shown windows when a window is brought to the front ([stimulus.md](stimulus.md#window-drag)) |
 
 The floating windows share one `z-index` scale, `calc(1000 + min(var(--east-ux-window-order, 1), 29))`, from 1001

@@ -105,8 +105,9 @@ loads the object, builds the form and renders it through the East bridge.
 ### List windows
 
 A `ListWindow` loaded by the renderer floats over the current page (`floating`), so several lists are open together.
-Its body names the path of its list recipe in `originalPath`: in the renderer, the current request is
-`POST /component/render`, the path that `LiveTrait` would keep otherwise.
+A link with the `window-dynamic-loader` controller ([stimulus.md](stimulus.md#window-dynamic-loader)) sends its body.
+This body names the path of its list recipe in `originalPath`, the path of the link: in the renderer, the current
+request is `POST /component/render`, the path that `LiveTrait` would keep otherwise.
 
 ```http
 POST /component/render
@@ -120,11 +121,11 @@ X-Requested-With: XMLHttpRequest
  "newFormRoute": "app_item_new"}}
 ```
 
-The window is rendered hidden and without list. The `list-window-refresh` controller opens it on `window:open`: it sets
-`hidden` to false and re-renders the window, and East Foundation re-routes this re-render to the recipe of
-`originalPath` (the list recipe), which loads the page of objects. The page of a floating window is not bound to the
-URL: its pagination re-renders it through the same recipe without changing the URL of the page holding it
-([components.md](components.md#listwindow)).
+The window is rendered hidden and without list. The `list-window-refresh` controller opens it on the `window:open`
+dispatched by the loader: it sets `hidden` to false and re-renders the window, and East Foundation re-routes this
+re-render to the recipe of `originalPath` (the list recipe), which loads the page of objects. The page of a floating
+window is not bound to the URL: its pagination re-renders it through the same recipe without changing the URL of the
+page holding it ([components.md](components.md#listwindow)).
 
 ### The component renderer
 

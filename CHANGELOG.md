@@ -21,6 +21,9 @@
 - `ListWindow` loadable by the component renderer (`ListWindowPropsValidator`): `windowId`, `originalPath`,
   `itemComponent` (a known component) and `floating` (`true`) required, the window and list props optional; any other
   prop (`closeRedirectUrl`, the view parameters of the recipes, ...) is refused (400).
+- Stimulus controller `window-dynamic-loader`: a link loads its window through the component renderer, reuses the
+  window already open with the same `windowId`, and follows its `href` on a modifier click or a failure. Applications
+  add it to their `assets/controllers.json`.
 
 ## [0.2.2] - 2026-10-24
 ### Alpha Release

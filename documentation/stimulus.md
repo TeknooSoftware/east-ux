@@ -1,6 +1,6 @@
 # Stimulus controllers
 
-East UX ships eight Stimulus controllers, hand-written ES modules without build step, in `assets/dist/controllers/`.
+East UX ships nine Stimulus controllers, hand-written ES modules without build step, in `assets/dist/controllers/`.
 They work next to the `live` controller of Symfony UX (see [live-components.md](live-components.md)). Every text shown
 to the user and every protocol name is a Stimulus value with an English default, so an application translates or
 adapts them from its templates.
@@ -26,6 +26,7 @@ the library and commit the entries Flex adds):
         "@teknoo/east-ux": {
             "form-window": {"enabled": true, "fetch": "eager"},
             "form-window-dynamic-loader": {"enabled": true, "fetch": "eager"},
+            "window-dynamic-loader": {"enabled": true, "fetch": "eager"},
             "list-window-refresh": {"enabled": true, "fetch": "eager"},
             "window-close": {"enabled": true, "fetch": "eager"},
             "window-drag": {"enabled": true, "fetch": "eager"},
@@ -51,6 +52,7 @@ The identifiers must stay the ones of this page: the templates of the components
 |------------------------------|----------------------------------------------|----------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------|
 | `form-window`                | `form_window_controller.js`                  | `open`, `close`, `submit` | `form`, `errors`, `submitButton` | `error-text` (`An error occurred while saving.`), `network-error-text` (`A network error occurred.`)      |
 | `form-window-dynamic-loader` | `form_window_dynamic_loader_controller.js`   | `open`         | -                                | `url`, `window-id`, `form-path`, `form-name`, `title`, `closable` (`true`), `draggable` (`true`), `close-aria-label` (`Close`), `object-id`, `load-error-text` (`An error occurred while loading the form.`) |
+| `window-dynamic-loader`      | `window_dynamic_loader_controller.js`        | `open`         | -                                | `url`, `component`, `title`, `props` (`{}`)                                                                       |
 | `list-window-refresh`        | `list_window_refresh_controller.js`          | `refresh`, `open` | -                             | -                                                                                                                 |
 | `window-close`               | `window_close_controller.js`                 | `close`        | -                                | `redirect-url`                                                                                                    |
 | `window-drag`                | `window_drag_controller.js`                  | `startDrag`, `bringToFront` | -                   | -                                                                                                                 |
@@ -113,6 +115,70 @@ On the "New" button of `ListWindow`, whose `load-error-text` is translated from
 - The `url` value is required: without it, or on any failure, the error goes to `console.error()` and the
   `load-error-text` value is shown with `alert()`.
 
+### window-dynamic-loader
+
+On a link that opens a window in the current page, without leaving it: a floating `ListWindow`, a `FormWindow`, any
+Live window that the component renderer accepts ([live-components.md](live-components.md#dynamic-windows)). The
+`href` of the link is the page of the window: it is opened by a click with the middle button or a modifier key, and
+it is the fallback when the window can not be loaded.
+
+```twig
+{% set props = {'windowId': 'items', 'itemComponent': 'ItemRow', 'floating': true, 'closable': true,
+    'draggable': true} %}
+<a href="{{ path('app_item_list') }}"
+   data-controller="window-dynamic-loader"
+   data-window-dynamic-loader-url-value="{{ path('_teknoo_east_ux_component_render') }}"
+   data-window-dynamic-loader-component-value="ListWindow"
+   data-window-dynamic-loader-title-value="{{ 'app.item.title.list'|trans }}"
+   data-window-dynamic-loader-props-value="{{ props|json_encode }}"
+   data-action="click->window-dynamic-loader#open">{{ 'app.item.title.list'|trans }}</a>
+```
+
+Values:
+
+- `url`: the URL of the component renderer (`path('_teknoo_east_ux_component_render')`), required;
+- `component`: the name of the component to render (`ListWindow`, `FormWindow`, ...);
+- `title`: the title of the window, added to the props when it is not empty (it replaces a `title` of `props`);
+- `props` (`{}`): the props of the component, a JSON object; its `windowId` names the window in the page.
+
+`open()` (bound to `click`):
+
+- A click with another button than the main one, or with a modifier key (`Ctrl`, `Shift`, `Alt`, `Meta`), is left to
+  the browser: it opens the `href` (in a new tab or window, ...). An element without `href` logs an error with
+  `console.error()` and does nothing.
+- Otherwise the navigation is prevented, and a click while a window is loading is ignored.
+- The props are the `props` value, plus `originalPath` (the path and the query of the `href`: the recipe that the
+  re-render of the window runs), `hidden: true`, and `title` when the `title` value is not empty. A `FormWindow`
+  replaces `originalPath` with its `formPath` when it is mounted (`FormWindow::postMount()`): its re-render, and the
+  page that `form-window` opens when this first render fails, are those of `formPath`, so give its link an `href`
+  equal to `formPath`.
+- If the page already holds the window (`[data-form-window="<windowId>"]`, escaped with `CSS.escape()`: a window loaded
+  before, or the window of the page of the link), nothing is loaded: a Live window gets `window:open` and opens
+  itself; a window that is not live can not be opened again, so the browser follows the link (see
+  [the rules](#rules-for-the-templates-and-new-controllers)).
+- Otherwise it `POST`s the JSON body `{"component": <component>, "props": <props>}` to the `url` value with the headers
+  `Content-Type: application/json` and `X-Requested-With: XMLHttpRequest`, appends the returned HTML at the end of
+  `#dynamic-modals`, and takes the `[data-form-window]` element it appended. It waits one frame
+  (`requestAnimationFrame` then `setTimeout(0)`) so that Stimulus connects the controllers of the window (`live`
+  included), sets the cascade offset on the window, then dispatches `window:open` on it: the Live window opens itself
+  (`list-window-refresh` or `form-window`, whose re-render runs the recipe of `originalPath`, the `formPath` of a
+  `FormWindow`), and `window-drag` brings it to the front.
+- The cascade offset: `--east-ux-window-offset` (`style.setProperty()` on the root element of the window) is
+  `(n % 6) * 1.5rem`, n being the number of the shown floating windows of the page
+  (`.window.window-floating:not(.d-none), .window.form-window.form-fixed:not(.d-none)`; the new window is still hidden,
+  so it is not counted). The windows opened one after the other do not cover each other
+  ([theming.md](theming.md#floating-windows)), and the Live window keeps this offset across its re-renders
+  ([the style of a Live window](#the-style-of-a-live-window)). A known limitation: a window still opening (its
+  `window:open` dispatched, its first Live render not returned yet) is hidden too, so two links clicked within this
+  time give the same offset to their windows, and the second covers the first until one of them is dragged.
+- On any failure (no `url` value or no `#dynamic-modals`, a malformed `props` value, a network error, a response that
+  is not `ok` or that is a redirection followed by `fetch`, such as the login page of an expired session, no window in
+  the returned HTML), the error goes to `console.error()` and the browser navigates to the `href` of the link. There is
+  no `alert()`, so no text to translate.
+
+`form-window-dynamic-loader` stays for the "New" and "Edit" buttons: it builds the props of a `FormWindow` from its
+values and shows an `alert()` on failure.
+
 ### list-window-refresh
 
 Added to `ListWindow` (`attributes.defaults()`, with `window-close`, and `window-drag` when the window is draggable).
@@ -164,9 +230,9 @@ the stacking order of `window-drag`) would be lost at each render (pagination, s
 `form-window` and `list-window-refresh` keep it: in `connect()`, they register on the Live Component the hooks
 `render:started` (saves the `style` attribute of the root element, before the morph) and `render:finished` (sets it
 back, or removes it when there was none). They are registered in `connect()`, never when the window is opened, so the
-first render keeps the offset set before `window:open`; `disconnect()` removes them with
-`component.off()`. The other changes made by JavaScript on the root element are not kept: the class `d-none` follows
-the server (`hidden`) and `open()`, the class `dragging` only lives during a drag.
+first render keeps the cascade offset that `window-dynamic-loader` sets before `window:open`; `disconnect()` removes
+them with `component.off()`. The other changes made by JavaScript on the root element are not kept: the class
+`d-none` follows the server (`hidden`) and `open()`, the class `dragging` only lives during a drag.
 
 ### delete-item
 
@@ -223,14 +289,14 @@ The controllers expect the page to provide:
 
 | Element or behaviour                         | Used by                        | Provided by                                                                 |
 |----------------------------------------------|--------------------------------|-----------------------------------------------------------------------------|
-| `<div id="dynamic-modals"></div>`            | `form-window-dynamic-loader`   | The application's layout, once per page: loaded windows are appended to it  |
+| `<div id="dynamic-modals"></div>`            | `form-window-dynamic-loader`, `window-dynamic-loader` | The application's layout, once per page: loaded windows are appended to it |
 | The modal `#delete-confirm-modal` and its `[data-confirm-button]` | `delete-item` (`modal-id` value) | `ListWindow` (a `ConfirmModal`); another modal can be named with `modal-id` |
 | The event `list-window:refresh` on `document` | `list-window-refresh`         | `form-window` after a save; the application may dispatch it too             |
 | The event `form-window:open` on a window element | `form-window`               | `form-window-dynamic-loader`; the application may dispatch it to open a window |
-| The event `window:open` on a window element  | `form-window`, `list-window-refresh` | The application may dispatch it to open a Live window (`FormWindow` when it is live, `ListWindow`) |
+| The event `window:open` on a window element  | `form-window`, `list-window-refresh` | `window-dynamic-loader`; the application may dispatch it to open a Live window (`FormWindow` when it is live, `ListWindow`) |
 | The fixed menu bar `.navbar.fixed-top`       | `window-drag` (top limit of a drag) | `MenuBar`; without it, the limit is the top of the viewport          |
-| The URL of the component renderer            | `form-window-dynamic-loader` (`url` value) | The bundle's route `_teknoo_east_ux_component_render`, imported by the application |
-| `X-Requested-With: XMLHttpRequest`           | sent by `form-window-dynamic-loader` and `delete-item` | The application may require it on its routes |
+| The URL of the component renderer            | `form-window-dynamic-loader`, `window-dynamic-loader` (`url` value) | The bundle's route `_teknoo_east_ux_component_render`, imported by the application |
+| `X-Requested-With: XMLHttpRequest`           | sent by `form-window-dynamic-loader`, `window-dynamic-loader` and `delete-item` | The application may require it on its routes |
 | CSRF token in the field `csrf-field` and the header `csrf-header` | sent by `delete-item` | The application generates the token (`csrf-token` value) and checks it on its delete routes (East Common: the route default `csrfTokenId`) |
 | Bootstrap's JavaScript (`Modal`)             | `delete-item`                  | The `bootstrap` entry of the importmap                                      |
 | `<html {{ east_ux_theme_attributes() }}>`    | `theme`                        | The application's layout (see [theme.md](theme.md#the-page))                |
@@ -239,7 +305,7 @@ The controllers expect the page to provide:
 | Event                 | Dispatched on                    | By                           | Listened by (on)                       |
 |-----------------------|----------------------------------|------------------------------|----------------------------------------|
 | `form-window:open`    | the `[data-form-window]` element | `form-window-dynamic-loader` | `form-window` and `window-drag` (its own element) |
-| `window:open`         | the `[data-form-window]` element | The application              | `form-window`, `list-window-refresh` and `window-drag` (its own element) |
+| `window:open`         | the `[data-form-window]` element | `window-dynamic-loader`, the application | `form-window`, `list-window-refresh` and `window-drag` (its own element) |
 | `list-window:refresh` | `document`                       | `form-window` after a save   | `list-window-refresh` (`document`)     |
 | `theme:changed`       | `<html>`                         | `theme` after a change       | The application, to persist the choice itself |
 
@@ -253,6 +319,8 @@ The controllers expect the page to provide:
   `connect()` awaits it would be lost. Register its hooks in `connect()` (`getComponent(element).then(...)`, after
   the listeners) and remove them in `disconnect()`.
 - `window:open` is handled only by the Live windows (`form-window`, `list-window-refresh`): dispatched on a `Window` or
-  on a `FormWindow` that is not live, it opens nothing.
+  on a `FormWindow` that is not live, it opens nothing (`window-drag` only brings it to the front). So
+  `window-dynamic-loader` reuses only a Live window: for a window that is not live with the same `windowId`, such as
+  the `FormWindow` of the page of its link (its fallback page), it follows the link.
 - Bind the listeners of `document` or `window` in `connect()` and remove them in `disconnect()`.
 - Keep the texts out of the JavaScript: use values with an English default.
