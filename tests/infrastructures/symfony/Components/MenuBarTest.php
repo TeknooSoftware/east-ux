@@ -585,7 +585,11 @@ class MenuBarTest extends TestCase
             new MenuItem(
                 name: 'app.menu.settings',
                 route: 'app_settings',
-                window: new MenuWindow(component: 'FormWindow', title: 'app.menu.settings', props: ['windowId' => 'me']),
+                window: new MenuWindow(
+                    component: 'FormWindow',
+                    title: 'app.menu.settings',
+                    props: ['windowId' => 'me'],
+                ),
             )
         );
 
