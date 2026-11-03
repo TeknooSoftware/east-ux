@@ -1,5 +1,12 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.3.1] - Release pending
+### Alpha Release
+
+#### Documentation
+- `AGENTS.md`: a `ListWindow` may be placed in a page rendered by `RenderForm` (East Common 4.8); the entry of 0.3.0
+  lists two more behaviours of the windows opened in the page.
+
 ## [0.3.0] - 2026-11-03
 ### Alpha Release
 
@@ -16,7 +23,8 @@
 #### Evolutions
 - `ListWindow`: prop `floating`, a window floating over the page whose page is not bound to the URL, and writable prop
   `hidden`: the window stays hidden until `window:open` loads its list. `form-window` also opens on `window:open`, and
-  the Live windows keep their `style` (position, offset, order) across their re-renders.
+  the Live windows keep their `style` (position, offset, order) across their re-renders. A window never shown whose
+  first render fails or is redirected (a session ended, ...) opens its page (`list-window-refresh`, `form-window`).
 - `east-ux.css`: floating windows under the menu bar (`--east-ux-window-top`, `--east-ux-window-offset`), brought to the
   front by `window-drag`; a modal nested in a floating window goes above its backdrop. BC: the fixed `FormWindow` is
   at z-index 1001-1029 instead of 9999, under the menu bar and the modals, and its top under the menu bar.
@@ -24,8 +32,8 @@
   `itemComponent` (a known component) and `floating` (`true`) required, the window and list props optional; any other
   prop (`closeRedirectUrl`, the view parameters of the recipes, ...) is refused (400).
 - Stimulus controller `window-dynamic-loader`: a link loads its window through the component renderer, reuses the
-  window already open with the same `windowId`, and follows its `href` on a modifier click or a failure. Applications
-  add it to their `assets/controllers.json`.
+  window already open with the same `windowId`, and follows its `href` on a modifier click, a failure, or when the
+  window with the same `windowId` is not a Live window. Applications add it to their `assets/controllers.json`.
 - `MenuItem::$window` (`MenuWindow`: component, title key, props): the entry opens its window in the page through
   `window-dynamic-loader`, its link stays the fallback. Requires the routes of the bundle.
 

@@ -103,8 +103,9 @@ class ListWindowTest extends TestCase
 
     /**
      * Private properties of Symfony UX's `ComponentWithFormTrait`, used by ListWindow for its search form. PHP forbids
-     * to redeclare them with another visibility. East Common's `RenderList`, the step rendering lists, never passes
-     * them; a recipe passing `form` or `formView` to a page holding a ListWindow would break its live re-render.
+     * to redeclare them with another visibility. East Common's `LiveComponentBuilder` (4.8) writes only the public
+     * properties of a component, so a recipe passing `formView` (`RenderForm`) to a page holding a ListWindow leaves
+     * them alone.
      */
     private const array COMPONENT_WITH_FORM_TRAIT_PRIVATE_PROPERTIES = [
         'form',
