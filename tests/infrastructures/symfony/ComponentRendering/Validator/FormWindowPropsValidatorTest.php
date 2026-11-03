@@ -94,6 +94,12 @@ class FormWindowPropsValidatorTest extends TestCase
         );
     }
 
+    public function testValidateTheNullablePropsSetToNull(): void
+    {
+        // Their properties are nullable: a "New" window has no object id
+        $this->assertValid(self::requiredProps() + ['originalPath' => null, 'objectId' => null]);
+    }
+
     /**
      * @return iterable<string, array{array<string, mixed>}>
      */

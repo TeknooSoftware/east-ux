@@ -151,6 +151,12 @@ class ListWindowPropsValidatorTest extends TestCase
         );
     }
 
+    public function testValidateTheNullablePropsSetToNull(): void
+    {
+        // Its property is nullable: a window without search form
+        $this->assertValid(self::requiredProps() + ['searchFormName' => null]);
+    }
+
     /**
      * @return iterable<string, array{array<string, mixed>}>
      */
