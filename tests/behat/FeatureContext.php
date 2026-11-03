@@ -274,6 +274,14 @@ class FeatureContext implements Context
         return $window;
     }
 
+    private function findForm(string $name): Crawler
+    {
+        $form = $this->getCrawler()->filter('form[name="' . $name . '"]');
+        Assert::assertCount(1, $form, "The form $name is not rendered once");
+
+        return $form;
+    }
+
     #[Given('a Symfony application with East UX')]
     public function aSymfonyApplicationWithEastUx(): void
     {
@@ -319,6 +327,15 @@ class FeatureContext implements Context
     public function iSubmitTheFormOfThePageWithTheName(string $path, string $name): void
     {
         $this->sendRequest('POST', $path, ['item' => ['name' => $name]]);
+    }
+
+    /**
+     * A valid name and a field unknown to the form: only the form itself is refused (no field error)
+     */
+    #[When('I submit the form of the page :path with an unknown field')]
+    public function iSubmitTheFormOfThePageWithAnUnknownField(string $path): void
+    {
+        $this->sendRequest('POST', $path, ['item' => ['name' => 'Named item', 'unknown' => 'A value']]);
     }
 
     #[When('the list window is re-rendered on the page :page')]
@@ -481,6 +498,30 @@ class FeatureContext implements Context
         $input = $form->filter('input[name="' . $field . '"]');
         Assert::assertCount(1, $input);
         Assert::assertSame($value, (string) $input->attr('value'));
+    }
+
+    /**
+     * The marker read by `form-window` on the page returned to its `fetch()`
+     */
+    #[Then('the form :name of the page must be marked invalid')]
+    public function theFormOfThePageMustBeMarkedInvalid(string $name): void
+    {
+        Assert::assertSame('', $this->findForm($name)->attr('data-form-window-invalid'));
+    }
+
+    #[Then('the form :name of the page must not be marked invalid')]
+    public function theFormOfThePageMustNotBeMarkedInvalid(string $name): void
+    {
+        Assert::assertNull($this->findForm($name)->attr('data-form-window-invalid'));
+    }
+
+    #[Then('the field :field of the form :name must be marked invalid')]
+    public function theFieldOfTheFormMustBeMarkedInvalid(string $field, string $name): void
+    {
+        $input = $this->findForm($name)->filter('[name="' . $field . '"]');
+
+        Assert::assertCount(1, $input);
+        Assert::assertSame('true', $input->attr('aria-invalid'));
     }
 
     #[Then('the menu bar must link its brand to :path')]

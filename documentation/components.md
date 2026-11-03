@@ -123,12 +123,19 @@ A window holding a Symfony form, in two modes:
 - `#[LiveAction] close()` sets `hidden`. `hasSubForms()` tells whether a child of the form is compound.
 - Rendering: compound children (embedded form types) each get a `<fieldset class="east-ux-fieldset">` titled with
   their label (translated in the default domain), the simple children are grouped in a first fieldset titled
-  `teknoo.east.ux.form_window.fieldset.main`, hidden fields go to `form_rest()`. Without compound child, the form is
-  rendered with `form_widget()`. The window gets `form-window-wide` when it has sub-forms, `form-fixed` when it is
-  draggable and closable, `d-none` while hidden.
+  `teknoo.east.ux.form_window.fieldset.main`, hidden fields go to `form_rest()`, and the errors of the form itself
+  are rendered above the fieldsets. Without compound child, the form is rendered with `form_widget()`. The window
+  gets `form-window-wide` when it has sub-forms, `form-fixed` when it is draggable and closable, `d-none` while
+  hidden.
 - The `<form>` has `data-form-window-target="form"`, `data-action="submit->form-window#submit"` and
   `data-skip-morph` (its values are replaced, not morphed, on a re-render); validation errors returned by the server
-  are written in the `data-form-window-target="errors"` element.
+  in a 400 or a 422 are written in the `data-form-window-target="errors"` element.
+- A form refused by the server (`formView.vars.submitted` true and `formView.vars.valid` false) gets the marker
+  `data-form-window-invalid`, also for the errors of the form itself (an unknown field, a CSRF token), which put no
+  `aria-invalid` on a field. East Common answers 200 with the page of `formPath` after an edition and when it refuses
+  the form: `form-window` reads this marker on the returned page to keep the window open with the errors
+  ([stimulus.md](stimulus.md#form-window)). So the page of `formPath` must give `formView="{{ formView }}"` to its
+  `FormWindow`: without it, `postMount()` builds a new form, not submitted, and the errors are lost.
 
 ## ListWindow
 

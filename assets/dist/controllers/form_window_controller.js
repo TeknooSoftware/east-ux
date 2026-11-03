@@ -67,10 +67,23 @@ export default class extends Controller {
                 body: formData
             });
 
-            if (response.ok || response.redirected) {
-                // Success - close window and refresh list
+            if (response.redirected) {
+                // Success (East Common redirects after a creation) - close window and refresh list
                 this.close();
                 this.dispatchRefreshEvent();
+            } else if (response.ok) {
+                // East Common answers 200 with the page after an edition and when it refuses the form: the form of
+                // the returned page tells them apart
+                const returnedForm = this.findReturnedForm(await response.text(), form);
+
+                if (returnedForm && this.isRefused(returnedForm)) {
+                    // Refused - show the returned form with its errors, keep the window open
+                    this.showRefusedForm(form, returnedForm);
+                } else {
+                    // Success - close window and refresh list
+                    this.close();
+                    this.dispatchRefreshEvent();
+                }
             } else if (response.status === 422 || response.status === 400) {
                 // Validation error - display errors
                 const html = await response.text();
@@ -88,6 +101,38 @@ export default class extends Controller {
                 this.submitButtonTarget.disabled = false;
             }
         }
+    }
+
+    // The form of the returned page: the one named as the sent form, else the one posted to the same action
+    findReturnedForm(html, form) {
+        const page = new DOMParser().parseFromString(html, 'text/html');
+
+        const name = form.getAttribute('name');
+        if (name) {
+            const namedForm = page.querySelector(`form[name="${CSS.escape(name)}"]`);
+            if (namedForm) {
+                return namedForm;
+            }
+        }
+
+        const action = form.getAttribute('action');
+        if (action) {
+            return page.querySelector(`form[action="${CSS.escape(action)}"]`);
+        }
+
+        return null;
+    }
+
+    // Marked by FormWindow.html.twig when submitted and invalid, or a field marked by the form theme
+    isRefused(returnedForm) {
+        return returnedForm.hasAttribute('data-form-window-invalid')
+            || returnedForm.querySelector('[aria-invalid="true"]') !== null;
+    }
+
+    showRefusedForm(form, returnedForm) {
+        // The `form` element keeps its attributes; its content (fields, errors, tokens, targets) is the server's
+        form.innerHTML = returnedForm.innerHTML;
+        form.querySelector('[aria-invalid="true"]')?.focus();
     }
 
     displayErrors(message) {

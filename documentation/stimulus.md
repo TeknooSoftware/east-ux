@@ -80,7 +80,16 @@ and a window loaded by the component renderer gets the translated messages too.
   and to the Cancel button (`click->form-window#close`).
 - `submit()` (bound on the form, `submit->form-window#submit`): sends the form with `fetch(form.action, {method,
   body: new FormData(form)})`, the submit button disabled meanwhile.
-  - On a success or a redirection: `close()`, then dispatches `list-window:refresh` on `document`.
+  - On a redirection (East Common's creation recipe after a save): `close()`, then dispatches `list-window:refresh`
+    on `document`.
+  - On another success (East Common answers 200 with the page of `formPath` after an edition, and when it refuses the
+    form): the response is parsed with `DOMParser`, and the returned form is the `form[name="<name>"]` of the sent
+    form, else the `form[action="<action>"]` (both escaped with `CSS.escape()`).
+    - If the returned form has `data-form-window-invalid` (set by `FormWindow.html.twig`) or holds an
+      `[aria-invalid="true"]` field: its content replaces the content of the sent `<form>` (fields, errors, tokens),
+      the first `[aria-invalid="true"]` field gets the focus, and the window stays open.
+    - Otherwise (the form is saved, or no returned form is found): `close()`, then dispatches `list-window:refresh`
+      on `document`.
   - On a 400 or a 422: the response text is written (with `textContent`) in the `errors` target.
   - On another status: the `error-text` value; on a network failure: the `network-error-text` value.
 

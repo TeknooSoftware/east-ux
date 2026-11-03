@@ -31,13 +31,18 @@
         {% if this.formTheme is not empty %}
             {% form_theme this.formView with [this.formTheme] %}
         {% endif %}
+        {% set form_attributes = {
+            'data-form-window-target': 'form',
+            'data-action': 'submit->form-window#submit',
+            'data-skip-morph': ''
+        } %}
+        {# A form refused by the server (submitted, invalid) is marked for `form-window`, even without field error #}
+        {% if this.formView.vars.submitted and not this.formView.vars.valid %}
+            {% set form_attributes = form_attributes|merge({'data-form-window-invalid': ''}) %}
+        {% endif %}
         {{ form_start(this.formView, {
             'action': this.formPath,
-            'attr': {
-                'data-form-window-target': 'form',
-                'data-action': 'submit->form-window#submit',
-                'data-skip-morph': ''
-            }
+            'attr': form_attributes
         }) }}
             <div class="p-3">
                 <div data-form-window-target="errors" class="alert alert-danger d-none" role="alert"></div>
@@ -53,6 +58,8 @@
                     {% endif %}
                 {% endfor %}
                 {% if sub_forms is not empty %}
+                    {# Errors of the form itself (unknown field, CSRF token), not rendered by `form_rest()` #}
+                    {{ form_errors(this.formView) }}
                     <div class="form-window-subforms">
                         {% if direct_fields is not empty %}
                             <fieldset class="east-ux-fieldset border rounded p-3">

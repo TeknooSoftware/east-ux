@@ -29,10 +29,12 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Teknoo\Tests\East\UX\Support\Fixtures\Object\Item;
 
 /**
- * Form type of `Item`, built by the form windows of the test application.
+ * Form type of `Item`, built by the form windows of the test application. Its name is required: an empty name is
+ * refused by the validation of the form, and the page is rendered again with the errors.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -47,7 +49,11 @@ class ItemType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('name', TextType::class, ['required' => true, 'label' => 'Name']);
+        $builder->add(
+            'name',
+            TextType::class,
+            ['required' => true, 'label' => 'Name', 'constraints' => [new NotBlank()]],
+        );
     }
 
     public function configureOptions(OptionsResolver $resolver): void

@@ -1,5 +1,13 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.3.0] - Release pending
+### Alpha Release
+
+#### Fixes
+- `FormWindow`: a form refused by the server (East Common answers 200 with the page) stays open with its errors, also
+  the errors of the form itself when it has sub-forms; it closes and refreshes the lists only after a save. The page
+  of `formPath` must give `formView` to its `FormWindow`.
+
 ## [0.2.2] - 2026-10-24
 ### Alpha Release
 

@@ -63,6 +63,26 @@ Feature: Form windows loaded dynamically through the component renderer
     Then the response status must be 200
     And the form window "dynamic-window" must contain the field "item[name]" with the value "" posted to "/index.php/items/new"
 
+  Scenario: A form refused for an empty name is marked invalid for the form window
+    Given I am authenticated as "user"
+    When I submit the form of the page "/items/new" with the name ""
+    Then the response status must be 200
+    And the form "item" of the page must be marked invalid
+    And the field "item[name]" of the form "item" must be marked invalid
+
+  Scenario: A form refused for an unknown field is marked invalid for the form window
+    Given I am authenticated as "user"
+    When I submit the form of the page "/items/new" with an unknown field
+    Then the response status must be 200
+    And the form "item" of the page must be marked invalid
+
+  Scenario: A saved edition is not marked invalid for the form window
+    Given I am authenticated as "user"
+    When I submit the form of the page "/items/edit/item-2" with the name "Renamed item"
+    Then the response status must be 200
+    And the form "item" of the page must not be marked invalid
+    And the form window "item-item-2" must contain the field "item[name]" with the value "Renamed item" posted to "/items/edit/item-2"
+
   Scenario: Refuse a component without validator of its props
     Given I am authenticated as "user"
     When the component renderer is asked for a "Card" with the props:
