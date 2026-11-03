@@ -169,6 +169,9 @@ export default class extends Controller {
 
             document.removeEventListener('mousemove', this.boundMouseMove);
             document.removeEventListener('mouseup', this.boundMouseUp);
+
+            // The content may have grown during the drag, while `onResize()` was waiting for its end
+            this.onResize();
         }
     }
 }

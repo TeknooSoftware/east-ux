@@ -211,7 +211,8 @@ ignores the clicks on `.close` and `.resize`, converts the centred position of t
 `mouseup`. The top of the window never goes above the bottom of the fixed menu bar (`.navbar.fixed-top`, the
 `MenuBar`), or of the viewport without menu bar, even when the window is higher than the viewport: its title bar stays
 reachable. Once dragged, the window is constrained to the viewport again each time its size changes (a
-`ResizeObserver`): a short list moved to the bottom of the screen stays on it when a re-render makes it longer.
+`ResizeObserver`) and at the end of each drag: a short list moved to the bottom of the screen stays on it when a
+re-render makes it longer.
 
 `connect()` also binds `bringToFront()` on the `mousedown`, `focusin`, `window:open` and `form-window:open` events of
 the window. `bringToFront()` only acts on a floating window (`.window.window-floating` or
