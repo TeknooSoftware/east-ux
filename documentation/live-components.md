@@ -162,6 +162,8 @@ The props are validated before the rendering:
       (a positive integer) are optional. Any other prop is refused: `closeRedirectUrl`, the view parameters of the
       recipes (`objectsCollection`, `pageCount`, `formView`), the LiveProps of the search form (`formValues`,
       `isValidated`, `validatedFields`), `@checksum`, ...
+    - A prop is `null` only when its property is nullable (`originalPath`, `objectId` of `FormWindow`,
+      `searchFormName` of `ListWindow`): any other `null` prop gets a 400, not a `TypeError` of the component.
 - An application renders another component through the renderer by registering a validator for it:
 
   ```yaml

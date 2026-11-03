@@ -190,6 +190,16 @@ class ListWindowPropsValidatorTest extends TestCase
         yield 'newFormRoute with parameters' => [$props + ['newFormRoute' => self::ROUTE_WITH_PARAMETERS]];
         yield 'page 0' => [$props + ['page' => 0]];
         yield 'page not an int' => [$props + ['page' => '2']];
+
+        // The properties of these props are not nullable: `null` would end in a `TypeError` of the component (a 500)
+        $notNullable = [
+            'hidden', 'closable', 'resizable', 'draggable', 'title', 'closeAriaLabel', 'resizeAriaLabel',
+            'tableHeaders', 'newFormName', 'newButtonLabel', 'newFormTitle', 'page',
+        ];
+        foreach ($notNullable as $name) {
+            yield "$name null" => [$props + [$name => null]];
+        }
+        yield 'tableHeaders with null' => [$props + ['tableHeaders' => ['app.item.name', null]]];
         yield 'closeRedirectUrl' => [$props + ['closeRedirectUrl' => '/items/']];
         yield 'objectsCollection' => [$props + ['objectsCollection' => ['item-1']]];
         yield 'pageCount' => [$props + ['pageCount' => 3]];

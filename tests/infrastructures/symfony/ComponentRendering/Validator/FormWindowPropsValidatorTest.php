@@ -112,6 +112,11 @@ class FormWindowPropsValidatorTest extends TestCase
         yield 'title not a string' => [$props + ['title' => 42]];
         yield 'closable not a bool' => [$props + ['closable' => 'yes']];
         yield 'hidden not a bool' => [$props + ['hidden' => 1]];
+
+        // The properties of these props are not nullable: `null` would end in a `TypeError` of the component (a 500)
+        foreach (['title', 'closeAriaLabel', 'closable', 'draggable', 'hidden'] as $name) {
+            yield "$name null" => [$props + [$name => null]];
+        }
         yield 'objectInstance' => [$props + ['objectInstance' => 'item-1']];
         yield 'formTheme' => [$props + ['formTheme' => 'evil.html.twig']];
         yield 'isLive' => [$props + ['isLive' => false]];

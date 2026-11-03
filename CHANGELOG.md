@@ -1,5 +1,12 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.3.1] - Release pending
+### Alpha Release
+
+#### Fixes
+- Component renderer: a `null` prop of `FormWindow` or `ListWindow` whose property is not nullable (`title`,
+  `closable`, `page`, ...) gets a 400 instead of a 500.
+
 ## [0.3.0] - 2026-11-03
 ### Alpha Release
 
