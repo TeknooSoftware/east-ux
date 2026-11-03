@@ -1,6 +1,6 @@
 # Teknoo Software - East UX - Change Log
 
-## [0.3.0] - Release pending
+## [0.3.0] - 2026-11-03
 ### Alpha Release
 
 #### Fixes
