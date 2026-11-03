@@ -42,6 +42,7 @@ use Teknoo\East\UX\Contracts\Menu\MenuGeneratorInterface;
 use Teknoo\East\UX\Contracts\Enum\Menu\Location;
 use Teknoo\East\UX\Object\DTO\Menu\MenuItem;
 use Teknoo\East\UX\Object\DTO\Menu\MenuSection;
+use Teknoo\East\UX\Object\DTO\Menu\MenuWindow;
 use Teknoo\East\UX\Service\MenuService;
 use Teknoo\East\UXBundle\Components\MenuBar;
 use Twig\Environment;
@@ -466,6 +467,126 @@ class MenuBarTest extends TestCase
             '<li><button type="button" class="dropdown-item">Raw &lt;button&gt;</button></li>',
             $html,
         );
+    }
+
+    /**
+     * A menu service returning the section on the left only
+     */
+    private function buildMenuServiceWithLeftSection(MenuSection $section): MenuService
+    {
+        $menuService = $this->createStub(MenuService::class);
+        $menuService->method('getMenuFor')->willReturnCallback(
+            static fn (UserInterface $user, Location $location): array => match ($location) {
+                Location::TopLeft => [$section],
+                Location::TopRight => [],
+            }
+        );
+
+        return $menuService;
+    }
+
+    public function testRenderEntriesOpeningAWindow(): void
+    {
+        $content = new MenuSection(name: 'app.menu.content', position: 1);
+        // A link with its own controller, action and attributes, and a window translated in the domain of the item
+        $content->addItem(
+            new MenuItem(
+                name: 'app.menu.items',
+                route: 'app_items',
+                attributes: [
+                    'data-turbo' => 'false',
+                    'data-controller' => 'app-tracker',
+                    'data-action' => 'click->app-tracker#track',
+                ],
+                translationDomain: 'app_domain',
+                window: new MenuWindow(
+                    component: 'ListWindow',
+                    title: 'app.item.title.list',
+                    props: ['windowId' => 'items', 'floating' => true, 'newButtonLabel' => 'Add "one" <item>'],
+                ),
+            )
+        );
+        // A link without attributes, and a window without props
+        $content->addItem(
+            new MenuItem(
+                name: 'app.menu.settings',
+                route: 'app_settings',
+                window: new MenuWindow(component: 'FormWindow', title: 'app.menu.settings'),
+            )
+        );
+        // A link without window
+        $content->addItem(new MenuItem(name: 'app.menu.notes', route: 'app_notes'));
+
+        $menuBar = $this->buildMenuBar($this->buildMenuServiceWithLeftSection($content));
+        $menuBar->user = new User();
+
+        $html = $this->render($menuBar);
+
+        // The href is kept, the controller and the action are merged with those of the item, in a single attribute
+        // each; the values of the loader follow the attributes of the item
+        $this->assertStringContainsString(
+            '<li><a class="dropdown-item" href="/app_items" data-turbo="false" '
+            . 'data-controller="app-tracker window-dynamic-loader" '
+            . 'data-action="click-&gt;app-tracker#track click-&gt;window-dynamic-loader#open" '
+            . 'data-window-dynamic-loader-url-value="/_teknoo_east_ux_component_render" '
+            . 'data-window-dynamic-loader-component-value="ListWindow" '
+            . 'data-window-dynamic-loader-title-value="app.item.title.list|app_domain" '
+            . 'data-window-dynamic-loader-props-value="{&quot;windowId&quot;:&quot;items&quot;,'
+            . '&quot;floating&quot;:true,&quot;newButtonLabel&quot;:&quot;Add \\&quot;one\\&quot; &lt;item&gt;&quot;}">'
+            . 'app.menu.items|app_domain</a></li>',
+            $html,
+        );
+        $this->assertStringNotContainsString('<item>', $html);
+
+        // Empty props are an empty JSON object, the title is translated in the default domain
+        $this->assertStringContainsString(
+            '<li><a class="dropdown-item" href="/app_settings" data-controller="window-dynamic-loader" '
+            . 'data-action="click-&gt;window-dynamic-loader#open" '
+            . 'data-window-dynamic-loader-url-value="/_teknoo_east_ux_component_render" '
+            . 'data-window-dynamic-loader-component-value="FormWindow" '
+            . 'data-window-dynamic-loader-title-value="app.menu.settings|default" '
+            . 'data-window-dynamic-loader-props-value="{}">app.menu.settings|default</a></li>',
+            $html,
+        );
+
+        // An entry without window is unchanged
+        $this->assertStringContainsString(
+            '<li><a class="dropdown-item" href="/app_notes">app.menu.notes|default</a></li>',
+            $html,
+        );
+
+        $this->assertSame(2, substr_count($html, 'data-controller='));
+        $this->assertSame(2, substr_count($html, 'data-action='));
+        $this->assertSame(2, substr_count($html, 'data-window-dynamic-loader-url-value='));
+    }
+
+    public function testRenderAnEntryWithAWindowButWithoutRouteAsAButton(): void
+    {
+        $theme = new MenuSection(name: 'app.menu.theme', position: 1);
+        $theme->addItem(
+            new MenuItem(
+                name: 'app.menu.night',
+                route: '',
+                attributes: ['data-action' => 'click->theme#select'],
+                window: new MenuWindow(component: 'ListWindow', title: 'app.menu.night', props: ['windowId' => 'x']),
+            )
+        );
+
+        // Neither a link nor the URL of the component renderer
+        $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+        $urlGenerator->expects($this->never())->method('generate');
+
+        $menuBar = $this->buildMenuBar($this->buildMenuServiceWithLeftSection($theme));
+        $menuBar->user = new User();
+
+        $html = $this->render($menuBar, $urlGenerator);
+
+        $this->assertStringContainsString(
+            '<li><button type="button" class="dropdown-item" data-action="click-&gt;theme#select">'
+            . 'app.menu.night|default</button></li>',
+            $html,
+        );
+        $this->assertStringNotContainsString('window-dynamic-loader', $html);
     }
 
     public function testRenderWithMenuServiceAndGenerators(): void

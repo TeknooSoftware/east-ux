@@ -84,7 +84,7 @@ A window holding a Symfony form, in two modes:
 
 - `isLive` true (default): a modal driven by the `form-window` Stimulus controller, opened and closed in the page,
   saved with `fetch()`, re-rendered by its East recipe. This is the window that the "New" and "Edit" buttons load
-  through the component renderer ([live-components.md](live-components.md#dynamic-form-windows)).
+  through the component renderer ([live-components.md](live-components.md#dynamic-windows)).
 - `isLive` false: a full page (the `new` and `edit` pages of a CRUD), closed by `window-close`, which navigates to
   `closeRedirectUrl`.
 
@@ -123,12 +123,19 @@ A window holding a Symfony form, in two modes:
 - `#[LiveAction] close()` sets `hidden`. `hasSubForms()` tells whether a child of the form is compound.
 - Rendering: compound children (embedded form types) each get a `<fieldset class="east-ux-fieldset">` titled with
   their label (translated in the default domain), the simple children are grouped in a first fieldset titled
-  `teknoo.east.ux.form_window.fieldset.main`, hidden fields go to `form_rest()`. Without compound child, the form is
-  rendered with `form_widget()`. The window gets `form-window-wide` when it has sub-forms, `form-fixed` when it is
-  draggable and closable, `d-none` while hidden.
+  `teknoo.east.ux.form_window.fieldset.main`, hidden fields go to `form_rest()`, and the errors of the form itself
+  are rendered above the fieldsets. Without compound child, the form is rendered with `form_widget()`. The window
+  gets `form-window-wide` when it has sub-forms, `form-fixed` when it is draggable and closable, `d-none` while
+  hidden.
 - The `<form>` has `data-form-window-target="form"`, `data-action="submit->form-window#submit"` and
   `data-skip-morph` (its values are replaced, not morphed, on a re-render); validation errors returned by the server
-  are written in the `data-form-window-target="errors"` element.
+  in a 400 or a 422 are written in the `data-form-window-target="errors"` element.
+- A form refused by the server (`formView.vars.submitted` true and `formView.vars.valid` false) gets the marker
+  `data-form-window-invalid`, also for the errors of the form itself (an unknown field, a CSRF token), which put no
+  `aria-invalid` on a field. East Common answers 200 with the page of `formPath` after an edition and when it refuses
+  the form: `form-window` reads this marker on the returned page to keep the window open with the errors
+  ([stimulus.md](stimulus.md#form-window)). So the page of `formPath` must give `formView="{{ formView }}"` to its
+  `FormWindow`: without it, `postMount()` builds a new form, not submitted, and the errors are lost.
 
 ## ListWindow
 
@@ -151,10 +158,12 @@ A window holding a Symfony form, in two modes:
 
 | Prop                | Type             | Live | Default | Use                                                                         |
 |---------------------|------------------|------|---------|-----------------------------------------------------------------------------|
-| window props        |                  | no   |         | Rendered once; `closeAriaLabel` is also given to the windows the "New" button opens |
+| window props        |                  | yes  |         | All the props of `AbstractWindow`, redeclared as LiveProps |
 | `objectsCollection` | `iterable<object>` | no | `[]`    | View parameter of `RenderList`, copied by the East bridge                   |
 | `pageCount`         | `int`            | no   | `0`     | View parameter of `RenderList`; the pagination is rendered when it is above 1 |
-| `page`              | `int`            | yes (writable, `url: true`) | `1` | Current page, updated by the `Pagination` buttons                  |
+| `page`              | `int`            | yes (writable, `url: true`) | `1` | Current page, updated by the `Pagination` buttons; bound to the URL (`?page=`) only when the window is not floating |
+| `floating`          | `bool`           | yes  | `false` | The window floats over the page (`window-floating`), for a window loaded by the component renderer |
+| `hidden`            | `bool`           | yes (writable) | `false` | The window is rendered hidden (`d-none`) until it is opened by `window:open` |
 | `itemComponent`     | `string`         | yes  | `''`    | Component rendering a row, given `object` (usually an anonymous component)  |
 | `tableHeaders`      | `array<string>`  | yes  | `[]`    | Translation keys of the headers, translated in the default domain          |
 | `searchFormName`    | `?class-string`  | yes  | `null`  | Form type of the search form; no search form when empty                    |
@@ -171,9 +180,28 @@ A window holding a Symfony form, in two modes:
   `searchFormName` that is not a class throws a `LogicException`.
 - The "New" button carries the `form-window-dynamic-loader` controller with the URL of the component renderer
   (`path('_teknoo_east_ux_component_render')`: the application must import the bundle's routes), the window id
-  `new-object-form`, `formPath` = `path(newFormRoute)` and `formName` = `newFormName`.
-- The window renders the `ConfirmModal` `delete-confirm-modal` used by the `delete-item` controller of the rows, and
-  carries the `list-window-refresh` controller (re-render on the `list-window:refresh` event).
+  `<windowId>-new-object-form` (`new-object-form` when `windowId` is empty), `formPath` = `path(newFormRoute)` and
+  `formName` = `newFormName`; the opened window gets the `closeAriaLabel` of the list. Two list windows of a page
+  with their own `windowId` open two distinct windows.
+- The window renders the `ConfirmModal` `delete-confirm-modal` used by the `delete-item` controller of the rows, which
+  looks for it first in its own window: each list window of a page uses its own modal.
+- The root element gets `data-controller="list-window-refresh window-close[ window-drag]"` (merged with `live`),
+  `data-form-window` and `data-window-close-redirect-url-value`, as `Window`: `list-window-refresh` re-renders the
+  list on the `list-window:refresh` event and opens the window on `window:open`, `window-close` handles the close
+  button, `window-drag` the title bar of a draggable window.
+- A window in a page fills the height of its container (`h-100`). A floating window (`floating`) gets the class
+  `window-floating` instead: it is fixed over the page, under the menu bar, and brought to the front by `window-drag`
+  ([theming.md](theming.md#floating-windows)), so it should be `draggable`. Its page is not bound to the URL: the
+  `modifyPage()` modifier of the LiveProp `page` removes its URL mapping, so its pagination never changes the URL of
+  the page holding it (`modifyPage()` returns the modified LiveProp, a contract of Symfony UX).
+- A hidden window (`hidden`) gets the class `d-none`. `window:open` shows it: `list-window-refresh` sets `hidden` to
+  `false` and re-renders the window, which loads its list from the recipe of `originalPath`
+  ([stimulus.md](stimulus.md#list-window-refresh)).
+- A floating window is loadable by the component renderer, which validates its props with
+  `ListWindowPropsValidator`: `windowId`, `originalPath` (the path of the list recipe), `itemComponent` and `floating`
+  (`true`) are required; `closeRedirectUrl`, the view parameters of the recipes (`objectsCollection`, `pageCount`,
+  ...) and the LiveProps of the search form (`formValues`, ...) are refused; `searchFormName` is accepted, see the
+  Security part of [live-components.md](live-components.md#dynamic-windows).
 - Helpers: `hasObjects()`, `hasPagination()`, `hasSearchForm()`, `getCurrentRequest()`.
 - Blocks: `search_form`, `search_form_container_classes`, `objects_list`, `pagination`, `confirm_modals` (in
   `window_modals`), plus those of `Window`.
@@ -213,6 +241,11 @@ alert-danger" role="alert">`: the id is a stable hook for the tests of the appli
 - The `Location::TopLeft` sections are rendered on the left (block `left_sections`), the `Location::TopRight` ones on
   the right (block `right_sections`), as Bootstrap dropdowns. See [menu.md](menu.md) for the generators, the
   dividers, the buttons and the labels that are not translation keys.
+- An entry with a route and a `MenuWindow` keeps its link (the fallback) and gets the `window-dynamic-loader`
+  controller, merged with its own `data-controller` and `data-action`, and its values: the URL of the component
+  renderer (`path('_teknoo_east_ux_component_render')`: the application must import the bundle's routes), the
+  component, the title translated in the domain of the entry and the props in JSON (`{}` when empty). A click opens
+  the window in the page ([menu.md](menu.md#entries-opening-a-window)).
 
 ## ObjectList
 

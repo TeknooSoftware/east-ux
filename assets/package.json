@@ -21,6 +21,12 @@
                 "fetch": "eager",
                 "enabled": true
             },
+            "window-dynamic-loader": {
+                "main": "dist/controllers/window_dynamic_loader_controller.js",
+                "name": "window-dynamic-loader",
+                "fetch": "eager",
+                "enabled": true
+            },
             "list-window-refresh": {
                 "main": "dist/controllers/list_window_refresh_controller.js",
                 "name": "list-window-refresh",

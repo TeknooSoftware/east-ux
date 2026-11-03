@@ -32,6 +32,7 @@ namespace Teknoo\East\UX\Object\DTO\Menu;
  * An item without route (and not a divider) is rendered as a button, for an entry handled by a Stimulus controller.
  * `attributes` are HTML attributes added to the link or the button (escaped), for example `data-action`, and
  * `translationDomain` the domain of the name (the default domain of the application when it is null).
+ * `window` is the window opened in the page by an item with a route, its link staying the fallback (see `MenuWindow`).
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -53,6 +54,7 @@ readonly class MenuItem
         public bool $rawLabel = false,
         public array $attributes = [],
         public ?string $translationDomain = null,
+        public ?MenuWindow $window = null,
     ) {
     }
 }

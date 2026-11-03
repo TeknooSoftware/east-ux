@@ -35,6 +35,7 @@ use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Bridge\Twig\Form\TwigRendererEngine;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormRenderer;
@@ -186,6 +187,35 @@ class FormWindowTest extends TestCase
         }
 
         return $builder->getForm()->createView();
+    }
+
+    /**
+     * A form submitted to the server, refused with an error of the form itself when `$refused` is true: an error
+     * without field gets no `aria-invalid`. With `$withSubForm`, it has a compound child, rendered in fieldsets
+     */
+    private function buildSubmittedFormView(bool $refused, bool $withSubForm): FormView
+    {
+        $formFactory = Forms::createFormFactory();
+        $builder = $formFactory->createNamedBuilder('object', FormType::class)
+            ->add('name', TextType::class);
+
+        $data = ['name' => 'An object'];
+        if ($withSubForm) {
+            $builder->add(
+                $formFactory->createNamedBuilder('address', FormType::class)
+                    ->add('street', TextType::class),
+            );
+            $data['address'] = ['street' => 'A street'];
+        }
+
+        $form = $builder->getForm();
+        $form->submit($data);
+
+        if ($refused) {
+            $form->addError(new FormError('This form should not contain extra fields.'));
+        }
+
+        return $form->createView();
     }
 
     public function testConstruct(): void
@@ -501,6 +531,62 @@ class FormWindowTest extends TestCase
         $this->assertStringContainsString('[messages]app.object.name', $output);
         $this->assertStringNotContainsString('east-ux-fieldset', $output);
         $this->assertStringNotContainsString('form-window-wide', $output);
+    }
+
+    public function testRenderMarksASubmittedInvalidForm(): void
+    {
+        $window = $this->buildFormWindow();
+        $window->formView = $this->buildSubmittedFormView(true, false);
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString(
+            'data-form-window-target="form" data-action="submit-&gt;form-window#submit" data-skip-morph=""'
+            . ' data-form-window-invalid=""',
+            $output,
+        );
+        $this->assertStringNotContainsString('aria-invalid', $output);
+    }
+
+    public function testRenderShowsTheErrorsOfTheFormItselfWithSubForms(): void
+    {
+        $window = $this->buildFormWindow();
+        $window->formView = $this->buildSubmittedFormView(true, true);
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString('east-ux-fieldset', $output);
+        $this->assertStringContainsString(' data-form-window-invalid=""', $output);
+        // `form_rest()` does not render them: written once, above the fieldsets
+        $this->assertSame(1, substr_count($output, 'This form should not contain extra fields.'));
+        $this->assertMatchesRegularExpression(
+            '#This form should not contain extra fields\.</li>\s*</ul>\s*<div class="form-window-subforms">#',
+            $output,
+        );
+        $this->assertStringNotContainsString('aria-invalid', $output);
+    }
+
+    public function testRenderDoesNotMarkAFormNotSubmitted(): void
+    {
+        $window = $this->buildFormWindow();
+        $window->formView = $this->buildFormView(false);
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString('data-form-window-target="form"', $output);
+        $this->assertStringNotContainsString('data-form-window-invalid', $output);
+    }
+
+    public function testRenderDoesNotMarkASubmittedValidForm(): void
+    {
+        $window = $this->buildFormWindow();
+        $window->formView = $this->buildSubmittedFormView(false, false);
+
+        $output = $this->render($window);
+
+        $this->assertStringContainsString('data-form-window-target="form"', $output);
+        $this->assertStringContainsString('value="An object"', $output);
+        $this->assertStringNotContainsString('data-form-window-invalid', $output);
     }
 
     public function testRenderTranslatesTheActionsInTheEastUxDomain(): void
