@@ -59,6 +59,9 @@ export default class extends Controller {
     }
 
     async open() {
+        // Live follows a redirection of the render itself (`X-Live-Redirect`, with its `Location`): the page is left
+        let leaving = false;
+
         try {
             const component = await getComponent(this.element);
 
@@ -66,6 +69,7 @@ export default class extends Controller {
             // request: `set()` without re-render, then `render()`
             component.set('hidden', false);
             const backendResponse = await component.render();
+            leaving = Boolean(backendResponse.response.headers.get('Location'));
 
             if (!this.shown && (!backendResponse.response.ok || backendResponse.response.redirected)) {
                 // The content of a window never shown could not be loaded (an error, or a redirection followed by
@@ -81,8 +85,10 @@ export default class extends Controller {
 
         this.element.classList.remove('d-none');
         this.shown = true;
-        // Shown: the end of the wait cursor of the loaders (not bubbling, as `window:open`)
-        this.element.dispatchEvent(new CustomEvent('window:opened'));
+        // Shown: the end of the wait cursor of the loaders (not bubbling, as `window:open`), not while the page is left
+        if (!leaving) {
+            this.element.dispatchEvent(new CustomEvent('window:opened'));
+        }
     }
 
     // Hook `render:started`, before the morph

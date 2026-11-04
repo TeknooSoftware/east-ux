@@ -87,7 +87,8 @@ and a window loaded by the component renderer gets the translated messages too.
   `window:opened` on its element (not bubbling). If the response of this render is not `ok` or is a redirection (such
   as the login page of an expired session, followed by `fetch`) and the window has never been shown, the browser
   navigates to `originalPath`, the page of the form, without `window:opened`. If the re-render throws, the window is
-  shown as it is, with `window:opened` too.
+  shown as it is, with `window:opened` too. When Live follows a redirection of the render itself (`X-Live-Redirect`,
+  with its `Location`), the window is shown as it is while the page is left, without `window:opened`.
 - `close()`: adds `d-none`, resets every `form` target and hides the errors. Bound to the close button of the title bar
   and to the Cancel button (`click->form-window#close`).
 - `submit()` (bound on the form, `submit->form-window#submit`): sends the form with `fetch(form.action, {method,
@@ -214,7 +215,8 @@ A wait ends:
   dispatch `window:opened`, a navigation that does not leave the page. An opening longer than that loses its cursor
   before the window is shown.
 
-When the browser follows the link instead (a failure of the loading, a first render refused or redirected), the
+When the browser follows the link instead (a failure of the loading, a first render refused or redirected), or when
+Live follows a redirection of a render itself (`X-Live-Redirect`, such as the login page of an expired session), the
 cursor stays until the page is left. Two openings at the same time count 2, then 1, then the attribute is removed. A
 second click on an entry whose window is still rendering re-renders it once more: both waits end when the window is
 shown.
@@ -235,7 +237,9 @@ Added to `ListWindow` (`attributes.defaults()`, with `window-close`, and `window
   bubbling). If the response of this render is not `ok` (refused by the access rules of the route, server error, ...)
   or is a redirection (such as the login page of an expired session, followed by `fetch`) and the window has never
   been shown, the browser navigates to `originalPath`, the page of the window, instead of showing an empty window,
-  without `window:opened`. A render that throws shows the window as it is, with `window:opened` too.
+  without `window:opened`. A render that throws shows the window as it is, with `window:opened` too. When Live follows
+  a redirection of the render itself (`X-Live-Redirect`, with its `Location`), the window is shown while the page is
+  left, without `window:opened`.
 
 ### window-close
 
@@ -409,7 +413,8 @@ The controllers expect the page to provide:
   `FormWindow` that is not live still carries): for another window with the same `windowId`, such as the `FormWindow`
   of the page of its link (its fallback page), it leaves the click to the browser, which follows the link.
 - A controller that opens a window on `window:open` or `form-window:open` dispatches `window:opened` on it once it is
-  shown (`new CustomEvent('window:opened')`, not bubbling), not when it navigates instead: the loaders end their wait
-  cursor on it, else after 10 seconds.
+  shown (`new CustomEvent('window:opened')`, not bubbling), not when it navigates instead or when Live follows a
+  redirection of its render (`Location` header of the response): the loaders end their wait cursor on it, else after
+  10 seconds.
 - Bind the listeners of `document` or `window` in `connect()` and remove them in `disconnect()`.
 - Keep the texts out of the JavaScript: use values with an English default.
