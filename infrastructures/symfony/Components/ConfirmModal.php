@@ -29,8 +29,8 @@ use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 /**
  * Twig component rendering a Bootstrap confirmation modal, styled as a window. Its confirm button carries the
- * `data-confirm-button` attribute, used by the `delete-item` Stimulus controller. Texts are props, already
- * translated by the caller.
+ * `data-confirm-button` attribute, used by the `delete-item` and `leave-confirm` Stimulus controllers. Texts are
+ * props, already translated by the caller.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)

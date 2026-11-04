@@ -1,5 +1,21 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.4.0] - 2026-11-04
+### Alpha Release
+
+#### Fixes
+- `window-dynamic-loader`: the entry of a window already in the page that is not live (a `FormWindow` with `isLive`
+  false still carries the `live` controller) leaves the click to the browser, which follows the link as documented; it
+  got `window:open` and the click did nothing.
+
+#### Evolutions
+- `window-dynamic-loader`, `form-window-dynamic-loader`: the `wait` cursor is shown from the click until the window
+  is shown (`html[data-east-ux-waiting]`, module `wait_cursor.js`, added to the importmap by AssetMapper);
+  `form-window` and `list-window-refresh` dispatch `window:opened` on the window when they show it.
+- `MenuBar`: while floating windows are shown, a link of the menu bar that does not open a window asks a confirmation
+  before leaving the page: its `<nav>` carries the Stimulus controller `leave-confirm` and it renders the
+  `ConfirmModal` `#leave-confirm-modal` after it. Applications add `leave-confirm` to their `assets/controllers.json`.
+
 ## [0.3.1] - 2026-11-04
 ### Alpha Release
 
@@ -16,7 +32,6 @@
 #### Documentation
 - `AGENTS.md`: a `ListWindow` may be placed in a page rendered by `RenderForm` (East Common 4.8); the entry of 0.3.0
   lists two more behaviours of the windows opened in the page.
-
 
 ## [0.3.0] - 2026-11-03
 ### Alpha Release

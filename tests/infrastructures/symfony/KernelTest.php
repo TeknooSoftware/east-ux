@@ -75,6 +75,7 @@ use function array_values;
 use function basename;
 use function count;
 use function dirname;
+use function explode;
 use function file_get_contents;
 use function glob;
 use function json_decode;
@@ -357,6 +358,35 @@ class KernelTest extends TestCase
         self::assertCount(0, $crawler->filter('li.nav-item'));
     }
 
+    public function testRenderMenuBarAsksAConfirmationBeforeLeavingThePage(): void
+    {
+        $this->pushRequest();
+
+        // The controller and the action of the application are added after those of the menu bar
+        $crawler = $this->render(
+            'MenuBar',
+            ['data-controller' => 'app-tracker', 'data-action' => 'click->app-tracker#track'],
+        );
+
+        $menuBar = $crawler->filter('nav.navbar');
+        self::assertCount(1, $menuBar);
+        self::assertSame('leave-confirm app-tracker', $menuBar->attr('data-controller'));
+        self::assertSame('click->leave-confirm#confirm click->app-tracker#track', $menuBar->attr('data-action'));
+        self::assertSame('leave-confirm-modal', $menuBar->attr('data-leave-confirm-modal-id-value'));
+
+        // The modal follows the `<nav>`, outside its stacking context
+        self::assertCount(0, $menuBar->filter('.modal'));
+        $modal = $crawler->filter('nav.navbar + #leave-confirm-modal.modal');
+        self::assertCount(1, $modal);
+        self::assertSame('Leave the Page', $modal->filter('.title-bar h1.title')->text());
+        self::assertSame(
+            'Leaving this page closes its open windows. Unsaved changes will be lost.',
+            $modal->filter('.window-pane p')->text(),
+        );
+        self::assertSame('Leave', $modal->filter('button.btn-danger[data-confirm-button]')->text());
+        self::assertSame('Cancel', $modal->filter('.window-pane button[data-bs-dismiss="modal"]')->text());
+    }
+
     public function testRenderMenuBarWithAUser(): void
     {
         $this->pushRequest();
@@ -556,6 +586,34 @@ class KernelTest extends TestCase
         self::assertArrayHasKey('@checksum', $props);
     }
 
+    public function testRenderFormWindowNotLiveKeepsTheLiveControllerWithoutFormWindow(): void
+    {
+        $this->pushRequest('https://localhost/items/new');
+
+        $crawler = $this->render(
+            'FormWindow',
+            [
+                'title' => 'Page window',
+                'windowId' => 'page-form',
+                'formName' => ItemType::class,
+                'objectInstance' => new Item(null, 'Page item'),
+                'formPath' => '/items/new',
+                'hidden' => false,
+                'isLive' => false,
+                'id' => 'page-form-window',
+            ],
+        );
+
+        // Symfony UX adds `live` to every Live component: `window-dynamic-loader` tells a window that `window:open`
+        // opens again by its `form-window` (or `list-window-refresh`) controller, not by `live`
+        $window = $crawler->filter('[data-form-window="page-form"]');
+        self::assertCount(1, $window);
+        $controllers = explode(' ', (string) $window->attr('data-controller'));
+        self::assertContains('live', $controllers);
+        self::assertContains('window-close', $controllers);
+        self::assertNotContains('form-window', $controllers);
+    }
+
     public function testRenderFormWindowWithoutFormTheme(): void
     {
         $this->pushRequest('https://localhost/items/new');
@@ -730,6 +788,28 @@ class KernelTest extends TestCase
         }
     }
 
+    public function testTheLoadersImportTheWaitCursor(): void
+    {
+        $assetMapper = $this->getTestContainer()->get('asset_mapper');
+        self::assertInstanceOf(AssetMapperInterface::class, $assetMapper);
+
+        self::assertNotNull($assetMapper->getAsset('@teknoo/east-ux/wait_cursor.js'));
+
+        // The relative import `../wait_cursor.js` of the loaders is resolved by AssetMapper to the module of the
+        // library, and added to the importmap of the application by itself
+        foreach (['window_dynamic_loader_controller.js', 'form_window_dynamic_loader_controller.js'] as $file) {
+            $loader = $assetMapper->getAsset('@teknoo/east-ux/controllers/' . $file);
+            self::assertNotNull($loader, $file);
+
+            $imports = [];
+            foreach ($loader->getJavaScriptImports() as $import) {
+                $imports[$import->assetLogicalPath] = $import->addImplicitlyToImportMap;
+            }
+
+            self::assertTrue($imports['@teknoo/east-ux/wait_cursor.js'] ?? false, $file);
+        }
+    }
+
     public function testStimulusRegistersTheControllersUnderTheirShortIdentifiers(): void
     {
         $assetMapper = $this->getTestContainer()->get('asset_mapper');
@@ -749,6 +829,7 @@ class KernelTest extends TestCase
                 'delete-item' => 'delete_item_controller.js',
                 'clipboard' => 'clipboard_controller.js',
                 'theme' => 'theme_controller.js',
+                'leave-confirm' => 'leave_confirm_controller.js',
             ] as $identifier => $file
         ) {
             self::assertStringContainsString('@teknoo/east-ux/controllers/' . $file, (string) $controllers->content);

@@ -45,6 +45,19 @@ Feature: Menu bar built from the menu generators of the application
     And the menu bar must show on the left the sections "Home section, Content"
     And the list window must show the items "Item 1, Item 2"
 
+  Scenario: The menu bar carries the leave confirmation and its modal
+    Given I am authenticated as "user"
+    And 2 items in the application
+    When I open the page "/items/"
+    Then the response status must be 200
+    And the menu bar must carry the confirmation "Leave the Page" before leaving the page
+    And the entry "Dashboard" of the section "Home section" must be a plain link
+    And the list window must provide the delete confirmation modal
+    When I am not authenticated
+    And I open the page "/home"
+    Then the response status must be 200
+    And the menu bar must carry the confirmation "Leave the Page" before leaving the page
+
   Scenario: The entries opening a window carry the loader of the window and keep their link
     Given I am authenticated as "user"
     When I open the page "/home"

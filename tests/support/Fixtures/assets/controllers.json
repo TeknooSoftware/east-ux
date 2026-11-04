@@ -36,6 +36,10 @@
             "theme": {
                 "enabled": true,
                 "fetch": "eager"
+            },
+            "leave-confirm": {
+                "enabled": true,
+                "fetch": "eager"
             }
         }
     },

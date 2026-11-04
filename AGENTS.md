@@ -8,7 +8,7 @@ application:
 
 - Symfony UX Twig and Live Components (`Window`, `FormWindow`, `ListWindow`, `LoginWindow`, `MenuBar`, `ObjectList`,
   `Pagination`, `ConfirmModal`, `Card`, `ThemeSwitcher`) and their templates
-- Nine Stimulus controllers and a structural stylesheet, served by AssetMapper
+- Ten Stimulus controllers and a structural stylesheet, served by AssetMapper
 - A component renderer endpoint (`POST /render`) rendering the component and the props of its JSON body, used to load a
   `FormWindow` or a floating `ListWindow` dynamically; the props are validated by the validator of the component (tag
   `teknoo.east.ux.component_rendering.validation`), a component without validator is refused by default
@@ -54,9 +54,10 @@ re-implements them.
       `di.php`, `twig.php`.
     - `templates/`: Twig namespace `@TeknooEastUX` (`components/<Name>.html.twig`, `component_renderer.html.twig`).
     - `translations/`: catalogue of the `east_ux` domain.
-- `assets/`: Symfony UX package `@teknoo/east-ux` (`package.json`, `dist/controllers/*.js`,
-  `dist/styles/east-ux.css`, `dist/system-theme/` copied from the theme repository by `make system-theme`, never edited
-  here), mapped in AssetMapper as `@teknoo/east-ux`.
+- `assets/`: Symfony UX package `@teknoo/east-ux` (`package.json`, `dist/controllers/*.js`, `dist/wait_cursor.js`
+  (the wait cursor shared by the two loaders, imported relatively), `dist/styles/east-ux.css`, `dist/system-theme/`
+  copied from the theme repository by `make system-theme`, never edited here), mapped in AssetMapper as
+  `@teknoo/east-ux`.
 - `documentation/`: components, Live Components and the East bridge, Stimulus, menu, theming, System.css theme.
 - `features/`: Behat features (components rendered by East recipes, dynamic form and list windows, menu, theme).
 - `tests/`: test suites:
@@ -106,7 +107,8 @@ All verification must be performed via the provided `Makefile`.
 - **Translations**: keys `teknoo.east.ux.<component>.<group>.<id>` in the `east_ux` domain, always passed explicitly to
   the `trans` filter; labels supplied by the application keep its default domain.
 - **Stimulus**: user-facing texts and protocol names are values with an English default; identifiers are the short
-  names declared in `assets/package.json`.
+  names declared in `assets/package.json`. The selector of the shown floating windows is written in
+  `window_dynamic_loader_controller.js` and `leave_confirm_controller.js`: change the two together.
 - **Theme**: the rendering of a preference on `<html>` (class `system-modern`, `data-bs-theme`) is written three
   times, in `ThemeService`, in the inline script of `ThemeExtension` and in `theme_controller.js`: change the three
   together. The keys `teknoo.east.ux.theme_switcher.*` used by `ThemeMenuGenerator` must stay in
