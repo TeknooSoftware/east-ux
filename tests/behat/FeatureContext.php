@@ -604,6 +604,16 @@ class FeatureContext implements Context
         Assert::assertSame($title, $listWindow->filter('.title-bar h1.title')->text());
     }
 
+    #[Then('the close button of the list window :windowId must be labelled :label')]
+    public function theCloseButtonOfTheListWindowMustBeLabelled(string $windowId, string $label): void
+    {
+        $listWindow = $this->getCrawler()->filter('div.window[data-live-name-value="ListWindow"]');
+        Assert::assertCount(1, $listWindow);
+
+        Assert::assertSame($windowId, $listWindow->attr('data-form-window'));
+        Assert::assertSame($label, $listWindow->filter('.title-bar button.close')->attr('aria-label'));
+    }
+
     #[Then('the list window :windowId must be hidden and floating')]
     public function theListWindowMustBeHiddenAndFloating(string $windowId): void
     {

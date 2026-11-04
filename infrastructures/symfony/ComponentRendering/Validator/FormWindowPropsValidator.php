@@ -41,7 +41,7 @@ use function is_string;
  * Validator of the props of the `FormWindow` component sent to the component renderer by the
  * `form-window-dynamic-loader` Stimulus controller: `windowId`, `formPath` and `formName` (a form type) are required,
  * `originalPath`, `objectId`, `title`, `closeAriaLabel`, `closable`, `draggable` and `hidden` are optional, any other
- * prop is refused.
+ * prop is refused. Only `originalPath` and `objectId`, whose properties are nullable, may be `null`.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -76,11 +76,11 @@ class FormWindowPropsValidator implements PropsValidatorInterface
                     ],
                     'originalPath' => new Assert\Optional(new Assert\Type('string')),
                     'objectId' => new Assert\Optional(new Assert\Type('string')),
-                    'title' => new Assert\Optional(new Assert\Type('string')),
-                    'closeAriaLabel' => new Assert\Optional(new Assert\Type('string')),
-                    'closable' => new Assert\Optional(new Assert\Type('bool')),
-                    'draggable' => new Assert\Optional(new Assert\Type('bool')),
-                    'hidden' => new Assert\Optional(new Assert\Type('bool')),
+                    'title' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('string')]),
+                    'closeAriaLabel' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('string')]),
+                    'closable' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('bool')]),
+                    'draggable' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('bool')]),
+                    'hidden' => new Assert\Optional([new Assert\NotNull(), new Assert\Type('bool')]),
                 ],
                 allowExtraFields: false,
                 allowMissingFields: false,

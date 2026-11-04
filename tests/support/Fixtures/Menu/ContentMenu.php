@@ -74,6 +74,8 @@ class ContentMenu implements MenuGeneratorInterface
                             'newFormRoute' => 'fixtures_item_new',
                             'newFormName' => ItemType::class,
                             'newButtonLabel' => 'fixtures.items.new',
+                            'closeAriaLabel' => 'fixtures.aria.close',
+                            'resizeAriaLabel' => 'fixtures.aria.resize',
                         ],
                     ),
                 )
@@ -91,6 +93,7 @@ class ContentMenu implements MenuGeneratorInterface
                             'formName' => ItemType::class,
                             'closable' => true,
                             'draggable' => true,
+                            'closeAriaLabel' => 'fixtures.aria.close',
                         ],
                     ),
                 )
