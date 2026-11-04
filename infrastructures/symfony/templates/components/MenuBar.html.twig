@@ -43,7 +43,14 @@
         </ul>
     </li>
 {% endmacro %}
-<nav {{ attributes.defaults({class: 'navbar navbar-expand-lg fixed-top'}) }}>
+{# The `leave-confirm` controller asks the modal rendered after the menu bar before one of its links leaves a page where
+   floating windows are shown; the entries opening a window are left to `window-dynamic-loader` #}
+<nav {{ attributes.defaults({
+    class: 'navbar navbar-expand-lg fixed-top',
+    'data-controller': 'leave-confirm',
+    'data-action': 'click->leave-confirm#confirm',
+    'data-leave-confirm-modal-id-value': 'leave-confirm-modal'
+}) }}>
     <div class="container-fluid">
         <a class="navbar-brand" href="{% if this.getHomeRoute() is not empty %}{{ path(this.getHomeRoute()) }}{% else %}/{% endif %}">
             {% block brand %}
@@ -71,3 +78,12 @@
         </div>
     </div>
 </nav>
+{# After the menu bar, not in it: the stacking context of `.fixed-top` would keep the modal under the backdrop #}
+<twig:ConfirmModal
+        modalId="leave-confirm-modal"
+        title="{{ 'teknoo.east.ux.menu_bar.modal.leave_title'|trans({}, 'east_ux') }}"
+        message="{{ 'teknoo.east.ux.menu_bar.modal.leave_message'|trans({}, 'east_ux') }}"
+        confirmText="{{ 'teknoo.east.ux.menu_bar.action.leave'|trans({}, 'east_ux') }}"
+        cancelText="{{ 'teknoo.east.ux.menu_bar.action.cancel'|trans({}, 'east_ux') }}"
+        confirmClass="btn-danger"
+/>

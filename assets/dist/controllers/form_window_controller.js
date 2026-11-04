@@ -84,12 +84,18 @@ export default class extends Controller {
             this.element.classList.remove('d-none');
             this.shown = true;
             this.hideErrors();
+            // Shown: the end of the wait cursor of the loaders (not bubbling, as `window:open`), not when Live follows
+            // a redirection of the render itself (`X-Live-Redirect`, with its `Location`): the page is left
+            if (!backendResponse.response.headers.get('Location')) {
+                this.element.dispatchEvent(new CustomEvent('window:opened'));
+            }
         } catch (error) {
             // Fallback: just show the current element without refresh
             console.debug('Could not refresh FormWindow, showing as-is:', error);
             this.element.classList.remove('d-none');
             this.shown = true;
             this.hideErrors();
+            this.element.dispatchEvent(new CustomEvent('window:opened'));
         }
     }
 

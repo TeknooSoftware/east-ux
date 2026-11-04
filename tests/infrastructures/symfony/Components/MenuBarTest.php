@@ -36,6 +36,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\ComponentAttributes;
+use Symfony\UX\TwigComponent\Twig\ComponentLexer;
 use Teknoo\East\Common\Contracts\User\UserInterface;
 use Teknoo\East\Common\Object\User;
 use Teknoo\East\UX\Contracts\Menu\MenuGeneratorInterface;
@@ -50,6 +51,7 @@ use Twig\Loader\ArrayLoader;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
 use Twig\Runtime\EscaperRuntime;
+use Twig\TwigFunction;
 
 use function array_intersect;
 use function array_map;
@@ -90,6 +92,11 @@ class MenuBarTest extends TestCase
         'searchForm',
     ];
 
+    /**
+     * @var list<array{0: string, 1: array<string, mixed>}>
+     */
+    private array $renderedComponents = [];
+
     private function buildMenuBar(?MenuService $menuService = null, ?string $homeRoute = null): MenuBar
     {
         return new MenuBar($menuService ?? $this->createStub(MenuService::class), $homeRoute);
@@ -114,7 +121,7 @@ class MenuBarTest extends TestCase
     /**
      * Renders the template (or `$template`, a template extending it) as Symfony UX does (`this`, `attributes` and
      * the public props), with a translator returning `<key>|<domain>` (`default` when no domain is passed). Spaces
-     * between tags are collapsed.
+     * between tags are collapsed. Nested components (`<twig:ConfirmModal>`) are only recorded.
      *
      * @param array<string, string> $templates
      */
@@ -130,6 +137,19 @@ class MenuBarTest extends TestCase
         $twig = new Environment(
             new ChainLoader([new ArrayLoader($templates), $filesystemLoader]),
             ['strict_variables' => true, 'autoescape' => 'html'],
+        );
+        $twig->setLexer(new ComponentLexer($twig));
+        $twig->addFunction(
+            new TwigFunction(
+                'component',
+                function (string $name, array $props = []): string {
+                    /** @var array<string, mixed> $props */
+                    $this->renderedComponents[] = [$name, $props];
+
+                    return '<component-' . $name . '/>';
+                },
+                ['is_safe' => ['html']],
+            ),
         );
         $escaper = $twig->getRuntime(EscaperRuntime::class);
         $escaper->addSafeClass(ComponentAttributes::class, ['html']);
@@ -310,7 +330,11 @@ class MenuBarTest extends TestCase
 
         $html = $this->render($this->buildMenuBar($menuService), $urlGenerator);
 
-        $this->assertStringStartsWith('<nav class="navbar navbar-expand-lg fixed-top">', $html);
+        $this->assertStringStartsWith(
+            '<nav class="navbar navbar-expand-lg fixed-top" data-controller="leave-confirm" '
+            . 'data-action="click-&gt;leave-confirm#confirm" data-leave-confirm-modal-id-value="leave-confirm-modal">',
+            $html,
+        );
         $this->assertStringContainsString(
             '<a class="navbar-brand" href="/"> teknoo.east.ux.menu_bar.brand.title|east_ux </a>',
             $html,
@@ -555,9 +579,34 @@ class MenuBarTest extends TestCase
             $html,
         );
 
-        $this->assertSame(2, substr_count($html, 'data-controller='));
-        $this->assertSame(2, substr_count($html, 'data-action='));
+        // The two entries and the `<nav>` (`leave-confirm`)
+        $this->assertSame(3, substr_count($html, 'data-controller='));
+        $this->assertSame(3, substr_count($html, 'data-action='));
         $this->assertSame(2, substr_count($html, 'data-window-dynamic-loader-url-value='));
+    }
+
+    public function testRenderTheLeaveConfirmationModalAfterTheNav(): void
+    {
+        $html = $this->render($this->buildMenuBar());
+
+        // After the `<nav>`, not in it: the stacking context of `.fixed-top` would keep it under the backdrop
+        $this->assertStringEndsWith('</nav> <component-ConfirmModal/>', $html);
+        $this->assertSame(
+            [
+                [
+                    'ConfirmModal',
+                    [
+                        'modalId' => 'leave-confirm-modal',
+                        'title' => 'teknoo.east.ux.menu_bar.modal.leave_title|east_ux',
+                        'message' => 'teknoo.east.ux.menu_bar.modal.leave_message|east_ux',
+                        'confirmText' => 'teknoo.east.ux.menu_bar.action.leave|east_ux',
+                        'cancelText' => 'teknoo.east.ux.menu_bar.action.cancel|east_ux',
+                        'confirmClass' => 'btn-danger',
+                    ],
+                ],
+            ],
+            $this->renderedComponents,
+        );
     }
 
     public function testTranslateTheAriaLabelsOfTheWindowLikeItsTitle(): void

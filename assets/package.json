@@ -62,6 +62,12 @@
                 "name": "theme",
                 "fetch": "eager",
                 "enabled": true
+            },
+            "leave-confirm": {
+                "main": "dist/controllers/leave_confirm_controller.js",
+                "name": "leave-confirm",
+                "fetch": "eager",
+                "enabled": true
             }
         },
         "importmap": {

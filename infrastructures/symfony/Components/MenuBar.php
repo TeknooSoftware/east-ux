@@ -35,7 +35,8 @@ use Teknoo\East\UX\Service\MenuService;
  * Twig component rendering the menu bar: the brand (block `brand`, linked to the route `home_route` of the bundle
  * configuration, or to `/`), the `Location::TopLeft` sections on the left and the `Location::TopRight` sections
  * on the right, all built by `MenuService` from the menu generators of the application for the `user` prop.
- * Without user, no section is rendered.
+ * Without user, no section is rendered. Its `<nav>` carries the `leave-confirm` Stimulus controller; the
+ * `ConfirmModal` it opens is rendered after the `<nav>`.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)

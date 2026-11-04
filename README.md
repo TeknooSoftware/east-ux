@@ -170,7 +170,7 @@ Components
 | `MenuBar`      | Twig | Navigation bar built from the menu generators                                     |
 | `ObjectList`   | Twig | Table of objects, one item component per row                                      |
 | `Pagination`   | Twig | Page buttons bound to the `page` prop of `ListWindow`                             |
-| `ConfirmModal` | Twig | Bootstrap confirmation modal, used by `ListWindow` for deletions                  |
+| `ConfirmModal` | Twig | Bootstrap confirmation modal, used by `ListWindow` for deletions and by `MenuBar` before leaving the page |
 | `Card`         | Twig | Bootstrap card; its content is escaped unless `contentIsHtml` is set              |
 | `ThemeSwitcher` | Twig | Buttons choosing the style and the mode of the System.css x Bootstrap theme      |
 
@@ -289,7 +289,7 @@ Assets
 
 `assets/package.json` is read by Symfony Flex (the package has the `symfony-ux` keyword) and by StimulusBundle. When
 the library is installed or updated, Flex writes the `@teknoo/east-ux` entries into the application's
-`assets/controllers.json` (the nine controllers) and `importmap.php` (`@teknoo/east-ux/styles/east-ux.css`,
+`assets/controllers.json` (the ten controllers) and `importmap.php` (`@teknoo/east-ux/styles/east-ux.css`,
 `@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css`, and `@hotwired/stimulus` and `bootstrap` when they
 are missing), each file only if it already exists: commit both files
 first, then require the library and commit the entries Flex adds. A later `composer install` leaves them unchanged.

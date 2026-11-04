@@ -754,6 +754,25 @@ class FeatureContext implements Context
         Assert::assertSame($path, $this->getCrawler()->filter('nav.navbar a.navbar-brand')->attr('href'));
     }
 
+    /**
+     * The `leave-confirm` controller of the menu bar and its modal, rendered after the `<nav>`. The confirmation itself
+     * is JavaScript, not run here
+     */
+    #[Then('the menu bar must carry the confirmation :title before leaving the page')]
+    public function theMenuBarMustCarryTheConfirmationBeforeLeavingThePage(string $title): void
+    {
+        $menuBar = $this->getCrawler()->filter('nav.navbar');
+        Assert::assertSame('leave-confirm', $menuBar->attr('data-controller'));
+        Assert::assertSame('click->leave-confirm#confirm', $menuBar->attr('data-action'));
+
+        $modal = $this->getCrawler()->filter(
+            'nav.navbar + #' . $menuBar->attr('data-leave-confirm-modal-id-value') . '.modal',
+        );
+        Assert::assertCount(1, $modal);
+        Assert::assertSame($title, $modal->filter('.title-bar h1.title')->text());
+        Assert::assertCount(1, $modal->filter('[data-confirm-button]'));
+    }
+
     #[Then('the menu bar must show on the :side the sections :sections')]
     public function theMenuBarMustShowOnTheTheSections(string $side, string $sections): void
     {
