@@ -170,7 +170,7 @@ Components
 | `MenuBar`      | Twig | Navigation bar built from the menu generators                                     |
 | `ObjectList`   | Twig | Table of objects, one item component per row                                      |
 | `Pagination`   | Twig | Page buttons bound to the `page` prop of `ListWindow`                             |
-| `ConfirmModal` | Twig | Bootstrap confirmation modal, used by `ListWindow` for deletions                  |
+| `ConfirmModal` | Twig | Bootstrap confirmation modal, used by `ListWindow` for deletions and by `MenuBar` before leaving the page |
 | `Card`         | Twig | Bootstrap card; its content is escaped unless `contentIsHtml` is set              |
 | `ThemeSwitcher` | Twig | Buttons choosing the style and the mode of the System.css x Bootstrap theme      |
 

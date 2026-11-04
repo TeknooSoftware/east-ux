@@ -61,11 +61,22 @@ export default class extends Controller {
         const abortController = new AbortController();
         let confirmed = false;
 
-        confirmButton.addEventListener(
-            'click',
+        // The confirm button is listened once the modal is shown: during its fade-in, Bootstrap ignores `hide()`, a click
+        // there would leave the page on the next Cancel
+        modalElement.addEventListener(
+            'shown.bs.modal',
             () => {
-                confirmed = true;
-                modal.hide();
+                confirmButton.addEventListener(
+                    'click',
+                    () => {
+                        confirmed = true;
+                        modal.hide();
+                    },
+                    {
+                        once: true,
+                        signal: abortController.signal
+                    }
+                );
             },
             {
                 once: true,

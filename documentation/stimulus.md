@@ -42,11 +42,11 @@ the library and commit the entries Flex adds):
 
 StimulusBundle registers them under their short identifiers (`form-window`, not `teknoo--east-ux--form-window`). Set
 `enabled` to `false` for a controller the application does not use. Three controllers import
-`@symfony/ux-live-component`, and `delete-item` and `leave-confirm` import `bootstrap`: both are entries of the importmap (the first one
-from Symfony UX, the second one from East UX's `package.json`). The two loaders (`window-dynamic-loader`,
-`form-window-dynamic-loader`) also import `../wait_cursor.js`, a module of the package that is not a controller
-(`assets/dist/wait_cursor.js`, [the wait cursor](#the-wait-cursor)): AssetMapper resolves this relative import and
-adds it to the importmap by itself.
+`@symfony/ux-live-component`, and `delete-item` and `leave-confirm` import `bootstrap`: both are entries of the
+importmap (the first one from Symfony UX, the second one from East UX's `package.json`). The two loaders
+(`window-dynamic-loader`, `form-window-dynamic-loader`) also import `../wait_cursor.js`, a module of the package that is
+not a controller (`assets/dist/wait_cursor.js`, [the wait cursor](#the-wait-cursor)): AssetMapper resolves this
+relative import and adds it to the importmap by itself.
 
 The identifiers must stay the ones of this page: the templates of the components use them.
 
@@ -357,8 +357,9 @@ Values:
   - the modal named by `modal-id`, or its `[data-confirm-button]`, is not in the page.
 - Otherwise the navigation is prevented and the modal is shown (`import { Modal } from 'bootstrap'`). Its confirm
   button hides it, and the link is followed (`window.location.assign()`) once it is hidden (`hidden.bs.modal`), so a
-  page restored from the back-forward cache shows no modal. Cancel hides it and the page stays. The listeners of a
-  confirmation are removed when the modal is hidden, as for `delete-item`.
+  page restored from the back-forward cache shows no modal. Cancel hides it and the page stays. As for `delete-item`,
+  the confirm button is listened once the modal is shown (`shown.bs.modal`: a click during its fade-in does nothing),
+  and the listeners of a confirmation are removed when the modal is hidden.
 - A link activated with `Enter` is handled the same way. The dropdown of the section closes (Bootstrap closes it on
   any click on an entry). The modal is static: `Escape` does not close it. The focus is not given back to the menu
   after a cancel.
