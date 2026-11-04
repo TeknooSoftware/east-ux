@@ -730,6 +730,28 @@ class KernelTest extends TestCase
         }
     }
 
+    public function testTheLoadersImportTheWaitCursor(): void
+    {
+        $assetMapper = $this->getTestContainer()->get('asset_mapper');
+        self::assertInstanceOf(AssetMapperInterface::class, $assetMapper);
+
+        self::assertNotNull($assetMapper->getAsset('@teknoo/east-ux/wait_cursor.js'));
+
+        // The relative import `../wait_cursor.js` of the loaders is resolved by AssetMapper to the module of the
+        // library, and added to the importmap of the application by itself
+        foreach (['window_dynamic_loader_controller.js', 'form_window_dynamic_loader_controller.js'] as $file) {
+            $loader = $assetMapper->getAsset('@teknoo/east-ux/controllers/' . $file);
+            self::assertNotNull($loader, $file);
+
+            $imports = [];
+            foreach ($loader->getJavaScriptImports() as $import) {
+                $imports[$import->assetLogicalPath] = $import->addImplicitlyToImportMap;
+            }
+
+            self::assertTrue($imports['@teknoo/east-ux/wait_cursor.js'] ?? false, $file);
+        }
+    }
+
     public function testStimulusRegistersTheControllersUnderTheirShortIdentifiers(): void
     {
         $assetMapper = $this->getTestContainer()->get('asset_mapper');

@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { beginWait, endWaits } from '../wait_cursor.js';
 
 // The shown floating windows of the page: floating ListWindows and FormWindow overlays
 const SHOWN_FLOATING_WINDOWS = '.window.window-floating:not(.d-none), .window.form-window.form-fixed:not(.d-none)';
@@ -16,6 +17,17 @@ export default class extends Controller {
 
     initialize() {
         this.loading = false;
+    }
+
+    connect() {
+        // A page left during an opening (a followed link) does not keep the wait cursor in the back-forward cache. One
+        // listener per controller: a listener shared by all of them would be removed by the first disconnected one
+        this.boundEndWaits = () => endWaits();
+        window.addEventListener('pagehide', this.boundEndWaits);
+    }
+
+    disconnect() {
+        window.removeEventListener('pagehide', this.boundEndWaits);
     }
 
     async open(event) {
@@ -39,6 +51,9 @@ export default class extends Controller {
 
         this.loading = true;
 
+        // The wait cursor, until the window is shown (`window:opened`); kept while the browser follows the link
+        const endWait = beginWait();
+
         try {
             // Read in the `try`: a malformed props value falls back to the navigation
             const link = new URL(this.element.href);
@@ -54,6 +69,7 @@ export default class extends Controller {
                 const existing = document.querySelector(`[data-form-window="${CSS.escape(props.windowId)}"]`);
                 if (existing) {
                     if (existing.matches('[data-controller~="live"]')) {
+                        existing.addEventListener('window:opened', endWait, { once: true });
                         existing.dispatchEvent(new CustomEvent('window:open'));
                     } else {
                         window.location.assign(this.element.href);
@@ -106,10 +122,12 @@ export default class extends Controller {
                 `${(shown % CASCADE_STEPS) * CASCADE_STEP_REM}rem`
             );
 
-            // The Live window opens itself: its re-render runs the recipe of `originalPath`
+            // The Live window opens itself: its re-render runs the recipe of `originalPath`, then it dispatches
+            // `window:opened`, listened before
+            windowElement.addEventListener('window:opened', endWait, { once: true });
             windowElement.dispatchEvent(new CustomEvent('window:open'));
         } catch (error) {
-            // Fallback: the page of the link
+            // Fallback: the page of the link, the wait cursor stays until the page is left
             console.error('Error loading the window:', error);
             window.location.assign(this.element.href);
         } finally {

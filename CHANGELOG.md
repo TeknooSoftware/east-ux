@@ -1,5 +1,14 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.4.0] - Release pending
+### Alpha Release
+
+#### Evolutions
+- `window-dynamic-loader`, `form-window-dynamic-loader`: the `wait` cursor is shown from the click until the window
+  is shown (`html[data-east-ux-waiting]`, module `wait_cursor.js`, added to the importmap by AssetMapper);
+  `form-window` and `list-window-refresh` dispatch `window:opened` on the window when they show it.
+
+
 ## [0.3.1] - 2026-11-04
 ### Alpha Release
 

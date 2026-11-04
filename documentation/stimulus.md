@@ -42,7 +42,10 @@ the library and commit the entries Flex adds):
 StimulusBundle registers them under their short identifiers (`form-window`, not `teknoo--east-ux--form-window`). Set
 `enabled` to `false` for a controller the application does not use. Three controllers import
 `@symfony/ux-live-component` and `delete-item` imports `bootstrap`: both are entries of the importmap (the first one
-from Symfony UX, the second one from East UX's `package.json`).
+from Symfony UX, the second one from East UX's `package.json`). The two loaders (`window-dynamic-loader`,
+`form-window-dynamic-loader`) also import `../wait_cursor.js`, a module of the package that is not a controller
+(`assets/dist/wait_cursor.js`, [the wait cursor](#the-wait-cursor)): AssetMapper resolves this relative import and
+adds it to the importmap by itself.
 
 The identifiers must stay the ones of this page: the templates of the components use them.
 
@@ -78,10 +81,11 @@ and a window loaded by the component renderer gets the translated messages too.
   it also keeps the `style` of the window across the Live re-renders (see
   [the style of a Live window](#the-style-of-a-live-window)). `disconnect()` removes the listeners and the hooks.
 - `open()`: re-renders the window (`getComponent(this.element)` then `component.render()`: the East recipe of
-  `formPath` loads the object and builds the form), then removes `d-none` and hides the errors. If the response of
-  this render is not `ok` or is a redirection (such as the login page of an expired session, followed by `fetch`) and
-  the window has never been shown, the browser navigates to `originalPath`, the page of the form. If the re-render
-  throws, the window is shown as it is.
+  `formPath` loads the object and builds the form), then removes `d-none`, hides the errors and dispatches
+  `window:opened` on its element (not bubbling). If the response of this render is not `ok` or is a redirection (such
+  as the login page of an expired session, followed by `fetch`) and the window has never been shown, the browser
+  navigates to `originalPath`, the page of the form, without `window:opened`. If the re-render throws, the window is
+  shown as it is, with `window:opened` too.
 - `close()`: adds `d-none`, resets every `form` target and hides the errors. Bound to the close button of the title bar
   and to the Cancel button (`click->form-window#close`).
 - `submit()` (bound on the form, `submit->form-window#submit`): sends the form with `fetch(form.action, {method,
@@ -114,6 +118,8 @@ On the "New" button of `ListWindow`, whose `load-error-text` is translated from
   dispatches `form-window:open` on the new window.
 - The `url` value is required: without it, or on any failure, the error goes to `console.error()` and the
   `load-error-text` value is shown with `alert()`.
+- [The wait cursor](#the-wait-cursor) is shown from the click until the window is shown (`window:opened`). It ends
+  before the `alert()` of a failure, and when `#dynamic-modals` or the window is not found after the loading.
 
 ### window-dynamic-loader
 
@@ -146,7 +152,8 @@ Values:
 - A click with another button than the main one, or with a modifier key (`Ctrl`, `Shift`, `Alt`, `Meta`), is left to
   the browser: it opens the `href` (in a new tab or window, ...). An element without `href` logs an error with
   `console.error()` and does nothing.
-- Otherwise the navigation is prevented, and a click while a window is loading is ignored.
+- Otherwise the navigation is prevented, and a click while its window is loaded from the renderer (until
+  `window:open`) is ignored.
 - The props are the `props` value, plus `originalPath` (the path and the query of the `href`: the recipe that the
   re-render of the window runs), `hidden: true`, and `title` when the `title` value is not empty. A `FormWindow`
   replaces `originalPath` with its `formPath` when it is mounted (`FormWindow::postMount()`): its re-render, and the
@@ -176,8 +183,35 @@ Values:
   the returned HTML), the error goes to `console.error()` and the browser navigates to the `href` of the link. There is
   no `alert()`, so no text to translate.
 
+- [The wait cursor](#the-wait-cursor) is shown from the click (not for a click left to the browser or ignored)
+  until the window is shown (`window:opened`). When the browser follows the link, it stays until the page is left.
+
 `form-window-dynamic-loader` stays for the "New" and "Edit" buttons: it builds the props of a `FormWindow` from its
 values and shows an `alert()` on failure.
+
+### The wait cursor
+
+From the click on a link or a button of `window-dynamic-loader` or `form-window-dynamic-loader` until the window is
+shown, `<html>` carries `data-east-ux-waiting`, the number of the windows being opened, and the rule
+`html[data-east-ux-waiting] *` of `east-ux.css` shows the `wait` cursor on the whole page
+([theming.md](theming.md#stylesheet)). The two loaders share these waits through the module `wait_cursor.js`.
+
+A wait ends:
+
+- on the `window:opened` of its window, dispatched by `form-window` and `list-window-refresh` when their `open()`
+  shows it: a Live render that answers, also refused or failed when the window has already been shown, and a window
+  shown as it is when its render throws;
+- before the `alert()` of `form-window-dynamic-loader`, and when it does not find the window it loaded;
+- when the page is left (`pagehide`, listened by every loader): a page restored from the back-forward cache shows the
+  normal cursor;
+- after 10 seconds without any of them: a Live render that never answers (a network failure), a window that does not
+  dispatch `window:opened`, a navigation that does not leave the page. An opening longer than that loses its cursor
+  before the window is shown.
+
+When the browser follows the link instead (a failure of the loading, a first render refused or redirected), the
+cursor stays until the page is left. Two openings at the same time count 2, then 1, then the attribute is removed. A
+second click on an entry whose window is still rendering re-renders it once more: both waits end when the window is
+shown.
 
 ### list-window-refresh
 
@@ -191,10 +225,11 @@ Added to `ListWindow` (`attributes.defaults()`, with `window-close`, and `window
   yet) is not refreshed: it stays closed, and is rendered again when it is opened.
 - `open()` (on `window:open`) sets the writable LiveProp `hidden` to `false` (`component.set('hidden', false)`, without
   re-render) and calls `component.render()`, a single request: the East recipe of `originalPath` loads the list, and the
-  window is rendered shown from now on. Then it removes `d-none`. If the response of this render is not `ok` (refused
-  by the access rules of the route, server error, ...) or is a redirection (such as the login page of an expired
-  session, followed by `fetch`) and the window has never been shown, the browser navigates to `originalPath`, the
-  page of the window, instead of showing an empty window.
+  window is rendered shown from now on. Then it removes `d-none` and dispatches `window:opened` on its element (not
+  bubbling). If the response of this render is not `ok` (refused by the access rules of the route, server error, ...)
+  or is a redirection (such as the login page of an expired session, followed by `fetch`) and the window has never
+  been shown, the browser navigates to `originalPath`, the page of the window, instead of showing an empty window,
+  without `window:opened`. A render that throws shows the window as it is, with `window:opened` too.
 
 ### window-close
 
@@ -297,6 +332,7 @@ The controllers expect the page to provide:
 | The event `list-window:refresh` on `document` | `list-window-refresh`         | `form-window` after a save; the application may dispatch it too             |
 | The event `form-window:open` on a window element | `form-window`               | `form-window-dynamic-loader`; the application may dispatch it to open a window |
 | The event `window:open` on a window element  | `form-window`, `list-window-refresh` | `window-dynamic-loader`; the application may dispatch it to open a Live window (`FormWindow` when it is live, `ListWindow`) |
+| The event `window:opened` on a window element | `form-window-dynamic-loader`, `window-dynamic-loader` (end of the wait cursor) | `form-window`, `list-window-refresh`; a custom Live window opened by a loader must dispatch it, else its wait cursor lasts 10 seconds |
 | The fixed menu bar `.navbar.fixed-top`       | `window-drag` (top limit of a drag) | `MenuBar`; without it, the limit is the top of the viewport          |
 | The URL of the component renderer            | `form-window-dynamic-loader`, `window-dynamic-loader` (`url` value) | The bundle's route `_teknoo_east_ux_component_render`, imported by the application |
 | `X-Requested-With: XMLHttpRequest`           | sent by `form-window-dynamic-loader`, `window-dynamic-loader` and `delete-item` | The application may require it on its routes |
@@ -304,11 +340,13 @@ The controllers expect the page to provide:
 | Bootstrap's JavaScript (`Modal`)             | `delete-item`                  | The `bootstrap` entry of the importmap                                      |
 | `<html {{ east_ux_theme_attributes() }}>`    | `theme`                        | The application's layout (see [theme.md](theme.md#the-page))                |
 | The rule of `html.east-ux-theme-switching`   | `theme` (no fade while switching) | `east-ux.css`                                                            |
+| The rule of `html[data-east-ux-waiting]`     | `form-window-dynamic-loader`, `window-dynamic-loader` (wait cursor) | `east-ux.css`                          |
 
 | Event                 | Dispatched on                    | By                           | Listened by (on)                       |
 |-----------------------|----------------------------------|------------------------------|----------------------------------------|
 | `form-window:open`    | the `[data-form-window]` element | `form-window-dynamic-loader` | `form-window` and `window-drag` (its own element) |
 | `window:open`         | the `[data-form-window]` element | `window-dynamic-loader`, the application | `form-window`, `list-window-refresh` and `window-drag` (its own element) |
+| `window:opened`       | the `[data-form-window]` element, not bubbling | `form-window`, `list-window-refresh` when `open()` shows the window | `form-window-dynamic-loader`, `window-dynamic-loader` (the window), the application |
 | `list-window:refresh` | `document`                       | `form-window` after a save   | `list-window-refresh` (`document`)     |
 | `theme:changed`       | `<html>`                         | `theme` after a change       | The application, to persist the choice itself |
 
@@ -325,5 +363,8 @@ The controllers expect the page to provide:
   on a `FormWindow` that is not live, it opens nothing (`window-drag` only brings it to the front). So
   `window-dynamic-loader` reuses only a Live window: for a window that is not live with the same `windowId`, such as
   the `FormWindow` of the page of its link (its fallback page), it follows the link.
+- A controller that opens a window on `window:open` or `form-window:open` dispatches `window:opened` on it once it is
+  shown (`new CustomEvent('window:opened')`, not bubbling), not when it navigates instead: the loaders end their wait
+  cursor on it, else after 10 seconds.
 - Bind the listeners of `document` or `window` in `connect()` and remove them in `disconnect()`.
 - Keep the texts out of the JavaScript: use values with an English default.

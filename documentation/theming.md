@@ -26,6 +26,7 @@ display without a theme. Colours come from the Bootstrap 5.3 CSS variables, with
 | `.modal .window.confirm-modal`                            | Window rendering of `ConfirmModal`                                      |
 | `.dropdown-item[data-theme-target~="menuOption"]`         | Check mark of the current theme entries of the menu bar                 |
 | `html.east-ux-theme-switching *`                          | No transition while the `theme` controller switches the theme           |
+| `html[data-east-ux-waiting] *`                            | `wait` cursor while a dynamic loader opens a window                     |
 
 With AssetMapper, the stylesheet is an entry of the importmap (`@teknoo/east-ux/styles/east-ux.css`, written by Flex)
 imported by the application's `assets/app.js`, after Bootstrap and before its own stylesheet:

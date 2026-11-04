@@ -54,9 +54,10 @@ re-implements them.
       `di.php`, `twig.php`.
     - `templates/`: Twig namespace `@TeknooEastUX` (`components/<Name>.html.twig`, `component_renderer.html.twig`).
     - `translations/`: catalogue of the `east_ux` domain.
-- `assets/`: Symfony UX package `@teknoo/east-ux` (`package.json`, `dist/controllers/*.js`,
-  `dist/styles/east-ux.css`, `dist/system-theme/` copied from the theme repository by `make system-theme`, never edited
-  here), mapped in AssetMapper as `@teknoo/east-ux`.
+- `assets/`: Symfony UX package `@teknoo/east-ux` (`package.json`, `dist/controllers/*.js`, `dist/wait_cursor.js`
+  (the wait cursor shared by the two loaders, imported relatively), `dist/styles/east-ux.css`, `dist/system-theme/`
+  copied from the theme repository by `make system-theme`, never edited here), mapped in AssetMapper as
+  `@teknoo/east-ux`.
 - `documentation/`: components, Live Components and the East bridge, Stimulus, menu, theming, System.css theme.
 - `features/`: Behat features (components rendered by East recipes, dynamic form and list windows, menu, theme).
 - `tests/`: test suites:

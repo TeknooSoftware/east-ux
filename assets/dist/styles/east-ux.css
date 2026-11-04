@@ -222,3 +222,10 @@ html.east-ux-theme-switching *::before,
 html.east-ux-theme-switching *::after {
     transition: none !important;
 }
+
+/* Window opening: the `wait` cursor on the whole page while `window-dynamic-loader` or `form-window-dynamic-loader`
+   opens a window (`wait_cursor.js`), above the cursors of the links, the buttons and the title bars */
+html[data-east-ux-waiting],
+html[data-east-ux-waiting] * {
+    cursor: wait !important;
+}

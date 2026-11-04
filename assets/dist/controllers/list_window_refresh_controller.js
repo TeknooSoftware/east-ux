@@ -81,6 +81,8 @@ export default class extends Controller {
 
         this.element.classList.remove('d-none');
         this.shown = true;
+        // Shown: the end of the wait cursor of the loaders (not bubbling, as `window:open`)
+        this.element.dispatchEvent(new CustomEvent('window:opened'));
     }
 
     // Hook `render:started`, before the morph

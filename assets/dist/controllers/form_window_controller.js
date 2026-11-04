@@ -84,12 +84,15 @@ export default class extends Controller {
             this.element.classList.remove('d-none');
             this.shown = true;
             this.hideErrors();
+            // Shown: the end of the wait cursor of the loaders (not bubbling, as `window:open`)
+            this.element.dispatchEvent(new CustomEvent('window:opened'));
         } catch (error) {
             // Fallback: just show the current element without refresh
             console.debug('Could not refresh FormWindow, showing as-is:', error);
             this.element.classList.remove('d-none');
             this.shown = true;
             this.hideErrors();
+            this.element.dispatchEvent(new CustomEvent('window:opened'));
         }
     }
 
