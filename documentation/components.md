@@ -247,6 +247,10 @@ alert-danger" role="alert">`: the id is a stable hook for the tests of the appli
   renderer (`path('_teknoo_east_ux_component_render')`: the application must import the bundle's routes), the
   component, the title translated in the domain of the entry and the props in JSON (`{}` when empty). A click opens
   the window in the page ([menu.md](menu.md#entries-opening-a-window)).
+- The `<nav>` carries the `leave-confirm` controller, merged with a `data-controller` and a `data-action` given to
+  `<twig:MenuBar>`, and the component renders after it the `ConfirmModal` `leave-confirm-modal`: a link that does not
+  open a window asks it before leaving a page where floating windows are shown ([menu.md](menu.md#rendering)). Render
+  `<twig:MenuBar>` as a child of `<body>`, outside an element creating a stacking context.
 
 ## ObjectList
 
@@ -321,7 +325,8 @@ query string of the current request with another page, for templates that prefer
 | `confirmClass` | `string` | `'btn-danger'`    |
 
 A Bootstrap modal (`data-bs-backdrop="static"`) whose content is a window. Texts are props, already translated by the
-caller. The confirm button carries `data-confirm-button`, which the `delete-item` controller listens to.
+caller. The confirm button carries `data-confirm-button`, which the `delete-item` and `leave-confirm` controllers
+listen to.
 
 ## Card
 

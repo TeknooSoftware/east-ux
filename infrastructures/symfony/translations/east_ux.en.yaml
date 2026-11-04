@@ -33,6 +33,10 @@ teknoo.east.ux.pagination.action.next: 'Next'
 
 # MenuBar
 teknoo.east.ux.menu_bar.brand.title: 'Home'
+teknoo.east.ux.menu_bar.action.leave: 'Leave'
+teknoo.east.ux.menu_bar.action.cancel: 'Cancel'
+teknoo.east.ux.menu_bar.modal.leave_title: 'Leave the Page'
+teknoo.east.ux.menu_bar.modal.leave_message: 'Leaving this page closes its open windows. Unsaved changes will be lost.'
 
 # ThemeSwitcher (also the labels of the entries added to the menu bar by ThemeMenuGenerator)
 teknoo.east.ux.theme_switcher.group.theme: 'Theme'

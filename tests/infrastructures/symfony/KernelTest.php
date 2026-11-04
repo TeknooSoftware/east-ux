@@ -357,6 +357,35 @@ class KernelTest extends TestCase
         self::assertCount(0, $crawler->filter('li.nav-item'));
     }
 
+    public function testRenderMenuBarAsksAConfirmationBeforeLeavingThePage(): void
+    {
+        $this->pushRequest();
+
+        // The controller and the action of the application are added after those of the menu bar
+        $crawler = $this->render(
+            'MenuBar',
+            ['data-controller' => 'app-tracker', 'data-action' => 'click->app-tracker#track'],
+        );
+
+        $menuBar = $crawler->filter('nav.navbar');
+        self::assertCount(1, $menuBar);
+        self::assertSame('leave-confirm app-tracker', $menuBar->attr('data-controller'));
+        self::assertSame('click->leave-confirm#confirm click->app-tracker#track', $menuBar->attr('data-action'));
+        self::assertSame('leave-confirm-modal', $menuBar->attr('data-leave-confirm-modal-id-value'));
+
+        // The modal follows the `<nav>`, outside its stacking context
+        self::assertCount(0, $menuBar->filter('.modal'));
+        $modal = $crawler->filter('nav.navbar + #leave-confirm-modal.modal');
+        self::assertCount(1, $modal);
+        self::assertSame('Leave the Page', $modal->filter('.title-bar h1.title')->text());
+        self::assertSame(
+            'Leaving this page closes its open windows. Unsaved changes will be lost.',
+            $modal->filter('.window-pane p')->text(),
+        );
+        self::assertSame('Leave', $modal->filter('button.btn-danger[data-confirm-button]')->text());
+        self::assertSame('Cancel', $modal->filter('.window-pane button[data-bs-dismiss="modal"]')->text());
+    }
+
     public function testRenderMenuBarWithAUser(): void
     {
         $this->pushRequest();
@@ -771,6 +800,7 @@ class KernelTest extends TestCase
                 'delete-item' => 'delete_item_controller.js',
                 'clipboard' => 'clipboard_controller.js',
                 'theme' => 'theme_controller.js',
+                'leave-confirm' => 'leave_confirm_controller.js',
             ] as $identifier => $file
         ) {
             self::assertStringContainsString('@teknoo/east-ux/controllers/' . $file, (string) $controllers->content);

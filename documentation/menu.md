@@ -213,3 +213,10 @@ class UserMenu implements MenuGeneratorInterface
 `<twig:MenuBar :user="..." />` (see [components.md](components.md#menubar)) renders the `Location::TopLeft` sections
 on the left and the `Location::TopRight` sections on the right, each as a Bootstrap dropdown, with the brand linked to
 `teknoo_east_ux.home_route`. Without user, no section is rendered.
+
+Before a link of the menu bar leaves a page where floating windows are shown (a floating `ListWindow`, a `FormWindow`
+overlay), the `leave-confirm` controller of the `<nav>` asks a confirmation in a `ConfirmModal` that `MenuBar` renders
+after the `<nav>`, with the texts `teknoo.east.ux.menu_bar.*` ([theming.md](theming.md#translations)). It concerns the
+brand and the entries without window (settings pages, logout, ...), not the entries opening a window, the buttons or
+the clicks with a modifier key ([stimulus.md](stimulus.md#leave-confirm)). `leave-confirm` must be enabled in the
+`assets/controllers.json` of the application; without it, the links are followed as before.

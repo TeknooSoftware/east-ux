@@ -8,7 +8,7 @@ application:
 
 - Symfony UX Twig and Live Components (`Window`, `FormWindow`, `ListWindow`, `LoginWindow`, `MenuBar`, `ObjectList`,
   `Pagination`, `ConfirmModal`, `Card`, `ThemeSwitcher`) and their templates
-- Nine Stimulus controllers and a structural stylesheet, served by AssetMapper
+- Ten Stimulus controllers and a structural stylesheet, served by AssetMapper
 - A component renderer endpoint (`POST /render`) rendering the component and the props of its JSON body, used to load a
   `FormWindow` or a floating `ListWindow` dynamically; the props are validated by the validator of the component (tag
   `teknoo.east.ux.component_rendering.validation`), a component without validator is refused by default
@@ -107,7 +107,8 @@ All verification must be performed via the provided `Makefile`.
 - **Translations**: keys `teknoo.east.ux.<component>.<group>.<id>` in the `east_ux` domain, always passed explicitly to
   the `trans` filter; labels supplied by the application keep its default domain.
 - **Stimulus**: user-facing texts and protocol names are values with an English default; identifiers are the short
-  names declared in `assets/package.json`.
+  names declared in `assets/package.json`. The selector of the shown floating windows is written in
+  `window_dynamic_loader_controller.js` and `leave_confirm_controller.js`: change the two together.
 - **Theme**: the rendering of a preference on `<html>` (class `system-modern`, `data-bs-theme`) is written three
   times, in `ThemeService`, in the inline script of `ThemeExtension` and in `theme_controller.js`: change the three
   together. The keys `teknoo.east.ux.theme_switcher.*` used by `ThemeMenuGenerator` must stay in

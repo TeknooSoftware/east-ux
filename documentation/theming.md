@@ -71,6 +71,9 @@ the System.css theme removes its blur in this case.
 The `FormWindow` overlay was above everything with `z-index: 9999` before East UX 0.3: it is now under the menu bar and
 the modals of the application.
 
+The `ConfirmModal` of `MenuBar` is rendered after its `<nav>`: `.fixed-top` (1030) is a stacking context, so a modal
+inside it would stay under the backdrop.
+
 ```css
 /* A taller menu bar */
 :root {
@@ -196,6 +199,10 @@ application translates them in another language, or changes the English texts, i
 | `teknoo.east.ux.pagination.action.previous`        | Previous                                                                 |
 | `teknoo.east.ux.pagination.action.next`            | Next                                                                     |
 | `teknoo.east.ux.menu_bar.brand.title`              | Home                                                                     |
+| `teknoo.east.ux.menu_bar.action.leave`             | Leave                                                                    |
+| `teknoo.east.ux.menu_bar.action.cancel`            | Cancel                                                                   |
+| `teknoo.east.ux.menu_bar.modal.leave_title`        | Leave the Page                                                           |
+| `teknoo.east.ux.menu_bar.modal.leave_message`      | Leaving this page closes its open windows. Unsaved changes will be lost. |
 | `teknoo.east.ux.theme_switcher.group.theme`        | Theme                                                                    |
 | `teknoo.east.ux.theme_switcher.group.mode`         | Appearance                                                               |
 | `teknoo.east.ux.theme_switcher.group.style`        | Style                                                                    |

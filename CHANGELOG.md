@@ -7,6 +7,11 @@
 - `window-dynamic-loader`, `form-window-dynamic-loader`: the `wait` cursor is shown from the click until the window
   is shown (`html[data-east-ux-waiting]`, module `wait_cursor.js`, added to the importmap by AssetMapper);
   `form-window` and `list-window-refresh` dispatch `window:opened` on the window when they show it.
+- `MenuBar`: while floating windows are shown, a link of the menu bar that does not open a window asks a confirmation
+  before leaving the page: its `<nav>` carries the Stimulus controller `leave-confirm` and it renders the
+  `ConfirmModal` `#leave-confirm-modal` after it. Applications add `leave-confirm` to their `assets/controllers.json`.
+- `window-dynamic-loader`: when the window of the link is in the page and is not live, the click is left to the
+  browser (no `location.assign()`), so `leave-confirm` can ask before the page is left.
 
 
 ## [0.3.1] - 2026-11-04

@@ -42,6 +42,14 @@ export default class extends Controller {
             return;
         }
 
+        // The window of the link is already in the page and is not live (the window of the page of the link): it can
+        // not be opened again, the click is left to the browser, which follows the link (`leave-confirm` may ask
+        // before the page is left)
+        const existing = this.findExistingWindow();
+        if (existing && !existing.matches('[data-controller~="live"]')) {
+            return;
+        }
+
         event.preventDefault();
 
         // A second click while the window is loading is ignored
@@ -62,21 +70,13 @@ export default class extends Controller {
                 props.title = this.titleValue;
             }
 
-            // The window is already in the page (loaded before, or the window of the page of the link): a Live window
-            // is reused, it opens itself on `window:open`; a window that is not live can not be opened again, the
-            // link is followed
-            if (props.windowId) {
-                const existing = document.querySelector(`[data-form-window="${CSS.escape(props.windowId)}"]`);
-                if (existing) {
-                    if (existing.matches('[data-controller~="live"]')) {
-                        existing.addEventListener('window:opened', endWait, { once: true });
-                        existing.dispatchEvent(new CustomEvent('window:open'));
-                    } else {
-                        window.location.assign(this.element.href);
-                    }
+            // The Live window is already in the page (loaded before, or the window of the page of the link): it is
+            // reused, it opens itself on `window:open`
+            if (existing) {
+                existing.addEventListener('window:opened', endWait, { once: true });
+                existing.dispatchEvent(new CustomEvent('window:open'));
 
-                    return;
-                }
+                return;
             }
 
             const container = document.getElementById('dynamic-modals');
@@ -133,6 +133,23 @@ export default class extends Controller {
         } finally {
             this.loading = false;
         }
+    }
+
+    // The window named by the `windowId` of the props, when the page already holds it: loaded before, or the window of
+    // the page of the link. Nothing for a malformed props value, read again by `open()` to fall back to the navigation
+    findExistingWindow() {
+        let windowId = null;
+        try {
+            windowId = this.propsValue.windowId;
+        } catch (error) {
+            return null;
+        }
+
+        if (!windowId) {
+            return null;
+        }
+
+        return document.querySelector(`[data-form-window="${CSS.escape(windowId)}"]`);
     }
 
     // The window appended last to the container: its root element, or the first window inside it. Nothing when the
