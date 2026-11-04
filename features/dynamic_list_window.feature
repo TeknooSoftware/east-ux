@@ -65,6 +65,11 @@ Feature: List windows loaded dynamically through the component renderer
       | newFormRoute     | fixtures_item_edit |
       | itemComponent    | UnknownRow         |
 
+  Scenario: Refuse a null prop of the ListWindow, which its property does not accept
+    Given I am authenticated as "user"
+    When the component renderer receives the body '{"component": "ListWindow", "props": {"windowId": "items", "originalPath": "/items/", "itemComponent": "ItemRow", "floating": true, "title": null}}'
+    Then the response status must be 400
+
   Scenario: The component renderer requires an authenticated user for a list window
     When the component renderer is asked for the list window "items" titled "Items" of the path "/items/"
     Then the response status must be 401

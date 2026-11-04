@@ -10,17 +10,25 @@
                 {% else %}
                     {% set item_attributes = item.attributes %}
                     {# An item with a route and a window opens the window in the page (window-dynamic-loader), its link
-                       stays the fallback; the props are a JSON object, `{}` when empty (`[]` is refused by Stimulus) #}
+                       stays the fallback; the props are a JSON object, `{}` when empty (`[]` is refused by Stimulus).
+                       The ARIA labels of the props are translation keys, translated as the title of the window #}
                     {% if item.window is not null and item.route is not empty %}
-                        {% set window_props = '{}' %}
-                        {% if item.window.props is not empty %}{% set window_props = item.window.props|json_encode %}{% endif %}
+                        {% set window_props = item.window.props %}
+                        {% if window_props.closeAriaLabel is defined %}
+                            {% set window_props = window_props|merge({'closeAriaLabel': window_props.closeAriaLabel|trans({}, item.translationDomain)}) %}
+                        {% endif %}
+                        {% if window_props.resizeAriaLabel is defined %}
+                            {% set window_props = window_props|merge({'resizeAriaLabel': window_props.resizeAriaLabel|trans({}, item.translationDomain)}) %}
+                        {% endif %}
+                        {% set window_props_json = '{}' %}
+                        {% if window_props is not empty %}{% set window_props_json = window_props|json_encode %}{% endif %}
                         {% set item_attributes = item_attributes|merge({
                             'data-controller': ((item_attributes['data-controller'] ?? '') ~ ' window-dynamic-loader')|trim,
                             'data-action': ((item_attributes['data-action'] ?? '') ~ ' click->window-dynamic-loader#open')|trim,
                             'data-window-dynamic-loader-url-value': path('_teknoo_east_ux_component_render'),
                             'data-window-dynamic-loader-component-value': item.window.component,
                             'data-window-dynamic-loader-title-value': item.window.title|trans({}, item.translationDomain),
-                            'data-window-dynamic-loader-props-value': window_props
+                            'data-window-dynamic-loader-props-value': window_props_json
                         }) %}
                     {% endif %}
                     {% set itemAttributes %}{% for name, value in item_attributes %} {{ name|e('html_attr') }}="{{ value }}"{% endfor %}{% endset %}

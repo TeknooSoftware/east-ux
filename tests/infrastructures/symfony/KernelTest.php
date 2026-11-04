@@ -437,6 +437,9 @@ class KernelTest extends TestCase
                 'newFormRoute' => 'fixtures_item_new',
                 'newFormName' => ItemType::class,
                 'newButtonLabel' => 'fixtures.items.new',
+                // The ARIA labels are translated, as the title, in the domain of the item
+                'closeAriaLabel' => 'Close the window',
+                'resizeAriaLabel' => 'Resize the window',
             ],
             json_decode((string) $items->attr('data-window-dynamic-loader-props-value'), true),
         );
@@ -456,6 +459,7 @@ class KernelTest extends TestCase
                 'formName' => ItemType::class,
                 'closable' => true,
                 'draggable' => true,
+                'closeAriaLabel' => 'Close the window',
             ],
             json_decode((string) $newItem->attr('data-window-dynamic-loader-props-value'), true),
         );

@@ -58,7 +58,8 @@ Common leaves them alone, so a `ListWindow` may also be placed in a page rendere
 | `resizeAriaLabel`  | `string` | `'Resize'` | `aria-label` of the resize button                                        |
 
 The labels are props, so the application passes them already translated:
-`closeAriaLabel="{{ 'app.aria.close'|trans }}"`.
+`closeAriaLabel="{{ 'app.aria.close'|trans }}"`. The props of a window opened by a menu entry are the exception: they
+hold translation keys, which the `MenuBar` translates ([menu.md](menu.md#entries-opening-a-window)).
 
 ## Window
 
