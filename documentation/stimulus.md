@@ -155,9 +155,11 @@ Values:
   the browser: it opens the `href` (in a new tab or window, ...). An element without `href` logs an error with
   `console.error()` and does nothing.
 - When the page already holds the window of the link (`[data-form-window="<windowId>"]`, escaped with `CSS.escape()`)
-  and this window is not live, such as the `FormWindow` of the page of the link, it can not be opened again: the click
-  is left to the browser, which follows the link, without wait cursor (a [leave-confirm](#leave-confirm) container may
-  ask before the page is left; see [the rules](#rules-for-the-templates-and-new-controllers)).
+  and this window is not live (it has neither `form-window` nor `list-window-refresh`; a `FormWindow` that is not live
+  still carries the `live` controller of Symfony UX), such as the `FormWindow` of the page of the link, it can not be
+  opened again: the click is left to the browser, which follows the link, without wait cursor (a
+  [leave-confirm](#leave-confirm) container may ask before the page is left; see
+  [the rules](#rules-for-the-templates-and-new-controllers)).
 - Otherwise the navigation is prevented, and a click while its window is loaded from the renderer (until
   `window:open`) is ignored.
 - The props are the `props` value, plus `originalPath` (the path and the query of the `href`: the recipe that the
@@ -403,9 +405,9 @@ The controllers expect the page to provide:
   the listeners) and remove them in `disconnect()`.
 - `window:open` is handled only by the Live windows (`form-window`, `list-window-refresh`): dispatched on a `Window` or
   on a `FormWindow` that is not live, it opens nothing (`window-drag` only brings it to the front). So
-  `window-dynamic-loader` reuses only a Live window: for a window that is not live with the same `windowId`, such as
-  the `FormWindow` of the page of its link (its fallback page), it leaves the click to the browser, which follows the
-  link.
+  `window-dynamic-loader` reuses only a window with one of these two controllers (not one with only `live`, which a
+  `FormWindow` that is not live still carries): for another window with the same `windowId`, such as the `FormWindow`
+  of the page of its link (its fallback page), it leaves the click to the browser, which follows the link.
 - A controller that opens a window on `window:open` or `form-window:open` dispatches `window:opened` on it once it is
   shown (`new CustomEvent('window:opened')`, not bubbling), not when it navigates instead: the loaders end their wait
   cursor on it, else after 10 seconds.

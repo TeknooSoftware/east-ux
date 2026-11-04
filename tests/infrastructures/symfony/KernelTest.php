@@ -75,6 +75,7 @@ use function array_values;
 use function basename;
 use function count;
 use function dirname;
+use function explode;
 use function file_get_contents;
 use function glob;
 use function json_decode;
@@ -583,6 +584,34 @@ class KernelTest extends TestCase
         self::assertSame('bootstrap_5_layout.html.twig', $props['formTheme']);
         self::assertSame('/items/new', $props['originalPath']);
         self::assertArrayHasKey('@checksum', $props);
+    }
+
+    public function testRenderFormWindowNotLiveKeepsTheLiveControllerWithoutFormWindow(): void
+    {
+        $this->pushRequest('https://localhost/items/new');
+
+        $crawler = $this->render(
+            'FormWindow',
+            [
+                'title' => 'Page window',
+                'windowId' => 'page-form',
+                'formName' => ItemType::class,
+                'objectInstance' => new Item(null, 'Page item'),
+                'formPath' => '/items/new',
+                'hidden' => false,
+                'isLive' => false,
+                'id' => 'page-form-window',
+            ],
+        );
+
+        // Symfony UX adds `live` to every Live component: `window-dynamic-loader` tells a window that `window:open`
+        // opens again by its `form-window` (or `list-window-refresh`) controller, not by `live`
+        $window = $crawler->filter('[data-form-window="page-form"]');
+        self::assertCount(1, $window);
+        $controllers = explode(' ', (string) $window->attr('data-controller'));
+        self::assertContains('live', $controllers);
+        self::assertContains('window-close', $controllers);
+        self::assertNotContains('form-window', $controllers);
     }
 
     public function testRenderFormWindowWithoutFormTheme(): void

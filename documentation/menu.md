@@ -217,6 +217,8 @@ on the left and the `Location::TopRight` sections on the right, each as a Bootst
 Before a link of the menu bar leaves a page where floating windows are shown (a floating `ListWindow`, a `FormWindow`
 overlay), the `leave-confirm` controller of the `<nav>` asks a confirmation in a `ConfirmModal` that `MenuBar` renders
 after the `<nav>`, with the texts `teknoo.east.ux.menu_bar.*` ([theming.md](theming.md#translations)). It concerns the
-brand and the entries without window (settings pages, logout, ...), not the entries opening a window, the buttons or
-the clicks with a modifier key ([stimulus.md](stimulus.md#leave-confirm)). `leave-confirm` must be enabled in the
-`assets/controllers.json` of the application; without it, the links are followed as before.
+links that do not open a window: the brand, the entries without window (settings pages, logout, ...) and an entry whose
+window is the window of the page, not live, so its link is followed ([stimulus.md](stimulus.md#window-dynamic-loader));
+not the clicks that open a window, the buttons or the clicks with a modifier key
+([stimulus.md](stimulus.md#leave-confirm)). `leave-confirm` must be enabled in the `assets/controllers.json` of the
+application; without it, the links are followed as before.

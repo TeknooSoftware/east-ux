@@ -6,6 +6,9 @@ const SHOWN_FLOATING_WINDOWS = '.window.window-floating:not(.d-none), .window.fo
 // The cascade: each new window is shifted by one step more than the previous one, back to 0 after the last step
 const CASCADE_STEPS = 6;
 const CASCADE_STEP_REM = 1.5;
+// The windows opened again by `window:open`: those of the controllers handling it. A FormWindow that is not live still
+// carries the `live` controller of Symfony UX, but not `form-window`
+const WINDOWS_OPENED_ON_EVENT = '[data-controller~="form-window"], [data-controller~="list-window-refresh"]';
 
 export default class extends Controller {
     static values = {
@@ -46,7 +49,7 @@ export default class extends Controller {
         // not be opened again, the click is left to the browser, which follows the link (`leave-confirm` may ask
         // before the page is left)
         const existing = this.findExistingWindow();
-        if (existing && !existing.matches('[data-controller~="live"]')) {
+        if (existing && !existing.matches(WINDOWS_OPENED_ON_EVENT)) {
             return;
         }
 
