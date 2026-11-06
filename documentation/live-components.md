@@ -24,7 +24,8 @@ Common.
 4. **East Common.** When the recipe renders (`Render`, `RenderForm`, `RenderList`, `RenderError`), `TemplateTrait`
    hands over to `LiveComponentBuilder`: it gets the component service, hydrates its LiveProps from the payload,
    **copies every view parameter of the recipe into the property of the same name** (`objectsCollection`,
-   `pageCount`, `page`, `objectInstance`, `formView`, ...), and sets the default action (`__invoke()`) as controller.
+   `pageCount`, `page`, `objectInstance`, `formView`, ...), and sets as controller the Live action of the request, when
+   the conditions of [Lifecycle](#lifecycle) are met, or else the default action (`__invoke()`).
    Symfony UX then renders the component as for any live request. `SearchFormLoader` and `FormHandling` replay a
    submitted form from `_live_body`.
 
@@ -32,7 +33,7 @@ Consequences:
 
 - Objects, collections and `FormView`s are never LiveProps (they can not be dehydrated): they are public properties
   filled by the recipe at each render. Only serializable values (strings, numbers, booleans, arrays of scalars) are
-  LiveProps.
+  LiveProps. `windowReference` is the only exception: a `WindowReference` has its own hydration extension.
 - A property named like a view parameter of a recipe must be public and writable (see
   [components.md](components.md#convention-public-properties-for-the-view-parameters-of-the-recipes)).
 - The access rules of the route of `originalPath` apply to the re-render: East Foundation checks them before running
@@ -69,9 +70,12 @@ Symfony UX exist (`TwigComponentBundle` and `LiveComponentBundle` registered).
 - **Page render** (`<twig:FormWindow ... />`): the component service is built with its constructor dependencies, the
   attributes become props, `#[PostMount]` runs (`FormWindow::postMount()` builds the form view and copies `formPath`
   into `originalPath`), then the template.
-- **Live render** (`component.render()` from JavaScript, a `LiveAction`, `data-model` with `live#update`): the service
-  is built again, the LiveProps are hydrated, the view parameters of the recipe are copied, then `__invoke()`.
+- **Live render** (`component.render()` from JavaScript, `data-model` with `live#update`): the service is built again,
+  the LiveProps are hydrated, the view parameters of the recipe are copied, then `__invoke()`.
   `FormWindow::__invoke()` calls `postMount()`; `ListWindow` uses `DefaultActionTrait` (an empty `__invoke()`).
+- **Live action** (`component.action()`): the same render, with the method instead of `__invoke()`, so the method runs
+  after the recipe and sees its view parameters. It needs `#[LiveAction]`, the header `X-Requested-With` and a recipe
+  without error. Any other action only renders the component again, like the `save` of the search form of `ListWindow`.
 - `#[PostMount]` runs once per instance and not on a re-render: never keep derived data in a property filled there;
   compute it from the inputs (`hasObjects()`, `hasSubForms()`) or in `__invoke()`.
 
@@ -98,7 +102,8 @@ X-Requested-With: XMLHttpRequest
  "draggable": true, "closeAriaLabel": "Close", "hidden": true, "objectId": "42"}}
 ```
 
-The window is rendered hidden and without form. The `form-window` controller then opens it with `component.render()`,
+The window is rendered hidden and without form. The `form-window` controller then opens it: it sets `hidden` to false
+and calls `component.render()`,
 a live re-render: East Foundation re-routes it to the recipe of `formPath` (the creation or edition recipe), which
 loads the object, builds the form and renders it through the East bridge.
 
@@ -178,6 +183,116 @@ The props are validated before the rendering:
 - The controller extends Symfony's `AbstractController`: East Foundation's router hands a route back to Symfony only
   for such a controller (any other invokable controller would be run as an East endpoint).
 
+## References of the windows
+
+A Live window with a `WindowReference` runs the methods sent to it from outside of its page: by the worker of a task,
+by another tab, by another browser. Instead of polling, the window waits for a message. Mercure only carries the name
+of the method, never business data: the method runs in a Live request, behind the firewall, and the recipe of the window
+reads the data. For a shipped window the query is this recipe, `refresh()` has nothing to do. A method of a custom
+window can run its own, it runs after the view parameters and before the render.
+
+`Window` and `LoginWindow` are not Live, their reference is refused. A `WindowReference` holds the class of the
+component, its `id` (the Mercure topic) and the list of its callable methods, public, without parameter and returning
+`void`. `AbstractWindow::createReference()` gives the methods `refresh` and `close`, a child class can override it.
+
+### Creating the reference
+
+The step `CreateWindowReferenceInterface` creates it before the rendering, from `windowClass`. It writes the reference
+in the workplan under `workPlanKey` (`WindowReference::class` by default) and in the view under `viewKey`
+(`windowReference` by default). It refuses a class which is not a Live window, and a method without `#[LiveAction]`.
+
+A parameter left open can be set by the request, even with a default value: `?viewKey=foo` would break the window. So
+`windowClass`, `viewKey` and `workPlanKey` come from a default of the route or from a `Value` of the plan. East Common's
+`LoadObject` and `CreateObject` read `workPlanKey` too, a default of the route would also change where they store their
+object: in a plan running them, this key must be a `Value`.
+
+```php
+// A plan of the application, the step is a public service of the bundle
+$recipe = $recipe->cook(
+    $this->createWindowReference,
+    CreateWindowReferenceInterface::class,
+    ['viewKey' => new Value('windowReference'), 'workPlanKey' => new Value(WindowReference::class)],
+    10,
+);
+$recipe = $recipe->execute($this->listObjectEndPoint, ListObjectEndPointInterface::class, 1, 20);
+```
+
+```yaml
+# The route, with the usual defaults of the list
+app_item_followed:
+    path: '/items/followed/'
+    defaults:
+        _controller: 'app.endpoint.item.followed'
+        windowClass: 'Teknoo\East\UXBundle\Components\ListWindow'
+```
+
+```twig
+<twig:ListWindow windowReference="{{ windowReference }}" objectsCollection="{{ objectsCollection }}" ... />
+```
+
+Each window of a page needs its own reference: cook the step twice, with another `viewKey`, and another `workPlanKey`
+when a next step reads the reference: the second run replaces the first one otherwise. Without step,
+`<twig:ListWindow windowReference="{{ reference }}" />` takes a reference created by the application.
+
+With a reference, `WindowReferenceAttributesSubscriber` adds the Stimulus controller `window-reference` to the root
+element of the window, and grants the topics of the windows in the Mercure cookie of the response
+([stimulus.md](stimulus.md#window-reference)). Add `window-reference` to `assets/controllers.json`.
+
+### Calling a method
+
+`WindowMethodPublisherInterface::publish()` sends a method of the reference. It throws for a method out of the
+reference, without hub, and when the hub fails.
+
+```php
+// A step of the plan of a task, in the worker
+$reference = $task->getWindowReference();
+if (null !== $reference) {
+    $this->publisher->publish($reference, 'refresh');
+}
+```
+
+A reference is a serializable value, a task carries it to the worker. For another tab or browser, which has its own
+window and its own id, the application keeps the id and rebuilds the reference:
+`new WindowReference(ListWindow::class, $id, ['refresh', 'close'])`.
+
+To follow a task, a page needs a custom Live window: `Window` is not Live. Follow the checklist of
+[a new Live Component](#checklist): without `LiveTrait` and `originalPath`, no recipe runs and the window has no data.
+
+### Mercure
+
+The updates are private and the topic is a constant IRI, `WindowMethodPublisher::TOPIC_PREFIX` followed by the id: the
+hub never fetches it, and a worker needs no host to build it. The subscribers hold one grant for all the windows,
+`WindowMethodPublisher::TOPIC_PATTERN`, of type `urlpattern`, because a Mercure cookie is replaced by the next response
+setting it: with a grant for each topic, a window would lose its grant as soon as another one is rendered. An
+authenticated user can therefore see window ids and method names, never business data.
+
+**A page writing its own Mercure cookie must add this grant**, or the windows opened in the other tabs stop receiving
+their messages at their next reconnection, without error:
+
+```twig
+{% set pattern = constant('Teknoo\\East\\UXBundle\\Mercure\\WindowMethodPublisher::TOPIC_PATTERN') %}
+{{ mercure(topic, {'subscribe': {'exact': [topic], 'urlpattern': [pattern]}}) }}
+```
+
+The hub must speak the protocol 1.0 and be on the same origin as the application (scheme, host and port): `EventSource`
+sends the cookie only there. A worker needs the remote URL of the hub: an empty URL selects the hub of FrankenPHP, which can not publish from the CLI.
+
+### Limits
+
+- A `refresh` of an open `FormWindow` erases what the user is typing (`data-skip-morph`). Do not send it to a form
+  being edited.
+- A message sent before the subscription is lost, there is no replay.
+- A window without any re-render stops receiving messages when its token expires: the hub closes the connection and the
+  reconnection is refused. Any re-render renews the cookie.
+- `close` hides the window, `closeRedirectUrl` stays a behaviour of the browser: a full page window leaves an empty page.
+- A `close` waiting with an action of the user in the same Live request is lost: both leave as one `_batch` request, which
+  the East bridge does not run, the window is only rendered again. A `refresh` is not concerned.
+- A window loaded by the component renderer gets its reference at its first opening, from the recipe of its path:
+  nothing is subscribed before. The props sent to the renderer can not hold a reference.
+- A recipe re-run by a re-render creates a new reference, ignored by the window: the reference of the workplan is only
+  the reference of the window in the run displaying it. If the recipe of the window also starts a task, each `refresh`
+  starts one: the two recipes must be different.
+
 ## Security
 
 - `^/component` (the renderer) and `^/_components` (the Live Component endpoint) require an authenticated user in the
@@ -188,6 +303,10 @@ The props are validated before the rendering:
   authentication of an anonymous user). The checksum prevents a client from changing `originalPath`; a recipe that
   needs more than its URL rules (an owner check, ...) does it in its own steps, as East Common's access control steps
   do.
+- A Live action runs after the recipe of the route of `originalPath`, never after an error of this recipe, and only with
+  the header `X-Requested-With`: a request without it fails, the method does not run.
+- A client can not choose a reference: `windowReference` is not writable, its value is covered by the checksum of the
+  props, and the validators of the component renderer refuse it.
 - The component renderer only validates the props: it does not check `originalPath` or `formPath` against the access
   rules of their routes. These rules apply to the re-render that opens the window: a user who may not open the route
   of `originalPath` gets a 403, and the window shows nothing of the recipe.

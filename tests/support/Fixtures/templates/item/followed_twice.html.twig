@@ -1,0 +1,25 @@
+{% extends 'layout.html.twig' %}
+
+{# Two windows in a page: each one has its own reference, under its own view key #}
+{% block body %}
+    <twig:ListWindow
+        title="First list"
+        windowId="first-list"
+        windowReference="{{ windowReference }}"
+        objectsCollection="{{ objectsCollection }}"
+        pageCount="{{ pageCount }}"
+        page="{{ page }}"
+        itemComponent="ItemRow"
+        tableHeaders="{{ ['fixtures.items.name', 'fixtures.items.actions'] }}"
+    />
+    <twig:ListWindow
+        title="Second list"
+        windowId="second-list"
+        windowReference="{{ secondWindowReference }}"
+        objectsCollection="{{ objectsCollection }}"
+        pageCount="{{ pageCount }}"
+        page="{{ page }}"
+        itemComponent="ItemRow"
+        tableHeaders="{{ ['fixtures.items.name', 'fixtures.items.actions'] }}"
+    />
+{% endblock %}

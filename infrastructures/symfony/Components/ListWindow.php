@@ -33,6 +33,7 @@ use Symfony\Component\Form\FormTypeInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\ComponentWithFormTrait;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
@@ -162,6 +163,20 @@ final class ListWindow extends AbstractWindow
         }
 
         return $liveProp;
+    }
+
+    /*
+     * Nothing to do: the recipe of the window has already run again, the window is rendered with its new objects.
+     */
+    #[LiveAction]
+    public function refresh(): void
+    {
+    }
+
+    #[LiveAction]
+    public function close(): void
+    {
+        $this->hidden = true;
     }
 
     public function hasSearchForm(): bool

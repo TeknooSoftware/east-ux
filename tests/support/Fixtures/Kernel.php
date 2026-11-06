@@ -27,6 +27,7 @@ namespace Teknoo\Tests\East\UX\Support\Fixtures;
 
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Bundle\MercureBundle\MercureBundle;
 use Symfony\Bundle\SecurityBundle\SecurityBundle;
 use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -47,7 +48,7 @@ use function dirname;
 /**
  * Minimal Symfony application used by the kernel test and by Behat: East Foundation and East Common (with PHP-DI),
  * Symfony UX (Twig and Live Components, StimulusBundle), AssetMapper, SecurityBundle (HTTP basic authentication on a
- * stateless firewall, with in-memory users) and East UX.
+ * stateless firewall, with in-memory users), MercureBundle (with a hub keeping its updates) and East UX.
  *
  * Its pages are rendered by East Common's recipes (list, creation and edition of `Item` objects, kept in memory, and a
  * static page with the menu bar). The component renderer is imported with the prefix `/component` and the Live
@@ -81,6 +82,7 @@ class Kernel extends BaseKernel
         yield new TwigComponentBundle();
         yield new StimulusBundle();
         yield new LiveComponentBundle();
+        yield new MercureBundle();
         yield new TeknooEastUXBundle();
     }
 

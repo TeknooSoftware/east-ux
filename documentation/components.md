@@ -26,8 +26,10 @@ methods of `this`, no default values of the props, no live behaviour). Always us
 | `Card`         | Twig | `Card`                        | Bootstrap card with a title, a content and up to two links         |
 | `ThemeSwitcher` | Twig | `ThemeSwitcher`              | Buttons choosing the style and the mode of the System.css x Bootstrap theme ([theme.md](theme.md)) |
 
-`AbstractWindow` is not a component: it holds the props shared by the windows and the helpers `isClosable()`,
-`isResizable()`, `isDraggable()` and `isFixed()` (draggable **and** closable).
+`AbstractWindow` is not a component: it holds the props shared by the windows, the helpers `isClosable()`,
+`isResizable()`, `isDraggable()` and `isFixed()` (draggable **and** closable), and the static method
+`createReference()`, which creates the reference of a Live window
+([live-components.md](live-components.md#references-of-the-windows)).
 
 The Live Components are re-rendered through the East recipe of their page: see [live-components.md](live-components.md).
 Their Stimulus controllers are described in [stimulus.md](stimulus.md), the stylesheet, the form themes, the
@@ -56,6 +58,7 @@ Common leaves them alone, so a `ListWindow` may also be placed in a page rendere
 | `closeRedirectUrl` | `string` | `''`       | Where `window-close` navigates when the window is closed (hidden when empty) |
 | `closeAriaLabel`   | `string` | `'Close'`  | `aria-label` of the close button                                         |
 | `resizeAriaLabel`  | `string` | `'Resize'` | `aria-label` of the resize button                                        |
+| `windowReference`  | `?WindowReference` | `null` | Reference of a Live window, kept for all its re-renders: only a first value is accepted |
 
 The labels are props, so the application passes them already translated:
 `closeAriaLabel="{{ 'app.aria.close'|trans }}"`. The props of a window opened by a menu entry are the exception: they
@@ -121,7 +124,8 @@ A window holding a Symfony form, in two modes:
 - `#[PostMount] postMount()` builds `formView` from `formName` and `objectInstance` when `formView` is null and
   `objectInstance` is set, and copies `formPath` into `originalPath`. `__invoke()`, the default action, calls it again
   on each live render.
-- `#[LiveAction] close()` sets `hidden`. `hasSubForms()` tells whether a child of the form is compound.
+- `#[LiveAction] close()` sets `hidden`, `#[LiveAction] refresh()` calls `postMount()`, because a Live action replaces
+  `__invoke()`. `hasSubForms()` tells whether a child of the form is compound.
 - Rendering: compound children (embedded form types) each get a `<fieldset class="east-ux-fieldset">` titled with
   their label (translated in the default domain), the simple children are grouped in a first fieldset titled
   `teknoo.east.ux.form_window.fieldset.main`, hidden fields go to `form_rest()`, and the errors of the form itself

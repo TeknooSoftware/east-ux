@@ -1,0 +1,16 @@
+# The hub of the test application: `RecordingHub` keeps its updates, nothing is sent
+mercure:
+  hubs:
+    default:
+      url: 'https://localhost/.well-known/mercure'
+      public_url: 'https://localhost/.well-known/mercure'
+      protocol_version: '1.0'
+      jwt:
+        secret: 'east-ux-tests-mercure-secret-with-enough-bytes'
+        publish: ['*']
+        subscribe: ['*']
+        algorithm: 'hmac.sha256'
+        claims:
+          iss: 'https://localhost'
+          sub: 'east-ux-tests'
+          client_id: 'east-ux-tests'

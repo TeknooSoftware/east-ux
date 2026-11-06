@@ -25,8 +25,17 @@ declare(strict_types=1);
 
 namespace Teknoo\East\UXBundle\Components;
 
+use Symfony\Component\Uid\Uuid;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
+use Teknoo\East\UX\Object\DTO\Window\WindowReference;
+
 /**
  * Live Twig component rendering the abstract window interface.
+ *
+ * A Live window with a `windowReference` listens to its Mercure topic and runs the methods sent there. The reference is
+ * given at the creation of the window and kept for its re-renders: a recipe re-run by a re-render creates a new one,
+ * which is ignored, so the topic of the window never changes. The hook must not throw, Symfony UX writes each LiveProp
+ * twice when it hydrates a component.
  *
  * @copyright   Copyright (c) EIRL Richard Déloge (https://deloge.io - richard@deloge.io)
  * @copyright   Copyright (c) SASU Teknoo Software (https://teknoo.software - contact@teknoo.software)
@@ -43,6 +52,33 @@ abstract class AbstractWindow
     public string $closeRedirectUrl = '';
     public string $closeAriaLabel = 'Close';
     public string $resizeAriaLabel = 'Resize';
+
+    /*
+     * phpcs 4.0.4 does not tokenize property hook bodies, it reads `$this` as a second property
+     * declaration. Only the abstract form (`{ get; }`, used in interfaces) is understood.
+     */
+    // phpcs:disable PSR2.Classes.PropertyDeclaration.Multiple
+    // phpcs:disable PSR2.Classes.PropertyDeclaration.ScopeMissing
+    #[LiveProp]
+    public ?WindowReference $windowReference = null {
+        set => $this->windowReference ?? $value;
+    }
+    // phpcs:enable PSR2.Classes.PropertyDeclaration.ScopeMissing
+    // phpcs:enable PSR2.Classes.PropertyDeclaration.Multiple
+
+    /**
+     * Reference of a new window of this class, to call its methods `refresh` and `close` from outside of the page. A
+     * window which is not Live has none of them, its reference is refused. A child class can override this method to
+     * list its own methods.
+     */
+    public static function createReference(): WindowReference
+    {
+        return new WindowReference(
+            componentClass: static::class,
+            id: (string) Uuid::v7(),
+            methods: ['refresh', 'close'],
+        );
+    }
 
     public function isClosable(): bool
     {

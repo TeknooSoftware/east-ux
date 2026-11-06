@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace Teknoo\Tests\East\UXBundle\Components;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -204,5 +205,12 @@ class WindowTest extends TestCase
 
         $this->assertStringNotContainsString('<script>', $output);
         $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $output);
+    }
+
+    public function testCreateReferenceIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Window::createReference();
     }
 }

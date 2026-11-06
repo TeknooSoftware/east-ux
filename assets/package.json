@@ -68,6 +68,12 @@
                 "name": "leave-confirm",
                 "fetch": "eager",
                 "enabled": true
+            },
+            "window-reference": {
+                "main": "dist/controllers/window_reference_controller.js",
+                "name": "window-reference",
+                "fetch": "eager",
+                "enabled": true
             }
         },
         "importmap": {

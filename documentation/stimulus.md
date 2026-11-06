@@ -1,6 +1,6 @@
 # Stimulus controllers
 
-East UX ships ten Stimulus controllers, hand-written ES modules without build step, in `assets/dist/controllers/`.
+East UX ships eleven Stimulus controllers, hand-written ES modules without build step, in `assets/dist/controllers/`.
 They work next to the `live` controller of Symfony UX (see [live-components.md](live-components.md)). Every text shown
 to the user and every protocol name is a Stimulus value with an English default, so an application translates or
 adapts them from its templates.
@@ -33,7 +33,8 @@ the library and commit the entries Flex adds):
             "delete-item": {"enabled": true, "fetch": "eager"},
             "clipboard": {"enabled": true, "fetch": "eager"},
             "theme": {"enabled": true, "fetch": "eager"},
-            "leave-confirm": {"enabled": true, "fetch": "eager"}
+            "leave-confirm": {"enabled": true, "fetch": "eager"},
+            "window-reference": {"enabled": true, "fetch": "eager"}
         }
     },
     "entrypoints": []
@@ -41,7 +42,7 @@ the library and commit the entries Flex adds):
 ```
 
 StimulusBundle registers them under their short identifiers (`form-window`, not `teknoo--east-ux--form-window`). Set
-`enabled` to `false` for a controller the application does not use. Three controllers import
+`enabled` to `false` for a controller the application does not use. Four controllers import
 `@symfony/ux-live-component`, and `delete-item` and `leave-confirm` import `bootstrap`: both are entries of the
 importmap (the first one from Symfony UX, the second one from East UX's `package.json`). The two loaders
 (`window-dynamic-loader`, `form-window-dynamic-loader`) also import `../wait_cursor.js`, a module of the package that is
@@ -64,6 +65,7 @@ The identifiers must stay the ones of this page: the templates of the components
 | `clipboard`                  | `clipboard_controller.js`                    | `copy`         | -                                | `text`, `success-text` (`✓ Copied!`), `error-text` (`✗ Error`), `button-class` (`btn-primary`), `success-class` (`btn-success`), `error-class` (`btn-danger`) |
 | `theme`                      | `theme_controller.js`                        | `select`, `toggleStyle`, `toggleMode` | `option`, `menuOption` | `style` (`legacy`), `mode` (`auto`), `storage` (`session`), `url`, `storage-key` (`east-ux-theme`), `modern-class` (`system-modern`), `switching-class` (`east-ux-theme-switching`) |
 | `leave-confirm`              | `leave_confirm_controller.js`                | `confirm`      | -                                | `modal-id`                                                                                                        |
+| `window-reference`           | `window_reference_controller.js`             | -              | -                                | `url`                                                                                                             |
 
 A value is set with `data-<identifier>-<value>-value`, for example
 `data-form-window-error-text-value="{{ 'app.form.error'|trans }}"`. The templates of the bundle already set the
@@ -82,8 +84,8 @@ and a window loaded by the component renderer gets the translated messages too.
 - `connect()` listens to the events `form-window:open` and `window:open` **on its own element** and calls `open()`;
   it also keeps the `style` of the window across the Live re-renders (see
   [the style of a Live window](#the-style-of-a-live-window)). `disconnect()` removes the listeners and the hooks.
-- `open()`: re-renders the window (`getComponent(this.element)` then `component.render()`: the East recipe of
-  `formPath` loads the object and builds the form), then removes `d-none`, hides the errors and dispatches
+- `open()`: re-renders the window (`getComponent(this.element)`, `component.set('hidden', false)` without re-render,
+  then `component.render()`: the East recipe of `formPath` loads the object and builds the form), then removes `d-none`, hides the errors and dispatches
   `window:opened` on its element (not bubbling). If the response of this render is not `ok` or is a redirection (such
   as the login page of an expired session, followed by `fetch`) and the window has never been shown, the browser
   navigates to `originalPath`, the page of the form, without `window:opened`. If the re-render throws, the window is
@@ -368,6 +370,18 @@ Values:
   of a form that is not in a Live window, the links outside the container, and the navigation of the browser itself
   (back, reload, address bar: there is no `beforeunload` handler).
 
+### window-reference
+
+Added to a Live window with a reference by `WindowReferenceAttributesSubscriber`, not by a template, with its `url`
+value, the subscription URL of the Mercure topic of the window. Without `url`, nothing is subscribed.
+
+- It opens an `EventSource` on `connect()` and closes it on `disconnect()`. A message is the name of a method, run with
+  `component.action()`.
+- The calls run one at a time, the same method waiting once. Two actions sent together would leave as one `_batch`
+  request, which the East bridge does not run: a `close` in a burst would be lost.
+- A window with `d-none` ignores its messages: a window closed by the user stays closed, it is rendered again when it
+  is opened.
+
 ## Contract with the page
 
 The controllers expect the page to provide:
@@ -390,6 +404,7 @@ The controllers expect the page to provide:
 | `<html {{ east_ux_theme_attributes() }}>`    | `theme`                        | The application's layout (see [theme.md](theme.md#the-page))                |
 | The rule of `html.east-ux-theme-switching`   | `theme` (no fade while switching) | `east-ux.css`                                                            |
 | The rule of `html[data-east-ux-waiting]`     | `form-window-dynamic-loader`, `window-dynamic-loader` (wait cursor) | `east-ux.css`                          |
+| A Mercure hub of the same origin, with the grant of the windows in its cookie | `window-reference` (`EventSource` sends the cookie) | `WindowReferenceAttributesSubscriber`; a page writing its own Mercure cookie must add this grant |
 
 | Event                 | Dispatched on                    | By                           | Listened by (on)                       |
 |-----------------------|----------------------------------|------------------------------|----------------------------------------|
