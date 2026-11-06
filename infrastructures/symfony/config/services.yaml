@@ -130,6 +130,17 @@ services:
         tags:
             - { name: 'live_component.hydration_extension' }
 
+    # `symfony/mercure` and its bundle are optional: without hub, the publisher refuses to publish
+    Teknoo\East\UXBundle\Mercure\WindowMethodPublisher:
+        class: 'Teknoo\East\UXBundle\Mercure\WindowMethodPublisher'
+        public: true
+        arguments:
+            - '@?Symfony\Component\Mercure\HubInterface'
+
+    Teknoo\East\UX\Contracts\Window\WindowMethodPublisherInterface:
+        alias: 'Teknoo\East\UXBundle\Mercure\WindowMethodPublisher'
+        public: true
+
     ########################
     # Component renderer (route `_teknoo_east_ux_component_render`, `POST /render`)
     # The controller extends Symfony's `AbstractController`: East Foundation's router hands a route back to Symfony

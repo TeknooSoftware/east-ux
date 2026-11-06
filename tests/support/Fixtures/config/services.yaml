@@ -39,6 +39,14 @@ services:
     tags:
       - { name: 'form.type' }
 
+  # Keeps the updates of the application instead of sending them to a hub, the public URL and the cookie stay real
+  Teknoo\Tests\East\UX\Support\Fixtures\Mercure\RecordingHub:
+    class: 'Teknoo\Tests\East\UX\Support\Fixtures\Mercure\RecordingHub'
+    public: true
+    decorates: 'mercure.hub.default'
+    arguments:
+      - '@.inner'
+
   # Menu generators, tagged as an application must do
   Teknoo\Tests\East\UX\Support\Fixtures\Menu\ContentMenu:
     class: 'Teknoo\Tests\East\UX\Support\Fixtures\Menu\ContentMenu'

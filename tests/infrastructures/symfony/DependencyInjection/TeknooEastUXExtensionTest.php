@@ -661,6 +661,21 @@ class TeknooEastUXExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $this->buildExtension()->load([], $container);
 
+        $publisher = 'Teknoo\\East\\UXBundle\\Mercure\\WindowMethodPublisher';
+        $this->assertTrue($container->getDefinition($publisher)->isPublic());
+        $this->assertEquals(
+            [
+                new Reference(
+                    'Symfony\\Component\\Mercure\\HubInterface',
+                    ContainerInterface::IGNORE_ON_INVALID_REFERENCE,
+                ),
+            ],
+            $container->getDefinition($publisher)->getArguments(),
+        );
+        $publisherAlias = $container->getAlias('Teknoo\\East\\UX\\Contracts\\Window\\WindowMethodPublisherInterface');
+        $this->assertSame($publisher, (string) $publisherAlias);
+        $this->assertTrue($publisherAlias->isPublic());
+
         $this->assertTrue(
             $container->getDefinition('Teknoo\\East\\UXBundle\\Hydration\\WindowReferenceHydrationExtension')
                 ->hasTag('live_component.hydration_extension'),
