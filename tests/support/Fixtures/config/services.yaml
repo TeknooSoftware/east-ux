@@ -69,6 +69,13 @@ services:
       - '@fixtures.plan.item.followed_edit'
       - '@service_container'
 
+  fixtures.endpoint.item.publish:
+    class: 'Teknoo\East\Foundation\EndPoint\RecipeEndPoint'
+    public: true
+    arguments:
+      - '@Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Plan\PublishWindowMethodEndPoint'
+      - '@service_container'
+
   # Menu generators, tagged as an application must do
   Teknoo\Tests\East\UX\Support\Fixtures\Menu\ContentMenu:
     class: 'Teknoo\Tests\East\UX\Support\Fixtures\Menu\ContentMenu'

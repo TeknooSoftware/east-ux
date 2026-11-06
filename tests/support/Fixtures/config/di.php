@@ -28,14 +28,18 @@ namespace Teknoo\Tests\East\UX\Support\Fixtures\config;
 use Psr\Container\ContainerInterface;
 use Teknoo\East\Common\Contracts\Recipe\Plan\EditObjectEndPointInterface;
 use Teknoo\East\Common\Contracts\Recipe\Plan\ListObjectEndPointInterface;
+use Teknoo\East\Common\Recipe\Step\Render;
 use Teknoo\East\Common\Recipe\Step\RenderError;
 use Teknoo\East\UX\Contracts\Recipe\Step\CreateWindowReferenceInterface;
+use Teknoo\East\UX\Contracts\Window\WindowMethodPublisherInterface;
 use Teknoo\Recipe\RecipeInterface;
+use Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Plan\PublishWindowMethodEndPoint;
 use Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Plan\ReferencedWindowEndPoint;
+use Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Step\PublishWindowMethod;
 
 /*
  * Plans of the test application using the reference of a window. An application defines its plans the same way, and
- * reads the step of East UX from the Symfony container.
+ * reads the step and the publisher of East UX from the Symfony container.
  */
 return [
     'fixtures.plan.item.followed' => static fn (ContainerInterface $container): ReferencedWindowEndPoint
@@ -60,6 +64,14 @@ return [
             $container->get(RecipeInterface::class),
             $container->get(CreateWindowReferenceInterface::class),
             $container->get(EditObjectEndPointInterface::class),
+            $container->get(RenderError::class),
+        ),
+
+    PublishWindowMethodEndPoint::class => static fn (ContainerInterface $container): PublishWindowMethodEndPoint
+        => new PublishWindowMethodEndPoint(
+            $container->get(RecipeInterface::class),
+            new PublishWindowMethod($container->get(WindowMethodPublisherInterface::class)),
+            $container->get(Render::class),
             $container->get(RenderError::class),
         ),
 ];

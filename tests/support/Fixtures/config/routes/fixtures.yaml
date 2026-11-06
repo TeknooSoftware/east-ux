@@ -125,3 +125,12 @@ fixtures_item_followed_refused:
     itemsPerPage: 5
     template: 'item/followed.html.twig'
     errorTemplate: 'error.html.twig'
+
+# A page asking a window, opened elsewhere, to run one of its methods
+fixtures_item_followed_publish:
+  path: '/items/followed/publish/{windowId}/{windowMethod}'
+  methods: ['GET']
+  defaults:
+    _controller: 'fixtures.endpoint.item.publish'
+    template: 'home.html.twig'
+    errorTemplate: 'error.html.twig'

@@ -682,6 +682,20 @@ class TeknooEastUXExtensionTest extends TestCase
         $this->assertSame($publisher, (string) $publisherAlias);
         $this->assertTrue($publisherAlias->isPublic());
 
+        $subscriber = $container->getDefinition(
+            'Teknoo\\East\\UXBundle\\Mercure\\WindowReferenceAttributesSubscriber',
+        );
+        $this->assertTrue($subscriber->hasTag('kernel.event_subscriber'));
+        $this->assertEquals(
+            [
+                new Reference(
+                    'Symfony\\Component\\Mercure\\Twig\\MercureExtension',
+                    ContainerInterface::IGNORE_ON_INVALID_REFERENCE,
+                ),
+            ],
+            $subscriber->getArguments(),
+        );
+
         $this->assertTrue(
             $container->getDefinition('Teknoo\\East\\UXBundle\\Hydration\\WindowReferenceHydrationExtension')
                 ->hasTag('live_component.hydration_extension'),

@@ -71,6 +71,9 @@ export default class extends Controller {
 
         try {
             const component = await getComponent(this.element);
+
+            // `hidden` is a writable LiveProp: without it, the next re-render of the window would hide it again
+            component.set('hidden', false);
             const backendResponse = await component.render();
 
             if (!this.shown && (!backendResponse.response.ok || backendResponse.response.redirected)) {

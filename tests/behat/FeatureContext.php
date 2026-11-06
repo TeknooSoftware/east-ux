@@ -38,18 +38,25 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType;
+use Teknoo\East\UXBundle\Mercure\WindowMethodPublisher;
 use Teknoo\Tests\East\UX\Support\Fixtures\Kernel;
+use Teknoo\Tests\East\UX\Support\Fixtures\Mercure\RecordingHub;
 use Teknoo\Tests\East\UX\Support\Fixtures\Object\Item;
 use Teknoo\Tests\East\UX\Support\Fixtures\Repository\ItemRepository;
 
 use function array_map;
+use function array_unique;
+use function base64_decode;
 use function explode;
 use function is_array;
 use function is_numeric;
 use function json_decode;
 use function json_encode;
 use function parse_url;
+use function rawurlencode;
+use function str_contains;
 use function str_replace;
+use function strtr;
 use function trim;
 
 use const JSON_THROW_ON_ERROR;
@@ -112,6 +119,8 @@ class FeatureContext implements Context
      */
     private array $liveProps = [];
 
+    private ?string $rememberedReferenceId = null;
+
     #[BeforeScenario]
     public function clean(): void
     {
@@ -121,6 +130,7 @@ class FeatureContext implements Context
         $this->response = null;
         $this->cookies = [];
         $this->liveProps = [];
+        $this->rememberedReferenceId = null;
     }
 
     #[AfterScenario]
@@ -909,5 +919,181 @@ class FeatureContext implements Context
         $escaped = str_replace(['<', '>'], ['&lt;', '&gt;'], $label);
 
         Assert::assertStringContainsString($escaped, (string) $this->getCrawler()->filter('nav.navbar')->html());
+    }
+
+    /**
+     * Sends the request of `live_controller.js` for an action: the same request as a re-render, on the path of the
+     * action. `component.action()` is what the `window-reference` controller calls for a message of the hub.
+     */
+    private function callLiveAction(string $componentName, string $action): void
+    {
+        $this->sendRequest(
+            method: 'POST',
+            path: '/_components/' . $componentName . '/' . $action,
+            parameters: [
+                'data' => json_encode(
+                    ['props' => $this->getLiveProps($componentName), 'updated' => (object) []],
+                    JSON_THROW_ON_ERROR,
+                ),
+            ],
+            server: [
+                'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+                'HTTP_ACCEPT' => 'application/vnd.live-component+html',
+            ],
+        );
+    }
+
+    private function getReferenceId(string $componentName): string
+    {
+        $reference = $this->getLiveProps($componentName)['windowReference'] ?? null;
+        Assert::assertIsArray($reference);
+        Assert::assertIsString($reference['id'] ?? null);
+
+        return $reference['id'];
+    }
+
+    private function findLiveComponent(string $componentName): Crawler
+    {
+        $component = $this->getCrawler()->filter('[data-live-name-value="' . $componentName . '"]');
+        Assert::assertCount(1, $component);
+
+        return $component;
+    }
+
+    private function getRecordingHub(): RecordingHub
+    {
+        $hub = $this->getKernel()->getContainer()->get(RecordingHub::class);
+        Assert::assertInstanceOf(RecordingHub::class, $hub);
+
+        return $hub;
+    }
+
+    #[When('the item :name is added to the application')]
+    public function theItemIsAddedToTheApplication(string $name): void
+    {
+        $repository = $this->getKernel()->getContainer()->get(ItemRepository::class);
+        Assert::assertInstanceOf(ItemRepository::class, $repository);
+
+        $repository->add(new Item(name: $name));
+    }
+
+    #[When('I remember the reference of the :component')]
+    public function iRememberTheReferenceOfThe(string $component): void
+    {
+        $this->rememberedReferenceId = $this->getReferenceId($component);
+    }
+
+    #[When('the method :method of the :component is called')]
+    public function theMethodOfTheIsCalled(string $method, string $component): void
+    {
+        $this->callLiveAction($component, $method);
+    }
+
+    #[When('the method :method is published on the reference of the :component')]
+    public function theMethodIsPublishedOnTheReferenceOfThe(string $method, string $component): void
+    {
+        $this->sendRequest(
+            method: 'GET',
+            path: '/items/followed/publish/' . $this->getReferenceId($component) . '/' . $method,
+        );
+    }
+
+    #[Then('the :component must subscribe to its Mercure topic')]
+    public function theMustSubscribeToItsMercureTopic(string $component): void
+    {
+        $window = $this->findLiveComponent($component);
+
+        Assert::assertContains('window-reference', explode(' ', (string) $window->attr('data-controller')));
+        Assert::assertSame(
+            'https://localhost/.well-known/mercure?match='
+                . rawurlencode(WindowMethodPublisher::TOPIC_PREFIX . $this->getReferenceId($component)),
+            $window->attr('data-window-reference-url-value'),
+        );
+    }
+
+    #[Then('the :component must not subscribe to a Mercure topic')]
+    public function theMustNotSubscribeToAMercureTopic(string $component): void
+    {
+        $window = $this->findLiveComponent($component);
+
+        Assert::assertNotContains('window-reference', explode(' ', (string) $window->attr('data-controller')));
+        Assert::assertNull($window->attr('data-window-reference-url-value'));
+    }
+
+    #[Then('the response must grant the topics of all the windows')]
+    public function theResponseMustGrantTheTopicsOfAllTheWindows(): void
+    {
+        $value = null;
+        foreach ($this->getResponse()->headers->getCookies() as $cookie) {
+            if (str_contains($cookie->getName(), 'mercure')) {
+                $value = (string) $cookie->getValue();
+            }
+        }
+
+        Assert::assertIsString($value);
+
+        $token = explode('.', $value);
+        Assert::assertCount(3, $token);
+
+        $claims = json_decode(
+            (string) base64_decode(strtr($token[1], '-_', '+/')),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        Assert::assertIsArray($claims);
+
+        Assert::assertSame(
+            [
+                [
+                    'type' => 'https://mercure.rocks/authorization-detail',
+                    'actions' => ['subscribe'],
+                    'topics' => [
+                        ['match' => WindowMethodPublisher::TOPIC_PATTERN, 'match_type' => 'urlpattern'],
+                    ],
+                ],
+            ],
+            $claims['authorization_details'] ?? null,
+        );
+    }
+
+    #[Then('the reference of the :component must not have changed')]
+    public function theReferenceOfTheMustNotHaveChanged(string $component): void
+    {
+        Assert::assertNotNull($this->rememberedReferenceId);
+        Assert::assertSame($this->rememberedReferenceId, $this->getReferenceId($component));
+    }
+
+    #[Then('the :component must be hidden')]
+    public function theMustBeHidden(string $component): void
+    {
+        Assert::assertContains('d-none', explode(' ', (string) $this->findLiveComponent($component)->attr('class')));
+    }
+
+    #[Then('the :count windows of the page must have different Mercure topics')]
+    public function theWindowsOfThePageMustHaveDifferentMercureTopics(int $count): void
+    {
+        $urls = $this->getCrawler()->filter('[data-window-reference-url-value]')->each(
+            static fn (Crawler $window): string => (string) $window->attr('data-window-reference-url-value'),
+        );
+
+        Assert::assertCount($count, $urls);
+        Assert::assertCount($count, array_unique($urls));
+    }
+
+    #[Then('the hub must have received the private method :method for the :component')]
+    public function theHubMustHaveReceivedThePrivateMethodForThe(string $method, string $component): void
+    {
+        $updates = $this->getRecordingHub()->updates;
+        Assert::assertCount(1, $updates);
+
+        Assert::assertSame([WindowMethodPublisher::TOPIC_PREFIX . $this->getReferenceId($component)], $updates[0]->getTopics());
+        Assert::assertSame($method, $updates[0]->getData());
+        Assert::assertTrue($updates[0]->isPrivate());
+    }
+
+    #[Then('the hub must have received nothing')]
+    public function theHubMustHaveReceivedNothing(): void
+    {
+        Assert::assertSame([], $this->getRecordingHub()->updates);
     }
 }

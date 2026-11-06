@@ -139,7 +139,8 @@ services:
         alias: 'Teknoo\East\UXBundle\Recipe\Step\CreateWindowReference'
         public: true
 
-    # `symfony/mercure` and its bundle are optional: without hub, the publisher refuses to publish
+    # `symfony/mercure` and its bundle are optional: without hub, the publisher refuses to publish, and without the Twig
+    # extension of the bundle, the windows do not subscribe to their topic
     Teknoo\East\UXBundle\Mercure\WindowMethodPublisher:
         class: 'Teknoo\East\UXBundle\Mercure\WindowMethodPublisher'
         public: true
@@ -149,6 +150,13 @@ services:
     Teknoo\East\UX\Contracts\Window\WindowMethodPublisherInterface:
         alias: 'Teknoo\East\UXBundle\Mercure\WindowMethodPublisher'
         public: true
+
+    Teknoo\East\UXBundle\Mercure\WindowReferenceAttributesSubscriber:
+        class: 'Teknoo\East\UXBundle\Mercure\WindowReferenceAttributesSubscriber'
+        arguments:
+            - '@?Symfony\Component\Mercure\Twig\MercureExtension'
+        tags:
+            - { name: 'kernel.event_subscriber' }
 
     ########################
     # Component renderer (route `_teknoo_east_ux_component_render`, `POST /render`)
