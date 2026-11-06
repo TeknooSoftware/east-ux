@@ -1,0 +1,15 @@
+{% extends 'layout.html.twig' %}
+
+{# Rendered by East Common's list recipe, after the step creating the reference of the window (`windowReference`) #}
+{% block body %}
+    <twig:ListWindow
+        title="Followed items"
+        windowId="followed-items"
+        windowReference="{{ windowReference }}"
+        objectsCollection="{{ objectsCollection }}"
+        pageCount="{{ pageCount }}"
+        page="{{ page }}"
+        itemComponent="ItemRow"
+        tableHeaders="{{ ['fixtures.items.name', 'fixtures.items.actions'] }}"
+    />
+{% endblock %}

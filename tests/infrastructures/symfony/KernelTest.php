@@ -43,9 +43,12 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\Translation\TranslatorBagInterface;
+use Symfony\UX\LiveComponent\LiveComponentHydrator;
+use Symfony\UX\LiveComponent\Metadata\LiveComponentMetadataFactory;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\ComponentRendererInterface;
 use Teknoo\East\Common\Object\User;
+use Teknoo\East\UX\Object\DTO\Window\WindowReference;
 use Teknoo\East\UX\Service\Menu\ThemeMenuGenerator;
 use Teknoo\East\UX\Service\MenuService;
 use Teknoo\East\UX\Service\ThemeService;
@@ -62,6 +65,8 @@ use Teknoo\East\UXBundle\Components\Window;
 use Teknoo\East\UXBundle\Controller\ComponentRenderer;
 use Teknoo\East\UXBundle\Controller\ThemePreferenceUpdater;
 use Teknoo\East\UXBundle\DependencyInjection\TeknooEastUXExtension;
+use Teknoo\East\UXBundle\Hydration\WindowReferenceHydrationExtension;
+use Teknoo\East\UXBundle\Mercure\WindowReferenceAttributesSubscriber;
 use Teknoo\East\UXBundle\TeknooEastUXBundle;
 use Teknoo\East\UXBundle\Theme\SessionThemePreferenceStorage;
 use Teknoo\East\UXBundle\Twig\ThemeExtension;
@@ -117,6 +122,8 @@ use function substr_count;
 #[CoversClass(ThemeService::class)]
 #[CoversClass(SessionThemePreferenceStorage::class)]
 #[CoversClass(ThemeExtension::class)]
+#[CoversClass(WindowReferenceHydrationExtension::class)]
+#[CoversClass(WindowReferenceAttributesSubscriber::class)]
 class KernelTest extends TestCase
 {
     private ?Kernel $kernel = null;
@@ -1020,5 +1027,104 @@ class KernelTest extends TestCase
         self::assertSame(415, $response->getStatusCode());
 
         self::assertSame(405, $this->handle('GET', '/east-ux/theme')->getStatusCode());
+    }
+
+    private function hydrateListWindow(array $props): ListWindow
+    {
+        $container = $this->getTestContainer();
+        $factory = $container->get('ux.twig_component.component_factory');
+        self::assertInstanceOf(ComponentFactory::class, $factory);
+        $hydrator = $container->get('ux.live_component.component_hydrator');
+        self::assertInstanceOf(LiveComponentHydrator::class, $hydrator);
+        $metadataFactory = $container->get('ux.live_component.metadata_factory');
+        self::assertInstanceOf(LiveComponentMetadataFactory::class, $metadataFactory);
+
+        $component = $factory->get('ListWindow');
+        self::assertInstanceOf(ListWindow::class, $component);
+        $hydrator->hydrate($component, $props, [], $metadataFactory->getMetadata('ListWindow'));
+
+        return $component;
+    }
+
+    public function testAWindowKeepsItsReferenceThroughTheHydrationOfSymfonyUx(): void
+    {
+        $this->pushRequest('https://localhost/items/');
+
+        $reference = ListWindow::createReference();
+        $crawler = $this->render(
+            'ListWindow',
+            [
+                'itemComponent' => 'ItemRow',
+                'windowReference' => $reference,
+                'id' => 'kernel-referenced-list-window',
+            ],
+        );
+
+        $props = $this->getLiveProps($crawler, 'ListWindow');
+        self::assertSame(
+            [
+                'componentClass' => ListWindow::class,
+                'id' => $reference->id,
+                'methods' => ['refresh', 'close'],
+            ],
+            $props['windowReference'],
+        );
+
+        // The hydrator writes each LiveProp twice: a hook refusing the second write would break each re-render
+        self::assertEquals($reference, $this->hydrateListWindow($props)->windowReference);
+    }
+
+    public function testAWindowWithoutReferenceStaysWithoutReferenceAfterTheHydrationOfSymfonyUx(): void
+    {
+        $this->pushRequest('https://localhost/items/');
+
+        $crawler = $this->render(
+            'ListWindow',
+            [
+                'itemComponent' => 'ItemRow',
+                'id' => 'kernel-not-referenced-list-window',
+            ],
+        );
+
+        $props = $this->getLiveProps($crawler, 'ListWindow');
+        self::assertNull($props['windowReference']);
+
+        self::assertNull($this->hydrateListWindow($props)->windowReference);
+    }
+
+    public function testAWindowWithAReferenceHasTheControllerOfItsTopic(): void
+    {
+        $this->pushRequest('https://localhost/items/');
+
+        $crawler = $this->render(
+            'ListWindow',
+            [
+                'itemComponent' => 'ItemRow',
+                'windowReference' => new WindowReference(ListWindow::class, 'foo', ['refresh', 'close']),
+                'id' => 'kernel-subscribed-list-window',
+            ],
+        );
+
+        $window = $crawler->filter('div.window[data-live-name-value="ListWindow"]');
+        self::assertSame('list-window-refresh window-close window-reference live', $window->attr('data-controller'));
+        self::assertSame(
+            'https://localhost/.well-known/mercure'
+                . '?match=https%3A%2F%2Fteknoo.software%2Feast-collection%2Fux%2Fwindow%2Ffoo',
+            $window->attr('data-window-reference-url-value'),
+        );
+    }
+
+    public function testTheControllerOfTheReferencesIsExposedToStimulus(): void
+    {
+        $assetMapper = $this->getTestContainer()->get('asset_mapper');
+        self::assertInstanceOf(AssetMapperInterface::class, $assetMapper);
+
+        $controllers = $assetMapper->getAsset('@symfony/stimulus-bundle/controllers.js');
+        self::assertNotNull($controllers);
+        self::assertStringContainsString(
+            '@teknoo/east-ux/controllers/window_reference_controller.js',
+            (string) $controllers->content,
+        );
+        self::assertStringContainsString('"window-reference": controller_', (string) $controllers->content);
     }
 }

@@ -1,5 +1,21 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.5.0] - Release pending
+### Alpha Release
+
+#### Fixes
+- `form-window`: a window opened in the page sets its prop `hidden` to false, its next re-render no longer hides it.
+
+#### Evolutions
+- Window references: a Live window given a `WindowReference` subscribes to its Mercure topic and runs the methods sent
+  there, `refresh` and `close` by default. Applications add `window-reference` to their `assets/controllers.json`.
+- `WindowMethodPublisherInterface`: sends a method to a window. Mercure only carries its name, never business data.
+- Step `CreateWindowReferenceInterface`: creates the reference of a Live window for the workplan and the view.
+- `AbstractWindow`: prop `windowReference`, set only once, and static method `createReference()`. `FormWindow` and
+  `ListWindow` get the Live actions `refresh` and `close`, which need East Common 4.10.
+- `symfony/mercure` 0.10 and `symfony/mercure-bundle` are optional. A page writing its own Mercure cookie must add the
+  grant of the windows, `WindowMethodPublisher::TOPIC_PATTERN`.
+
 ## [0.4.0] - 2026-11-04
 ### Alpha Release
 

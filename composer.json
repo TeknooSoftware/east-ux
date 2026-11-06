@@ -54,13 +54,14 @@
     "require": {
         "php": "^8.4",
         "teknoo/east-foundation": "^9.5",
-        "teknoo/east-common": "^4.9.1",
+        "teknoo/east-common": "^4.10",
         "symfony/form": "^7.4||^8.1",
         "symfony/framework-bundle": "^7.4||^8.1",
         "symfony/http-foundation": "^7.4||^8.1",
         "symfony/security-http": "^7.4||^8.1",
         "symfony/service-contracts": "^3.6",
         "symfony/translation-contracts": "^3.6.1",
+        "symfony/uid": "^7.4||^8.1",
         "symfony/ux-live-component": "^3",
         "symfony/ux-twig-component": "^3",
         "symfony/validator": "^7.4||^8.1",
@@ -90,6 +91,8 @@
         "symfony/expression-language": "^7.4||^8.1",
         "symfony/filesystem": "^7.4||^8.1",
         "symfony/http-kernel": "^7.4||^8.1",
+        "symfony/mercure": "^0.10",
+        "symfony/mercure-bundle": "^0.7",
         "symfony/password-hasher": "^7.4||^8.1",
         "symfony/polyfill-php83": "^1.31",
         "symfony/property-access": "^7.4||^8.1",
@@ -108,7 +111,9 @@
     },
     "suggest": {
         "symfony/stimulus-bundle": "Required to load the Stimulus controllers of the components from the controllers.json of the application.",
-        "symfony/asset-mapper": "Required to serve the Stimulus controllers and the stylesheet of the components without a build step (the bundle maps its assets as `@teknoo/east-ux`)."
+        "symfony/asset-mapper": "Required to serve the Stimulus controllers and the stylesheet of the components without a build step (the bundle maps its assets as `@teknoo/east-ux`).",
+        "symfony/mercure": "Required, from 0.10, to refresh the windows through a Mercure hub.",
+        "symfony/mercure-bundle": "Required to refresh the windows through a Mercure hub."
     },
     "archive": {
         "exclude": ["features", "tests", "vendor", ".idea"]

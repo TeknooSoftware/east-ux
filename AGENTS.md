@@ -8,18 +8,20 @@ application:
 
 - Symfony UX Twig and Live Components (`Window`, `FormWindow`, `ListWindow`, `LoginWindow`, `MenuBar`, `ObjectList`,
   `Pagination`, `ConfirmModal`, `Card`, `ThemeSwitcher`) and their templates
-- Ten Stimulus controllers and a structural stylesheet, served by AssetMapper
+- Eleven Stimulus controllers and a structural stylesheet, served by AssetMapper
 - A component renderer endpoint (`POST /render`) rendering the component and the props of its JSON body, used to load a
   `FormWindow` or a floating `ListWindow` dynamically; the props are validated by the validator of the component (tag
   `teknoo.east.ux.component_rendering.validation`), a component without validator is refused by default
 - A menu service fed by the menu generators of the application
+- The references of the Live windows (`WindowReference`): a worker or another window asks an opened window to run one of
+  its methods, through Mercure, which only carries the name of the method
 - The System.css x Bootstrap theme (stylesheet, fonts), its Twig functions (`east_ux_theme_*`, class and attributes of
   `<html>`, pre-paint script), the `theme` Stimulus controller and the storage of the choice of the visitor (session
   through `POST /theme`, replaceable by a storage of the application, or browser)
 
 **Boundary rule**: East UX holds only these application-level pieces. The router logic and `LiveTrait` stay in East
-Foundation, the `LiveComponentBuilder` and the recipe steps in East Common: East UX depends on them and never
-re-implements them.
+Foundation, the `LiveComponentBuilder` and the recipe steps of the pages in East Common: East UX depends on them and
+never re-implements them. Its only step, `CreateWindowReference`, creates the reference of its own windows.
 
 ## Technical Stack
 
@@ -40,13 +42,17 @@ re-implements them.
       `Object/DTO/Menu/` (`MenuSection`, `MenuItem`, `MenuWindow`), `Service/MenuService`,
       `Service/Menu/ThemeMenuGenerator`;
     - theme: `Contracts/Enum/Theme/` (`Style`, `Mode`), `Contracts/Theme/ThemePreferenceStorageInterface`,
-      `Object/DTO/Theme/ThemePreference`, `Service/ThemeService`.
+      `Object/DTO/Theme/ThemePreference`, `Service/ThemeService`;
+    - window references: `Object/DTO/Window/WindowReference`, `Contracts/Window/WindowMethodPublisherInterface`,
+      `Contracts/Recipe/Step/CreateWindowReferenceInterface`.
 - `infrastructures/symfony/`: the bundle, namespace `Teknoo\East\UXBundle\`.
     - `TeknooEastUXBundle.php`, `DependencyInjection/` (configuration `teknoo_east_ux`, prepends of `twig_component`
       and AssetMapper).
     - `Components/`: the component classes.
     - `Controller/`: the component renderer and the theme updater (`ThemePreferenceUpdater`).
     - `Theme/`: `SessionThemePreferenceStorage`; `Twig/`: `ThemeExtension` (the `east_ux_theme_*` functions).
+    - `Mercure/`: `WindowMethodPublisher`, `WindowReferenceAttributesSubscriber`; `Hydration/`:
+      `WindowReferenceHydrationExtension`; `Recipe/Step/`: `CreateWindowReference`.
     - `ComponentRendering/`, `Contracts/ComponentRendering/`: the validation of the props of the rendered components
       (`PropsValidatorInterface`, `PropsValidatorRegistry`, `FormWindowPropsValidator`, `ListWindowPropsValidator`, the
       exceptions).
@@ -59,10 +65,12 @@ re-implements them.
   copied from the theme repository by `make system-theme`, never edited here), mapped in AssetMapper as
   `@teknoo/east-ux`.
 - `documentation/`: components, Live Components and the East bridge, Stimulus, menu, theming, System.css theme.
-- `features/`: Behat features (components rendered by East recipes, dynamic form and list windows, menu, theme).
+- `features/`: Behat features (components rendered by East recipes, dynamic form and list windows, menu, theme,
+  window references).
 - `tests/`: test suites:
-    - `universal/`: menu and theme tests (`Teknoo\Tests\East\UX\`).
-    - `infrastructures/symfony/`: components, controller, bundle, DI and kernel tests (`Teknoo\Tests\East\UXBundle\`).
+    - `universal/`: menu, theme and window reference tests (`Teknoo\Tests\East\UX\`).
+    - `infrastructures/symfony/`: components, controller, bundle, DI, kernel, Mercure, hydration and recipe step tests
+      (`Teknoo\Tests\East\UXBundle\`).
     - `behat/`: Behat `FeatureContext` (`Teknoo\Tests\East\UX\Behat\`).
     - `support/Fixtures/`: the test application shared by the kernel test and Behat (`Kernel`, configuration,
       templates, in-memory items, menu generators).
@@ -87,7 +95,7 @@ All verification must be performed via the provided `Makefile`.
 - **Code Style**: PHPCS is used (PSR-12 standard).
 - **Unit Testing**: PHPUnit; deprecations, notices, warnings and risky tests fail the suite.
 - **Behavioral Testing**: Behat, on the test application of `tests/support/Fixtures/` (East Foundation, East Common,
-  Symfony UX, AssetMapper, SecurityBundle and East UX), driven with HTTP requests.
+  Symfony UX, AssetMapper, SecurityBundle, MercureBundle and East UX), driven with HTTP requests.
 
 ## Development Conventions
 
@@ -104,6 +112,9 @@ All verification must be performed via the provided `Makefile`.
   public properties, so a `ListWindow` may also be placed in a page rendered by `RenderForm`, see
   [components.md](documentation/components.md#convention-public-properties-for-the-view-parameters-of-the-recipes);
   LiveProps only on serializable values.
+- **Window references**: `windowReference` is a LiveProp of `AbstractWindow`, declared once, with a `set` hook keeping the
+  first value. The hook must never throw, Symfony UX writes each LiveProp twice. `refresh()` and `close()` stay in the
+  Live windows, so `Window::createReference()` fails. Mercure is optional: a template never calls `mercure()`.
 - **Translations**: keys `teknoo.east.ux.<component>.<group>.<id>` in the `east_ux` domain, always passed explicitly to
   the `trans` filter; labels supplied by the application keep its default domain.
 - **Stimulus**: user-facing texts and protocol names are values with an English default; identifiers are the short

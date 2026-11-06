@@ -109,6 +109,15 @@ final class FormWindow extends AbstractWindow
         $this->formTheme = $formTheme;
     }
 
+    /*
+     * The recipe of the window has already run again. A Live action replaces `__invoke()`, it must build the form too.
+     */
+    #[LiveAction]
+    public function refresh(): void
+    {
+        $this->postMount();
+    }
+
     #[LiveAction]
     public function close(): void
     {

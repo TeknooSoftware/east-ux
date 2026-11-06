@@ -655,4 +655,50 @@ class TeknooEastUXExtensionTest extends TestCase
         /** @phpstan-ignore argument.type */
         $this->buildExtension()->prepend(new stdClass());
     }
+
+    public function testLoadRegistersTheWindowReferences(): void
+    {
+        $container = new ContainerBuilder();
+        $this->buildExtension()->load([], $container);
+
+        $step = 'Teknoo\\East\\UXBundle\\Recipe\\Step\\CreateWindowReference';
+        $this->assertTrue($container->getDefinition($step)->isPublic());
+        $stepAlias = $container->getAlias('Teknoo\\East\\UX\\Contracts\\Recipe\\Step\\CreateWindowReferenceInterface');
+        $this->assertSame($step, (string) $stepAlias);
+        $this->assertTrue($stepAlias->isPublic());
+
+        $publisher = 'Teknoo\\East\\UXBundle\\Mercure\\WindowMethodPublisher';
+        $this->assertTrue($container->getDefinition($publisher)->isPublic());
+        $this->assertEquals(
+            [
+                new Reference(
+                    'Symfony\\Component\\Mercure\\HubInterface',
+                    ContainerInterface::IGNORE_ON_INVALID_REFERENCE,
+                ),
+            ],
+            $container->getDefinition($publisher)->getArguments(),
+        );
+        $publisherAlias = $container->getAlias('Teknoo\\East\\UX\\Contracts\\Window\\WindowMethodPublisherInterface');
+        $this->assertSame($publisher, (string) $publisherAlias);
+        $this->assertTrue($publisherAlias->isPublic());
+
+        $subscriber = $container->getDefinition(
+            'Teknoo\\East\\UXBundle\\Mercure\\WindowReferenceAttributesSubscriber',
+        );
+        $this->assertTrue($subscriber->hasTag('kernel.event_subscriber'));
+        $this->assertEquals(
+            [
+                new Reference(
+                    'Symfony\\Component\\Mercure\\Twig\\MercureExtension',
+                    ContainerInterface::IGNORE_ON_INVALID_REFERENCE,
+                ),
+            ],
+            $subscriber->getArguments(),
+        );
+
+        $this->assertTrue(
+            $container->getDefinition('Teknoo\\East\\UXBundle\\Hydration\\WindowReferenceHydrationExtension')
+                ->hasTag('live_component.hydration_extension'),
+        );
+    }
 }

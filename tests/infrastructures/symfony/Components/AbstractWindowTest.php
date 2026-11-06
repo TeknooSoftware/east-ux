@@ -25,10 +25,17 @@ declare(strict_types=1);
 
 namespace Teknoo\Tests\East\UXBundle\Components;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionProperty;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\UuidV7;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
+use Teknoo\East\UX\Object\DTO\Window\WindowReference;
 use Teknoo\East\UXBundle\Components\AbstractWindow;
+use Teknoo\East\UXBundle\Components\ListWindow;
 
 /**
  * Live Twig component rendering the abstract window interface.
@@ -152,5 +159,94 @@ class AbstractWindowTest extends TestCase
             $this->assertTrue($property->isPublic(), $property->getName() . ' must be public');
             $this->assertFalse($property->isReadOnly(), $property->getName() . ' must not be readonly');
         }
+    }
+
+    private function buildReference(string $id): WindowReference
+    {
+        return new WindowReference(ListWindow::class, $id, ['refresh', 'close']);
+    }
+
+    public function testWindowReferenceIsEmptyByDefault(): void
+    {
+        $this->assertNull($this->buildConcreteWindow()->windowReference);
+    }
+
+    public function testWindowReferenceIsANotWritableLiveProp(): void
+    {
+        $attributes = (new ReflectionProperty(AbstractWindow::class, 'windowReference'))
+            ->getAttributes(LiveProp::class);
+
+        $this->assertCount(1, $attributes);
+        $this->assertSame([], $attributes[0]->getArguments());
+    }
+
+    public function testWindowReferenceKeepsItsFirstValue(): void
+    {
+        $window = $this->buildConcreteWindow();
+        $first = $this->buildReference('first');
+
+        $window->windowReference = $first;
+        $this->assertSame($first, $window->windowReference);
+
+        $window->windowReference = $this->buildReference('second');
+        $this->assertSame($first, $window->windowReference);
+
+        $window->windowReference = null;
+        $this->assertSame($first, $window->windowReference);
+    }
+
+    public function testWindowReferenceAcceptsAValueAfterNull(): void
+    {
+        $window = $this->buildConcreteWindow();
+        $reference = $this->buildReference('first');
+
+        $window->windowReference = null;
+        $window->windowReference = $reference;
+
+        $this->assertSame($reference, $window->windowReference);
+    }
+
+    public function testCreateReference(): void
+    {
+        $window = new class extends AbstractWindow {
+            public function refresh(): void
+            {
+            }
+
+            public function close(): void
+            {
+            }
+        };
+
+        $first = $window::createReference();
+        $second = $window::createReference();
+
+        $this->assertSame($window::class, $first->componentClass);
+        $this->assertSame(['refresh', 'close'], $first->methods);
+        $this->assertInstanceOf(UuidV7::class, Uuid::fromString($first->id));
+        $this->assertNotSame($first->id, $second->id);
+    }
+
+    public function testCreateReferenceIsOverridableByAChildClass(): void
+    {
+        $window = new class extends AbstractWindow {
+            public function followLogs(): void
+            {
+            }
+
+            public static function createReference(): WindowReference
+            {
+                return new WindowReference(static::class, 'foo', ['followLogs']);
+            }
+        };
+
+        $this->assertSame(['followLogs'], $window::createReference()->methods);
+    }
+
+    public function testCreateReferenceIsRefusedForAWindowWithoutTheseMethods(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->buildConcreteWindow()::createReference();
     }
 }

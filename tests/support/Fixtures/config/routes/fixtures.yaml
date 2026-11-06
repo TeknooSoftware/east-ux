@@ -74,3 +74,63 @@ fixtures_tenant_admin_item_new:
     errorTemplate: 'error.html.twig'
     route: 'fixtures_item_edit'
     formOptions: { }
+
+# Pages whose windows have a reference: the class of the window is a default of the route, never read from the request
+fixtures_item_followed:
+  path: '/items/followed/'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'fixtures.endpoint.item.followed'
+    windowClass: 'Teknoo\East\UXBundle\Components\ListWindow'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    defaultOrderDirection: 'ASC'
+    itemsPerPage: 5
+    template: 'item/followed.html.twig'
+    errorTemplate: 'error.html.twig'
+
+fixtures_item_followed_twice:
+  path: '/items/followed/twice'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'fixtures.endpoint.item.followed_twice'
+    windowClass: 'Teknoo\East\UXBundle\Components\ListWindow'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    defaultOrderDirection: 'ASC'
+    itemsPerPage: 5
+    template: 'item/followed_twice.html.twig'
+    errorTemplate: 'error.html.twig'
+
+fixtures_item_followed_edit:
+  path: '/items/followed/edit/{id}'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'fixtures.endpoint.item.followed_edit'
+    windowClass: 'Teknoo\East\UXBundle\Components\FormWindow'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    writer: '@Teknoo\Tests\East\UX\Support\Fixtures\Writer\ItemWriter'
+    formClass: 'Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType'
+    template: 'item/followed_edit.html.twig'
+    errorTemplate: 'error.html.twig'
+    formOptions: { }
+
+# `Window` is not a Live window: the step refuses it
+fixtures_item_followed_refused:
+  path: '/items/followed/refused'
+  methods: ['GET']
+  defaults:
+    _controller: 'fixtures.endpoint.item.followed'
+    windowClass: 'Teknoo\East\UXBundle\Components\Window'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    defaultOrderDirection: 'ASC'
+    itemsPerPage: 5
+    template: 'item/followed.html.twig'
+    errorTemplate: 'error.html.twig'
+
+# A page asking a window, opened elsewhere, to run one of its methods
+fixtures_item_followed_publish:
+  path: '/items/followed/publish/{windowId}/{windowMethod}'
+  methods: ['GET']
+  defaults:
+    _controller: 'fixtures.endpoint.item.publish'
+    template: 'home.html.twig'
+    errorTemplate: 'error.html.twig'

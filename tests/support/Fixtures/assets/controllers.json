@@ -40,6 +40,10 @@
             "leave-confirm": {
                 "enabled": true,
                 "fetch": "eager"
+            },
+            "window-reference": {
+                "enabled": true,
+                "fetch": "eager"
             }
         }
     },

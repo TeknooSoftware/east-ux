@@ -14,6 +14,8 @@ providing the application-level UI pieces of an East application:
   `LoginWindow`), `ObjectList`, `Pagination`, `ConfirmModal`, `Card`, `MenuBar` and `ThemeSwitcher`;
 * their Stimulus controllers and a structural stylesheet, served by AssetMapper without build step;
 * a component renderer endpoint, to load windows dynamically;
+* the references of the Live windows: a worker or another window asks an opened window to run one of its methods,
+  through Mercure, which only carries the name of the method;
 * a menu service, fed by the menu generators of the application;
 * the [System.css x Bootstrap](https://github.com/TeknooSoftware/system.css-x-bootstrap) theme with its fonts, the Twig
   functions writing its style (legacy, modern) and its mode (light, dark, auto) on `<html>`, and the switch of the
@@ -22,15 +24,15 @@ providing the application-level UI pieces of an East application:
 The Live Components are re-rendered by the East recipe of their page: East Foundation's router maps a
 `POST /_components/<Name>` back to the route of the component's `originalPath` and runs its recipe again, and East
 Common's `LiveComponentBuilder` copies the view parameters of the recipe into the component. East UX only uses this
-bridge: the router and `LiveTrait` stay in East Foundation, the `LiveComponentBuilder` and the recipe steps in East
-Common.
+bridge: the router and `LiveTrait` stay in East Foundation, the `LiveComponentBuilder` and the recipe steps of the pages
+in East Common.
 
 Documentation
 -------------
 
 * [Components](documentation/components.md): props, blocks and behaviour of each component.
 * [Live Components and the East bridge](documentation/live-components.md): re-renders through the recipes, the
-  component renderer, security.
+  component renderer, the references of the windows, security.
 * [Stimulus controllers](documentation/stimulus.md): values of each controller and contract with the page.
 * [Menu](documentation/menu.md): menu generators, sections, items and the menu service.
 * [Theming](documentation/theming.md): stylesheet, form theme, template overrides and translations.
@@ -45,12 +47,13 @@ This library requires:
     * PHP 8.4+
     * A PHP autoloader (Composer is recommended)
     * Teknoo/East-Foundation 9.4+
-    * Teknoo/East-Common 4.8+
+    * Teknoo/East-Common 4.10+
     * Symfony 7.4+ or 8.1+ (FrameworkBundle, Form, Security HTTP, Validator), with SecurityBundle registered and
       `framework.validation` enabled in the application
     * Symfony UX TwigComponent 3 and LiveComponent 3
     * Twig 3.24+
     * Optional: Symfony AssetMapper and StimulusBundle, to serve the controllers and the stylesheet without build step
+    * Optional: Symfony Mercure 0.10+ and its bundle, with a hub of the protocol 1.0, for the references of the windows
 
 ```sh
 composer require teknoo/east-ux
@@ -289,7 +292,7 @@ Assets
 
 `assets/package.json` is read by Symfony Flex (the package has the `symfony-ux` keyword) and by StimulusBundle. When
 the library is installed or updated, Flex writes the `@teknoo/east-ux` entries into the application's
-`assets/controllers.json` (the ten controllers) and `importmap.php` (`@teknoo/east-ux/styles/east-ux.css`,
+`assets/controllers.json` (the eleven controllers) and `importmap.php` (`@teknoo/east-ux/styles/east-ux.css`,
 `@teknoo/east-ux/system-theme/css/bootstrap-system-theme.min.css`, and `@hotwired/stimulus` and `bootstrap` when they
 are missing), each file only if it already exists: commit both files
 first, then require the library and commit the entries Flex adds. A later `composer install` leaves them unchanged.

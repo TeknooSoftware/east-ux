@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace Teknoo\Tests\East\UXBundle\Components;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -356,5 +357,12 @@ class LoginWindowTest extends TestCase
         $this->assertStringContainsString('id="login-error"', $output);
         $this->assertStringContainsString('[security]An authentication exception occurred.', $output);
         $this->assertStringNotContainsString('Internal detail', $output);
+    }
+
+    public function testCreateReferenceIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        LoginWindow::createReference();
     }
 }
