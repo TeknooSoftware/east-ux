@@ -30,6 +30,7 @@ use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionProperty;
 use stdClass;
 use Symfony\Bridge\Twig\Extension\FormExtension;
@@ -47,6 +48,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\ComponentWithFormTrait;
 use Symfony\UX\LiveComponent\Metadata\UrlMapping;
@@ -899,5 +901,37 @@ class ListWindowTest extends TestCase
             ],
             $this->getRenderedComponentProps('ConfirmModal'),
         );
+    }
+
+    public function testCreateReference(): void
+    {
+        $reference = ListWindow::createReference();
+
+        $this->assertSame(ListWindow::class, $reference->componentClass);
+        $this->assertSame(['refresh', 'close'], $reference->methods);
+    }
+
+    public function testRefreshAndCloseAreLiveActions(): void
+    {
+        $this->assertCount(1, (new ReflectionMethod(ListWindow::class, 'refresh'))->getAttributes(LiveAction::class));
+        $this->assertCount(1, (new ReflectionMethod(ListWindow::class, 'close'))->getAttributes(LiveAction::class));
+    }
+
+    public function testRefreshKeepsTheWindowShown(): void
+    {
+        $window = $this->buildListWindow();
+
+        $window->refresh();
+
+        $this->assertFalse($window->hidden);
+    }
+
+    public function testCloseHidesTheWindow(): void
+    {
+        $window = $this->buildListWindow();
+
+        $window->close();
+
+        $this->assertTrue($window->hidden);
     }
 }

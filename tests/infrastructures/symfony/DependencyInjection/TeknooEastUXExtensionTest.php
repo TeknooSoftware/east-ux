@@ -655,4 +655,15 @@ class TeknooEastUXExtensionTest extends TestCase
         /** @phpstan-ignore argument.type */
         $this->buildExtension()->prepend(new stdClass());
     }
+
+    public function testLoadRegistersTheWindowReferences(): void
+    {
+        $container = new ContainerBuilder();
+        $this->buildExtension()->load([], $container);
+
+        $this->assertTrue(
+            $container->getDefinition('Teknoo\\East\\UXBundle\\Hydration\\WindowReferenceHydrationExtension')
+                ->hasTag('live_component.hydration_extension'),
+        );
+    }
 }

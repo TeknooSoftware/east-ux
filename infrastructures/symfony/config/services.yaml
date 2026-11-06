@@ -123,6 +123,14 @@ services:
         autoconfigure: true
 
     ########################
+    # Window references
+    # A `WindowReference` is a LiveProp of the windows, Symfony UX can not rebuild it without this extension
+    Teknoo\East\UXBundle\Hydration\WindowReferenceHydrationExtension:
+        class: 'Teknoo\East\UXBundle\Hydration\WindowReferenceHydrationExtension'
+        tags:
+            - { name: 'live_component.hydration_extension' }
+
+    ########################
     # Component renderer (route `_teknoo_east_ux_component_render`, `POST /render`)
     # The controller extends Symfony's `AbstractController`: East Foundation's router hands a route back to Symfony
     # only for such a controller, so `autowire` (the `#[Required]` `setContainer()`) and `autoconfigure`

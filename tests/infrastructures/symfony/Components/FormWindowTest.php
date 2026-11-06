@@ -28,6 +28,7 @@ namespace Teknoo\Tests\East\UXBundle\Components;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionProperty;
 use stdClass;
 use Symfony\Bridge\Twig\Extension\FormExtension;
@@ -43,6 +44,7 @@ use Symfony\Component\Form\Forms;
 use Symfony\Component\Form\FormView;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\TwigComponent\ComponentAttributes;
 use Symfony\UX\TwigComponent\Twig\ComponentLexer;
@@ -655,5 +657,44 @@ class FormWindowTest extends TestCase
         $output = $this->render($window);
 
         $this->assertStringContainsString('<input class="test-theme-widget">', $output);
+    }
+
+    public function testCreateReference(): void
+    {
+        $reference = FormWindow::createReference();
+
+        $this->assertSame(FormWindow::class, $reference->componentClass);
+        $this->assertSame(['refresh', 'close'], $reference->methods);
+    }
+
+    public function testRefreshAndCloseAreLiveActions(): void
+    {
+        $this->assertCount(1, (new ReflectionMethod(FormWindow::class, 'refresh'))->getAttributes(LiveAction::class));
+        $this->assertCount(1, (new ReflectionMethod(FormWindow::class, 'close'))->getAttributes(LiveAction::class));
+    }
+
+    public function testRefreshBuildsTheFormOfTheObjectGivenByTheRecipe(): void
+    {
+        $object = new stdClass();
+        $formView = new FormView();
+
+        $form = $this->createStub(FormInterface::class);
+        $form->method('createView')->willReturn($formView);
+
+        $formFactory = $this->createMock(FormFactoryInterface::class);
+        $formFactory->expects($this->once())
+            ->method('create')
+            ->with(FormType::class, $object)
+            ->willReturn($form);
+
+        $window = new FormWindow($formFactory);
+        $window->formName = FormType::class;
+        $window->objectInstance = $object;
+        $window->formPath = '/items/edit/1';
+
+        $window->refresh();
+
+        $this->assertSame($formView, $window->formView);
+        $this->assertSame('/items/edit/1', $window->originalPath);
     }
 }
