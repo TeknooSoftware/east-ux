@@ -130,6 +130,15 @@ services:
         tags:
             - { name: 'live_component.hydration_extension' }
 
+    # Step of the plans of the application. Public: PHP-DI reads it from the Symfony container
+    Teknoo\East\UXBundle\Recipe\Step\CreateWindowReference:
+        class: 'Teknoo\East\UXBundle\Recipe\Step\CreateWindowReference'
+        public: true
+
+    Teknoo\East\UX\Contracts\Recipe\Step\CreateWindowReferenceInterface:
+        alias: 'Teknoo\East\UXBundle\Recipe\Step\CreateWindowReference'
+        public: true
+
     # `symfony/mercure` and its bundle are optional: without hub, the publisher refuses to publish
     Teknoo\East\UXBundle\Mercure\WindowMethodPublisher:
         class: 'Teknoo\East\UXBundle\Mercure\WindowMethodPublisher'

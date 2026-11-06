@@ -661,6 +661,12 @@ class TeknooEastUXExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $this->buildExtension()->load([], $container);
 
+        $step = 'Teknoo\\East\\UXBundle\\Recipe\\Step\\CreateWindowReference';
+        $this->assertTrue($container->getDefinition($step)->isPublic());
+        $stepAlias = $container->getAlias('Teknoo\\East\\UX\\Contracts\\Recipe\\Step\\CreateWindowReferenceInterface');
+        $this->assertSame($step, (string) $stepAlias);
+        $this->assertTrue($stepAlias->isPublic());
+
         $publisher = 'Teknoo\\East\\UXBundle\\Mercure\\WindowMethodPublisher';
         $this->assertTrue($container->getDefinition($publisher)->isPublic());
         $this->assertEquals(

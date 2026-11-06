@@ -29,9 +29,9 @@ namespace Teknoo\East\UXBundle\config;
  * PHP-DI definitions of East UX, loaded by the application through `di_bridge.definitions`
  * (`vendor/teknoo/east-ux/infrastructures/symfony/config/di.php`).
  *
- * The components, the component renderer and the menu service are Symfony services (`services.yaml`): East UX
- * defines no recipe step and needs no PHP-DI entry yet. This file is the place for future ones, so that an
- * application can list it now.
+ * The components, the component renderer, the menu service and the step `CreateWindowReference` are Symfony services
+ * (`services.yaml`): an application reads them from the Symfony container, East UX needs no PHP-DI entry yet. This file
+ * is the place for future ones, so that an application can list it now.
  */
 return [
 ];

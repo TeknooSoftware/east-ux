@@ -1,0 +1,16 @@
+{% extends 'layout.html.twig' %}
+
+{# Rendered by East Common's edition recipe, after the step creating the reference of the window (`windowReference`) #}
+{% block body %}
+    <twig:FormWindow
+        title="Edit a followed item"
+        windowId="followed-item-{{ objectInstance.id }}"
+        windowReference="{{ windowReference }}"
+        closable="1"
+        hidden="0"
+        formView="{{ formView }}"
+        objectInstance="{{ objectInstance }}"
+        formName="Teknoo\\Tests\\East\\UX\\Support\\Fixtures\\Form\\Type\\ItemType"
+        formPath="{{ path('fixtures_item_followed_edit', {'id': objectInstance.id}) }}"
+    />
+{% endblock %}

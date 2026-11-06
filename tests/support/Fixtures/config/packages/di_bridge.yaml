@@ -8,3 +8,4 @@ di_bridge:
     - '%kernel.project_dir%/vendor/teknoo/east-common/infrastructures/di.php'
     - '%kernel.project_dir%/infrastructures/symfony/config/di.php'
     - '%kernel.project_dir%/infrastructures/symfony/config/twig.php'
+    - '%kernel.project_dir%/tests/support/Fixtures/config/di.php'
