@@ -1,5 +1,15 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.6.0] - Release pending
+### Alpha Release
+
+#### Evolutions
+- `ObjectWindow`: a Live window showing one object of the recipe of its page, through the component named by its prop
+  `contentComponent`. A row of a list opens it over the page with `window-dynamic-loader`.
+- Component renderer: `ObjectWindowPropsValidator` validates the props of a floating `ObjectWindow`.
+- Configuration `teknoo_east_ux.component_rendering.object_window.content_components`: the components allowed as
+  content of an `ObjectWindow` loaded by the component renderer. Empty by default: such a window is refused.
+
 ## [0.5.0] - Release pending
 ### Alpha Release
 

@@ -39,6 +39,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Teknoo\Tests\East\UX\Support\Fixtures\Form\Type\ItemType;
 use Teknoo\East\UXBundle\Mercure\WindowMethodPublisher;
+use Teknoo\Recipe\Promise\Promise;
 use Teknoo\Tests\East\UX\Support\Fixtures\Kernel;
 use Teknoo\Tests\East\UX\Support\Fixtures\Mercure\RecordingHub;
 use Teknoo\Tests\East\UX\Support\Fixtures\Object\Item;
@@ -1095,5 +1096,184 @@ class FeatureContext implements Context
     public function theHubMustHaveReceivedNothing(): void
     {
         Assert::assertSame([], $this->getRecordingHub()->updates);
+    }
+
+    private function findObjectWindow(string $windowId): Crawler
+    {
+        $window = $this->getCrawler()->filter(
+            'div.window[data-live-name-value="ObjectWindow"][data-form-window="' . $windowId . '"]',
+        );
+        Assert::assertCount(1, $window, "The object window $windowId is not rendered");
+
+        return $window;
+    }
+
+    /**
+     * The id of the item of this name, kept in memory by the test application
+     */
+    private function findItemId(string $name): string
+    {
+        $repository = $this->getKernel()->getContainer()->get(ItemRepository::class);
+        Assert::assertInstanceOf(ItemRepository::class, $repository);
+
+        $ids = [];
+        /** @var Promise<iterable<Item>, mixed, mixed> $promise */
+        $promise = new Promise(
+            static function (iterable $items) use ($name, &$ids): void {
+                foreach ($items as $item) {
+                    if ($item instanceof Item && $name === $item->getName()) {
+                        $ids[] = $item->getId();
+                    }
+                }
+            },
+        );
+        $repository->findAll($promise);
+
+        Assert::assertCount(1, $ids, "The item $name is not in the application once");
+
+        return $ids[0];
+    }
+
+    /**
+     * Props of a floating object window, as a link opening it sends them to the component renderer: the window props,
+     * `originalPath` (the route of the recipe loading the object), `contentComponent` and `hidden`
+     *
+     * @return array<string, mixed>
+     */
+    private function buildObjectWindowProps(string $windowId, string $path): array
+    {
+        return [
+            'windowId' => $windowId,
+            'originalPath' => $path,
+            'contentComponent' => 'ItemView',
+            'floating' => true,
+            'hidden' => true,
+            'title' => 'View item',
+            'closable' => true,
+            'draggable' => true,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    private function callComponentRendererForAnObjectWindow(array $props): void
+    {
+        $this->callComponentRenderer(
+            (string) json_encode(['component' => 'ObjectWindow', 'props' => $props], JSON_THROW_ON_ERROR),
+        );
+    }
+
+    #[When('the component renderer is asked for the object window :windowId of the item :name')]
+    public function theComponentRendererIsAskedForTheObjectWindowOfTheItem(string $windowId, string $name): void
+    {
+        $this->callComponentRendererForAnObjectWindow(
+            $this->buildObjectWindowProps($windowId, '/items/view/' . $this->findItemId($name)),
+        );
+    }
+
+    #[When(
+        'the component renderer is asked for the object window :windowId of the item :name with the prop :prop set to '
+        . ':value'
+    )]
+    public function theComponentRendererIsAskedForTheObjectWindowOfTheItemWithThePropSetTo(
+        string $windowId,
+        string $name,
+        string $prop,
+        string $value,
+    ): void {
+        $props = $this->buildObjectWindowProps($windowId, '/items/view/' . $this->findItemId($name));
+        $props[$prop] = $this->convertPropValue($value);
+
+        $this->callComponentRendererForAnObjectWindow($props);
+    }
+
+    #[When('the component renderer is asked for the object window :windowId of the item :name without the prop :prop')]
+    public function theComponentRendererIsAskedForTheObjectWindowOfTheItemWithoutTheProp(
+        string $windowId,
+        string $name,
+        string $prop,
+    ): void {
+        $props = $this->buildObjectWindowProps($windowId, '/items/view/' . $this->findItemId($name));
+        unset($props[$prop]);
+
+        $this->callComponentRendererForAnObjectWindow($props);
+    }
+
+    #[When('the component renderer is asked for the object window :windowId of the path :path')]
+    public function theComponentRendererIsAskedForTheObjectWindowOfThePath(string $windowId, string $path): void
+    {
+        $this->callComponentRendererForAnObjectWindow($this->buildObjectWindowProps($windowId, $path));
+    }
+
+    #[When('the object window is opened')]
+    public function theObjectWindowIsOpened(): void
+    {
+        // `list-window-refresh#open` sets `hidden` to false (`component.set()`), then re-renders the window
+        $this->reRender('ObjectWindow', ['hidden' => false]);
+    }
+
+    #[Then('the object window :windowId must be hidden and floating')]
+    public function theObjectWindowMustBeHiddenAndFloating(string $windowId): void
+    {
+        $window = $this->findObjectWindow($windowId);
+
+        $classes = explode(' ', (string) $window->attr('class'));
+        Assert::assertContains('window-floating', $classes);
+        Assert::assertContains('d-none', $classes);
+        // `list-window-refresh` opens the window on `window:open`
+        Assert::assertSame('list-window-refresh window-close window-drag live', $window->attr('data-controller'));
+        Assert::assertTrue($this->getLiveProps('ObjectWindow')['floating'] ?? null);
+        Assert::assertTrue($this->getLiveProps('ObjectWindow')['hidden'] ?? null);
+    }
+
+    #[Then('the object window :windowId must be shown and floating')]
+    public function theObjectWindowMustBeShownAndFloating(string $windowId): void
+    {
+        $window = $this->findObjectWindow($windowId);
+
+        $classes = explode(' ', (string) $window->attr('class'));
+        Assert::assertContains('window-floating', $classes);
+        Assert::assertNotContains('d-none', $classes);
+        Assert::assertTrue($this->getLiveProps('ObjectWindow')['floating'] ?? null);
+        Assert::assertFalse($this->getLiveProps('ObjectWindow')['hidden'] ?? null);
+    }
+
+    #[Then('the object window :windowId must be shown in the page')]
+    public function theObjectWindowMustBeShownInThePage(string $windowId): void
+    {
+        $window = $this->findObjectWindow($windowId);
+
+        $classes = explode(' ', (string) $window->attr('class'));
+        Assert::assertContains('h-100', $classes);
+        Assert::assertNotContains('window-floating', $classes);
+        Assert::assertNotContains('d-none', $classes);
+        Assert::assertFalse($this->getLiveProps('ObjectWindow')['floating'] ?? null);
+        Assert::assertFalse($this->getLiveProps('ObjectWindow')['hidden'] ?? null);
+    }
+
+    /**
+     * The content of the window is the content component, given the object loaded by the recipe
+     */
+    #[Then('the object window :windowId must show :text')]
+    public function theObjectWindowMustShow(string $windowId, string $text): void
+    {
+        $pane = $this->findObjectWindow($windowId)->filter('.window-pane');
+        Assert::assertCount(1, $pane);
+
+        Assert::assertSame($text, $pane->text());
+    }
+
+    /**
+     * No object without the recipe of `originalPath`: the window has no content
+     */
+    #[Then('the object window :windowId must be empty')]
+    public function theObjectWindowMustBeEmpty(string $windowId): void
+    {
+        $pane = $this->findObjectWindow($windowId)->filter('.window-pane');
+        Assert::assertCount(1, $pane);
+
+        Assert::assertCount(0, $pane->children());
+        Assert::assertSame('', $pane->text());
     }
 }

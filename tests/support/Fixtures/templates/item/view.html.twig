@@ -1,0 +1,20 @@
+{% extends 'layout.html.twig' %}
+
+{# Rendered by the plan `ViewItemEndPoint`: `objectInstance` is its view parameter. The full page of an item: the window
+   opened over the page, with the same `windowId`, in the page #}
+{% block body %}
+    <twig:ObjectWindow
+        title="View item"
+        closable="1"
+        resizable="0"
+        draggable="0"
+        hidden="0"
+        floating="0"
+        closeAriaLabel="{{ 'fixtures.aria.close'|trans }}"
+        resizeAriaLabel="{{ 'fixtures.aria.resize'|trans }}"
+        windowId="item-{{ objectInstance.id }}"
+        contentComponent="ItemView"
+        objectInstance="{{ objectInstance }}"
+        closeRedirectUrl="{{ path('fixtures_item_list') }}"
+    />
+{% endblock %}

@@ -149,7 +149,10 @@ class TeknooEastUXExtension extends Extension implements PrependExtensionInterfa
          * @var array{
          *     home_route: string|null,
          *     form_theme: string|null,
-         *     component_rendering: array{allow_unreferenced_components: bool},
+         *     component_rendering: array{
+         *         allow_unreferenced_components: bool,
+         *         object_window: array{content_components: list<string>},
+         *     },
          *     theme: array{style: string, mode: string, storage: string, update_route: string},
          * } $config
          */
@@ -163,6 +166,10 @@ class TeknooEastUXExtension extends Extension implements PrependExtensionInterfa
         $container->setParameter(
             'teknoo_east_ux.component_rendering.allow_unreferenced_components',
             $config['component_rendering']['allow_unreferenced_components'],
+        );
+        $container->setParameter(
+            'teknoo_east_ux.component_rendering.object_window.content_components',
+            $config['component_rendering']['object_window']['content_components'],
         );
 
         $container->setParameter('teknoo_east_ux.theme.style', $config['theme']['style']);

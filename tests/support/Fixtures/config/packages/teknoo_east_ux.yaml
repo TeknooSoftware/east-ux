@@ -1,6 +1,10 @@
 teknoo_east_ux:
   home_route: 'fixtures_home'
   form_theme: 'bootstrap_5_layout.html.twig'
+  # The components allowed as content of an `ObjectWindow` sent to the component renderer
+  component_rendering:
+    object_window:
+      content_components: ['ItemView']
   # The defaults: the choice of the visitor is kept in the session, sent to `POST /east-ux/theme`
   theme:
     style: 'legacy'

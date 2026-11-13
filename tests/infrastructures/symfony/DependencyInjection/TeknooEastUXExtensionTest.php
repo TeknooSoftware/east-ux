@@ -69,6 +69,7 @@ class TeknooEastUXExtensionTest extends TestCase
         'LoginWindow',
         'MenuBar',
         'ObjectList',
+        'ObjectWindow',
         'Pagination',
         'ThemeSwitcher',
         'Window',
@@ -343,6 +344,10 @@ class TeknooEastUXExtensionTest extends TestCase
         $this->assertFalse(
             $container->getParameter('teknoo_east_ux.component_rendering.allow_unreferenced_components')
         );
+        $this->assertSame(
+            [],
+            $container->getParameter('teknoo_east_ux.component_rendering.object_window.content_components'),
+        );
         $this->assertSame('legacy', $container->getParameter('teknoo_east_ux.theme.style'));
         $this->assertSame('auto', $container->getParameter('teknoo_east_ux.theme.mode'));
         $this->assertSame('session', $container->getParameter('teknoo_east_ux.theme.storage'));
@@ -444,6 +449,10 @@ class TeknooEastUXExtensionTest extends TestCase
 
         $pagination = $container->getDefinition('Teknoo\\East\\UXBundle\\Components\\Pagination');
         $this->assertEquals([new Reference('request_stack')], $pagination->getArguments());
+
+        // The constructor of East Foundation's `LiveTrait`
+        $objectWindow = $container->getDefinition('Teknoo\\East\\UXBundle\\Components\\ObjectWindow');
+        $this->assertEquals([new Reference('request_stack')], $objectWindow->getArguments());
     }
 
     public function testLoadRegistersTheComponentRenderer(): void
@@ -513,6 +522,45 @@ class TeknooEastUXExtensionTest extends TestCase
         $this->assertEquals(
             [['component' => 'Teknoo\\East\\UXBundle\\Components\\ListWindow']],
             $validator->getTag('teknoo.east.ux.component_rendering.validation'),
+        );
+    }
+
+    public function testLoadRegistersTheValidationOfTheObjectWindowProps(): void
+    {
+        $container = new ContainerBuilder();
+        $this->buildExtension()->load([], $container);
+
+        $validator = $container->getDefinition(
+            'Teknoo\\East\\UXBundle\\ComponentRendering\\Validator\\ObjectWindowPropsValidator'
+        );
+        $this->assertEquals(
+            'Teknoo\\East\\UXBundle\\ComponentRendering\\Validator\\ObjectWindowPropsValidator',
+            $validator->getClass(),
+        );
+        $this->assertEquals(
+            [
+                new Reference('validator'),
+                '%teknoo_east_ux.component_rendering.object_window.content_components%',
+            ],
+            $validator->getArguments(),
+        );
+        $this->assertEquals(
+            [['component' => 'Teknoo\\East\\UXBundle\\Components\\ObjectWindow']],
+            $validator->getTag('teknoo.east.ux.component_rendering.validation'),
+        );
+    }
+
+    public function testLoadWithObjectWindowContentComponents(): void
+    {
+        $container = new ContainerBuilder();
+        $this->buildExtension()->load(
+            [['component_rendering' => ['object_window' => ['content_components' => ['ItemView', 'ItemCard']]]]],
+            $container,
+        );
+
+        $this->assertSame(
+            ['ItemView', 'ItemCard'],
+            $container->getParameter('teknoo_east_ux.component_rendering.object_window.content_components'),
         );
     }
 

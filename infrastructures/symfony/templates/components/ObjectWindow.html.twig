@@ -1,0 +1,29 @@
+{% extends '@TeknooEastUX/components/Window.html.twig' %}
+
+{# The classes and the controllers of a `ListWindow`: a floating window is positioned over the page, a hidden one waits
+   for `window:open`, handled by `list-window-refresh` #}
+{% block window_classes %}{% if this.floating %} window-floating{% else %} h-100{% endif %} d-flex flex-column{% if this.hidden %} d-none{% endif %}{% endblock %}
+{% block window_pane_classes %} flex-grow-1 overflow-auto p-3{% endblock %}
+{%- block window_attributes -%}
+    {%- set window_controllers = 'list-window-refresh window-close' -%}
+    {%- if this.isDraggable() -%}
+        {%- set window_controllers = window_controllers ~ ' window-drag' -%}
+    {%- endif -%}
+    {{ attributes.defaults({
+        'data-controller': window_controllers,
+        'data-form-window': this.windowId,
+        'data-window-close-redirect-url-value': this.closeRedirectUrl
+    }) }}
+{%- endblock -%}
+
+{% block window %}
+    {{ parent() }}
+{% endblock %}
+
+{# The object comes from the recipe of `originalPath`: none in a window rendered by the component renderer, nor after a
+   refusal of its access, the window is then empty #}
+{% block content %}
+    {% if this.objectInstance is not null %}
+        {{ component(this.contentComponent, {'object': this.objectInstance}) }}
+    {% endif %}
+{% endblock %}

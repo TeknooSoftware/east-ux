@@ -76,6 +76,14 @@ services:
       - '@Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Plan\PublishWindowMethodEndPoint'
       - '@service_container'
 
+  # The page of an item, the route of its `ObjectWindow`, the plan is defined with PHP-DI in `config/di.php`
+  fixtures.endpoint.item.view:
+    class: 'Teknoo\East\Foundation\EndPoint\RecipeEndPoint'
+    public: true
+    arguments:
+      - '@Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Plan\ViewItemEndPoint'
+      - '@service_container'
+
   # Menu generators, tagged as an application must do
   Teknoo\Tests\East\UX\Support\Fixtures\Menu\ContentMenu:
     class: 'Teknoo\Tests\East\UX\Support\Fixtures\Menu\ContentMenu'

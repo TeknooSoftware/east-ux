@@ -70,7 +70,10 @@ class ConfigurationTest extends TestCase
             [
                 'home_route' => null,
                 'form_theme' => null,
-                'component_rendering' => ['allow_unreferenced_components' => false],
+                'component_rendering' => [
+                    'allow_unreferenced_components' => false,
+                    'object_window' => ['content_components' => []],
+                ],
                 'theme' => [
                     'style' => 'legacy',
                     'mode' => 'auto',
@@ -88,7 +91,10 @@ class ConfigurationTest extends TestCase
             [
                 'home_route' => 'app_home',
                 'form_theme' => '@App/fields.html.twig',
-                'component_rendering' => ['allow_unreferenced_components' => true],
+                'component_rendering' => [
+                    'allow_unreferenced_components' => true,
+                    'object_window' => ['content_components' => ['ItemView', 'ItemCard']],
+                ],
                 'theme' => [
                     'style' => 'modern',
                     'mode' => 'dark',
@@ -100,7 +106,10 @@ class ConfigurationTest extends TestCase
                 [
                     'home_route' => 'app_home',
                     'form_theme' => '@App/fields.html.twig',
-                    'component_rendering' => ['allow_unreferenced_components' => true],
+                    'component_rendering' => [
+                        'allow_unreferenced_components' => true,
+                        'object_window' => ['content_components' => ['ItemView', 'ItemCard']],
+                    ],
                     'theme' => [
                         'style' => 'modern',
                         'mode' => 'dark',
@@ -145,6 +154,21 @@ class ConfigurationTest extends TestCase
     {
         $this->expectException(InvalidTypeException::class);
         $this->process([['component_rendering' => ['allow_unreferenced_components' => 'yes']]]);
+    }
+
+    public function testObjectWindowContentComponents(): void
+    {
+        $config = $this->process([
+            ['component_rendering' => ['object_window' => ['content_components' => ['ItemView', 'ItemCard']]]],
+        ]);
+
+        $this->assertEquals(
+            [
+                'allow_unreferenced_components' => false,
+                'object_window' => ['content_components' => ['ItemView', 'ItemCard']],
+            ],
+            $config['component_rendering'],
+        );
     }
 
     public function testThemeValuesAreMergedOneByOne(): void

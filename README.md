@@ -11,7 +11,7 @@ Symfony bundle, following the #East programming philosophy, built on Teknoo/East
 providing the application-level UI pieces of an East application:
 
 * Symfony UX Twig and Live Components, with their templates: windows (`Window`, `FormWindow`, `ListWindow`,
-  `LoginWindow`), `ObjectList`, `Pagination`, `ConfirmModal`, `Card`, `MenuBar` and `ThemeSwitcher`;
+  `ObjectWindow`, `LoginWindow`), `ObjectList`, `Pagination`, `ConfirmModal`, `Card`, `MenuBar` and `ThemeSwitcher`;
 * their Stimulus controllers and a structural stylesheet, served by AssetMapper without build step;
 * a component renderer endpoint, to load windows dynamically;
 * the references of the Live windows: a worker or another window asks an opened window to run one of its methods,
@@ -103,6 +103,8 @@ teknoo_east_ux:
     form_theme: '@App/form/fields.html.twig'     # form theme of the FormWindow
     component_rendering:
         allow_unreferenced_components: false     # render a component without validator of its props
+        object_window:
+            content_components: []               # contents allowed in an ObjectWindow sent to the component renderer
     theme:
         style: 'legacy'                          # default style of the theme: legacy or modern
         mode: 'auto'                             # default mode: light, dark or auto
@@ -115,15 +117,17 @@ teknoo_east_ux:
 | `home_route`                                          | `null`  | Route of the brand link of `MenuBar`; without it, the brand links to `/`        |
 | `form_theme`                                          | `null`  | Default of the `formTheme` prop of `FormWindow`; without it, no theme is set on the form and the global form themes apply |
 | `component_rendering.allow_unreferenced_components`   | `false` | Lets the component renderer render a component without validator of its props   |
+| `component_rendering.object_window.content_components` | `[]` | Allowed contents of the renderer's `ObjectWindow` |
 | `theme.style`, `theme.mode`                           | `legacy`, `auto` | Theme rendered while the visitor has not chosen                       |
 | `theme.storage`                                       | `session` | `session`: the choice is sent to `theme.update_route` and kept on the server; `browser`: it is kept in the localStorage |
 | `theme.update_route`                                  | `_teknoo_east_ux_theme_update` | Route receiving the choice with the `session` storage    |
 
 A configured value can not be an empty string. The values are available as the parameters
 `teknoo_east_ux.home_route`, `teknoo_east_ux.form_theme`,
-`teknoo_east_ux.component_rendering.allow_unreferenced_components` and `teknoo_east_ux.theme.*`. The validators of the props use Symfony's
-validator: the application enables `framework.validation` (the default `config/packages/validator.yaml` of the
-Symfony recipe does).
+`teknoo_east_ux.component_rendering.allow_unreferenced_components`,
+`teknoo_east_ux.component_rendering.object_window.content_components` and `teknoo_east_ux.theme.*`. The validators of
+the props use Symfony's validator: the application enables `framework.validation` (the default
+`config/packages/validator.yaml` of the Symfony recipe does).
 
 ### Routes and access control
 
@@ -169,6 +173,7 @@ Components
 | `Window`       | Twig | Generic window (title bar, separator, pane), base of the other windows' templates  |
 | `FormWindow`   | Live | Window holding a Symfony form, as a modal loaded dynamically or as a full page      |
 | `ListWindow`   | Live | Paginated list of objects with an optional search form and a "New" button         |
+| `ObjectWindow` | Live | One object, shown by a content component, in its page or opened by a row of a list |
 | `LoginWindow`  | Twig | Login form of Symfony's `form_login`, error in `#login-error`                       |
 | `MenuBar`      | Twig | Navigation bar built from the menu generators                                     |
 | `ObjectList`   | Twig | Table of objects, one item component per row                                      |

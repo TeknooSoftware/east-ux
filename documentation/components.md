@@ -1,6 +1,6 @@
 # Components
 
-East UX ships ten Symfony UX components. Their classes are in `infrastructures/symfony/Components/`
+East UX ships eleven Symfony UX components. Their classes are in `infrastructures/symfony/Components/`
 (namespace `Teknoo\East\UXBundle\Components\`), their templates in `infrastructures/symfony/templates/components/`
 (Twig namespace `@TeknooEastUX`).
 
@@ -18,6 +18,7 @@ methods of `this`, no default values of the props, no live behaviour). Always us
 | `Window`       | Twig | `Window` (`AbstractWindow`)   | Generic window: title bar, separator, pane; base of the other windows' templates |
 | `FormWindow`   | Live | `FormWindow` (`AbstractWindow`, `LiveTrait`) | Window holding a Symfony form, as a modal (live) or as a full page |
 | `ListWindow`   | Live | `ListWindow` (`AbstractWindow`, `LiveTrait`, `DefaultActionTrait`, `ComponentWithFormTrait`) | Paginated list of objects, optional search form, "New" button |
+| `ObjectWindow` | Live | `ObjectWindow` (`AbstractWindow`, `LiveTrait`, `DefaultActionTrait`) | Window of one object |
 | `LoginWindow`  | Twig | `LoginWindow` (`AbstractWindow`) | Login form of Symfony's `form_login`                            |
 | `MenuBar`      | Twig | `MenuBar`                     | Navigation bar built by the menu service ([menu.md](menu.md))      |
 | `ObjectList`   | Twig | `ObjectList`                  | Table of objects, one item component (or block) per row            |
@@ -210,6 +211,89 @@ A window holding a Symfony form, in two modes:
 - Helpers: `hasObjects()`, `hasPagination()`, `hasSearchForm()`, `getCurrentRequest()`.
 - Blocks: `search_form`, `search_form_container_classes`, `objects_list`, `pagination`, `confirm_modals` (in
   `window_modals`), plus those of `Window`.
+
+## ObjectWindow
+
+A window showing one object, through the component named by `contentComponent`, which gets the object in its prop
+`object` (usually an anonymous component of the application). It is the window of the page of an object, and the
+floating window that the links of the rows of a list open over the page, loaded by the component renderer.
+
+```twig
+{# Template of the route of the page of an object: `objectInstance` is its view parameter #}
+<twig:ObjectWindow
+    title="{{ 'app.item.title.view'|trans }}"
+    windowId="item-view-{{ objectInstance.id }}"
+    closable="1"
+    contentComponent="ItemView"
+    objectInstance="{{ objectInstance }}"
+    closeRedirectUrl="{{ path('app_item_list') }}"
+/>
+```
+
+| Prop               | Type      | Live           | Default      | Use                                                 |
+|--------------------|-----------|----------------|--------------|-----------------------------------------------------|
+| window props       |           | yes            |              | `AbstractWindow` props, redeclared as LiveProps     |
+| `hidden`           | `bool`    | yes (writable) | `false`      | Adds `d-none` until `window:open` opens the window  |
+| `floating`         | `bool`    | yes            | `false`      | Floats over the page (`window-floating`)            |
+| `contentComponent` | `string`  | yes            | `''`         | Component showing the object, given `object`        |
+| `originalPath`     | `?string` | yes            | current path | From `LiveTrait`: the route loading the object      |
+| `objectInstance`   | `?object` | no             | `null`       | View parameter, copied by the East bridge           |
+
+- The object is loaded by the recipe of the route of `originalPath`, behind its access rules: East Common's
+  `LiveComponentBuilder` copies it into the public property `objectInstance`, which is not a LiveProp. The template
+  renders `component(contentComponent, {'object': objectInstance})` only when it is not null: it is null in a window
+  loaded by the component renderer, and after a refusal, so the window is empty.
+- The routes of the pages of an object answer `GET` and `POST`: the Live re-render of the window runs the recipe of
+  the route of `originalPath` from a `POST`.
+- `#[LiveAction] refresh()` does nothing (the recipe has already run again), `#[LiveAction] close()` sets `hidden`.
+- The root element gets the classes and the controllers of a `ListWindow`: `window-floating` (or `h-100`), `d-none`
+  while hidden, `data-controller="list-window-refresh window-close[ window-drag]"`, `data-form-window` and
+  `data-window-close-redirect-url-value`. It has no Stimulus controller of its own: `list-window-refresh` opens it on
+  `window:open` and re-renders it on `list-window:refresh` ([stimulus.md](stimulus.md#list-window-refresh)).
+- The page of the object is the fallback of the links of the rows: it renders the same window, with the same
+  `windowId`, in the page (`floating` false), closable towards its list with `closeRedirectUrl`.
+
+A row of a list opens its object in a floating window with a link to the page of the object, carrying
+`window-dynamic-loader` ([stimulus.md](stimulus.md#window-dynamic-loader)). Its `windowId` holds the id of the object:
+with a fixed id, every row would open the first window again.
+
+```twig
+{# In the row of an object (`ItemRow`): one window for each object, named after its id #}
+{% set props = {'windowId': 'item-view-' ~ object.id, 'floating': true, 'closable': true, 'draggable': true,
+    'contentComponent': 'ItemView'} %}
+<a href="{{ path('app_item_view', {'id': object.id}) }}"
+   data-controller="window-dynamic-loader"
+   data-window-dynamic-loader-url-value="{{ path('_teknoo_east_ux_component_render') }}"
+   data-window-dynamic-loader-component-value="ObjectWindow"
+   data-window-dynamic-loader-title-value="{{ 'app.item.title.view'|trans }}"
+   data-window-dynamic-loader-props-value="{{ props|json_encode }}"
+   data-action="click->window-dynamic-loader#open">{{ 'app.action.view'|trans }}</a>
+```
+
+The component renderer validates its props with `ObjectWindowPropsValidator`. No prop may be `null`, and invalid
+props get a 400:
+
+| Props                                          | Rule                                                             |
+|------------------------------------------------|------------------------------------------------------------------|
+| `windowId`, `originalPath`                     | Required, non-empty strings                                      |
+| `contentComponent`                             | Required, one of the components of the configuration below       |
+| `floating`                                     | Required, `true`: a window loaded by the renderer floats         |
+| `title`, `closeAriaLabel`, `resizeAriaLabel`   | Optional strings                                                 |
+| `closable`, `resizable`, `draggable`, `hidden` | Optional booleans                                                |
+| Any other prop                                 | Refused: `objectInstance`, `windowReference`, `closeRedirectUrl` |
+
+The components allowed in `contentComponent` are a whitelist, the key
+`teknoo_east_ux.component_rendering.object_window.content_components`, empty by default: until the application fills
+it, every `ObjectWindow` sent to the component renderer is refused. Accepting any known component would allow to nest a
+window in the window, and end in an error of the server.
+
+```yaml
+# config/packages/teknoo_east_ux.yaml
+teknoo_east_ux:
+    component_rendering:
+        object_window:
+            content_components: ['ItemView']
+```
 
 ## LoginWindow
 

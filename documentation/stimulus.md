@@ -128,10 +128,10 @@ On the "New" button of `ListWindow`, whose `load-error-text` is translated from
 
 ### window-dynamic-loader
 
-On a link that opens a window in the current page, without leaving it: a floating `ListWindow`, a `FormWindow`, any
-Live window that the component renderer accepts ([live-components.md](live-components.md#dynamic-windows)). The
-`href` of the link is the page of the window: it is opened by a click with the middle button or a modifier key, and
-it is the fallback when the window can not be loaded.
+On a link that opens a window in the current page, without leaving it: a floating `ListWindow` or `ObjectWindow`, a
+`FormWindow`, any Live window that the component renderer accepts
+([live-components.md](live-components.md#dynamic-windows)). The `href` of the link is the page of the window: it is
+opened by a click with the middle button or a modifier key, and it is the fallback when the window can not be loaded.
 
 ```twig
 {% set props = {'windowId': 'items', 'itemComponent': 'ItemRow', 'floating': true, 'closable': true,
@@ -148,7 +148,7 @@ it is the fallback when the window can not be loaded.
 Values:
 
 - `url`: the URL of the component renderer (`path('_teknoo_east_ux_component_render')`), required;
-- `component`: the name of the component to render (`ListWindow`, `FormWindow`, ...);
+- `component`: the name of the component to render (`ListWindow`, `FormWindow`, `ObjectWindow`, ...);
 - `title`: the title of the window, added to the props when it is not empty (it replaces a `title` of `props`);
 - `props` (`{}`): the props of the component, a JSON object; its `windowId` names the window in the page.
 
@@ -225,7 +225,9 @@ shown.
 
 ### list-window-refresh
 
-Added to `ListWindow` (`attributes.defaults()`, with `window-close`, and `window-drag` when the window is draggable).
+Added to `ListWindow` and `ObjectWindow` (`attributes.defaults()`, with `window-close`, and `window-drag` when the
+window is draggable). The recipe of an `ObjectWindow` loads its object instead of a list: a shown `ObjectWindow` is
+re-rendered with its object on `list-window:refresh`, after a save in a `FormWindow` for example.
 
 - `connect()` listens, before any `await`, to `list-window:refresh` on `document` and to `window:open` on its own
   element; it also keeps the `style` of the window across the Live re-renders (see
@@ -245,8 +247,8 @@ Added to `ListWindow` (`attributes.defaults()`, with `window-close`, and `window
 
 ### window-close
 
-The default close action of `Window.html.twig` (`click->window-close#close`), also used by `ListWindow` and by
-`FormWindow` when it is not live. `close()` navigates to the `redirect-url` value
+The default close action of `Window.html.twig` (`click->window-close#close`), also used by `ListWindow`, `ObjectWindow`
+and by `FormWindow` when it is not live. `close()` navigates to the `redirect-url` value
 (`data-window-close-redirect-url-value`, filled from the `closeRedirectUrl` prop) or, without it, hides the element with
 `d-none`.
 
@@ -391,10 +393,10 @@ The controllers expect the page to provide:
 | `<div id="dynamic-modals"></div>`            | `form-window-dynamic-loader`, `window-dynamic-loader` | The application's layout, once per page: loaded windows are appended to it |
 | The modal `#delete-confirm-modal` and its `[data-confirm-button]` | `delete-item` (`modal-id` value) | `ListWindow` (a `ConfirmModal`); another modal can be named with `modal-id` |
 | The modal `#leave-confirm-modal` and its `[data-confirm-button]` | `leave-confirm` (`modal-id` value) | `MenuBar` (a `ConfirmModal` after its `<nav>`); without it, the links are followed |
-| The shown floating windows (`.window.window-floating:not(.d-none)`, `.window.form-window.form-fixed:not(.d-none)`) | `window-dynamic-loader` (cascade), `leave-confirm` | `ListWindow` (`floating`), `FormWindow` (closable and draggable) |
+| The shown floating windows (`.window.window-floating:not(.d-none)`, `.window.form-window.form-fixed:not(.d-none)`) | `window-dynamic-loader` (cascade), `leave-confirm` | `ListWindow` and `ObjectWindow` (`floating`), `FormWindow` (closable and draggable) |
 | The event `list-window:refresh` on `document` | `list-window-refresh`         | `form-window` after a save; the application may dispatch it too             |
 | The event `form-window:open` on a window element | `form-window`               | `form-window-dynamic-loader`; the application may dispatch it to open a window |
-| The event `window:open` on a window element  | `form-window`, `list-window-refresh` | `window-dynamic-loader`; the application may dispatch it to open a Live window (`FormWindow` when it is live, `ListWindow`) |
+| The event `window:open` on a window element  | `form-window`, `list-window-refresh` | `window-dynamic-loader`; the application may dispatch it to open a Live window (`FormWindow` when it is live, `ListWindow`, `ObjectWindow`) |
 | The event `window:opened` on a window element | `form-window-dynamic-loader`, `window-dynamic-loader` (end of the wait cursor) | `form-window`, `list-window-refresh`; a custom Live window opened by a loader must dispatch it, else its wait cursor lasts 10 seconds |
 | The fixed menu bar `.navbar.fixed-top`       | `window-drag` (top limit of a drag) | `MenuBar`; without it, the limit is the top of the viewport          |
 | The URL of the component renderer            | `form-window-dynamic-loader`, `window-dynamic-loader` (`url` value) | The bundle's route `_teknoo_east_ux_component_render`, imported by the application |

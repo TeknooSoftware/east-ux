@@ -59,6 +59,7 @@ use Teknoo\East\UXBundle\Components\ListWindow;
 use Teknoo\East\UXBundle\Components\LoginWindow;
 use Teknoo\East\UXBundle\Components\MenuBar;
 use Teknoo\East\UXBundle\Components\ObjectList;
+use Teknoo\East\UXBundle\Components\ObjectWindow;
 use Teknoo\East\UXBundle\Components\Pagination;
 use Teknoo\East\UXBundle\Components\ThemeSwitcher;
 use Teknoo\East\UXBundle\Components\Window;
@@ -223,6 +224,7 @@ class KernelTest extends TestCase
         yield 'LoginWindow' => ['LoginWindow', LoginWindow::class, false];
         yield 'MenuBar' => ['MenuBar', MenuBar::class, false];
         yield 'ObjectList' => ['ObjectList', ObjectList::class, false];
+        yield 'ObjectWindow' => ['ObjectWindow', ObjectWindow::class, true];
         yield 'Pagination' => ['Pagination', Pagination::class, false];
         yield 'ThemeSwitcher' => ['ThemeSwitcher', ThemeSwitcher::class, false];
         yield 'Window' => ['Window', Window::class, false];

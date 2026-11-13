@@ -18,7 +18,7 @@ display without a theme. Colours come from the Bootstrap 5.3 CSS variables, with
 | `.window-pane`                                            | Content of the window, scrolling when the window is height-constrained  |
 | `.menu-icon`                                              | Size and alignment of the menu icons (the icon set stays in the application) |
 | `.window.form-window`, `.form-fixed`, `.form-window-wide` | `FormWindow` overlay: fixed, centred under the menu bar, wide when the form has sub-forms |
-| `.window.window-floating`                                 | Floating `ListWindow`: fixed under the menu bar, without `transform`    |
+| `.window.window-floating`                                 | Floating `ListWindow` or `ObjectWindow`: fixed under the menu bar, without `transform` |
 | `.window.window-floating`, `.window.form-window.form-fixed` | Shared stacking order of the floating windows (see below)             |
 | `.window.window-floating:has([aria-modal="true"])`        | A floating window holding a shown modal goes above the modal backdrop   |
 | `.form-window-subforms`, `.east-ux-fieldset`              | Sub-form fieldsets of `FormWindow`                                      |
@@ -44,13 +44,14 @@ The application restyles the components in its own stylesheet, loaded after this
 
 ### Floating windows
 
-A floating `ListWindow` (prop `floating`) and a `FormWindow` overlay (closable and draggable, class `form-fixed`) are
-`position: fixed` over the page, without margin (a margin of a theme, such as `.window { margin: 1rem }` of System.css,
-would shift them and make them jump on their first drag). Three CSS custom properties place them:
+A floating `ListWindow` or `ObjectWindow` (prop `floating`) and a `FormWindow` overlay (closable and draggable, class
+`form-fixed`) are `position: fixed` over the page, without margin (a margin of a theme, such as
+`.window { margin: 1rem }` of System.css, would shift them and make them jump on their first drag). Three CSS custom
+properties place them:
 
 | Property                  | Set by                                  | Use                                                            |
 |---------------------------|-----------------------------------------|----------------------------------------------------------------|
-| `--east-ux-window-top`    | The application (default `4rem`)        | Height kept free for the fixed menu bar: the top of a floating `ListWindow`, the space where a `FormWindow` overlay is centred, and their `max-height` |
+| `--east-ux-window-top`    | The application (default `4rem`)        | Height kept free for the fixed menu bar: the top of a floating `ListWindow` or `ObjectWindow`, the space where a `FormWindow` overlay is centred, and their `max-height` |
 | `--east-ux-window-offset` | `window-dynamic-loader`, or the application (default `0rem`) | Shift of the window to the bottom and to the right, so that the windows opened one after the other do not cover each other (the cascade of `window-dynamic-loader`, [stimulus.md](stimulus.md#window-dynamic-loader)); the `max-height` of the window is reduced so that it stays in the viewport |
 | `--east-ux-window-order`  | `window-drag` (default `1`)             | Stacking order of the window, rewritten from 1 to n on the shown windows when a window is brought to the front ([stimulus.md](stimulus.md#window-drag)) |
 

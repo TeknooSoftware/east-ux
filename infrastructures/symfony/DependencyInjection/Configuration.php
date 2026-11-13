@@ -35,6 +35,8 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  *   (none by default: the form themes of the application apply),
  * - `component_rendering.allow_unreferenced_components`: allows the component renderer to render a component without
  *   validator of its props (false by default),
+ * - `component_rendering.object_window.content_components`: components allowed as content of an `ObjectWindow` sent
+ *   to the component renderer (none by default: every `ObjectWindow` sent to it is refused),
  * - `theme.style` and `theme.mode`: default preference of the System.css x Bootstrap theme, used while the visitor has
  *   not chosen (`legacy` and `auto` by default),
  * - `theme.storage`: where the choice of the visitor is kept, `session` (by default, sent by the `theme` Stimulus
@@ -79,6 +81,18 @@ class Configuration implements ConfigurationInterface
                                 . '(tag teknoo.east.ux.component_rendering.validation)'
                             )
                             ->defaultFalse()
+                        ->end()
+                        ->arrayNode('object_window')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->arrayNode('content_components')
+                                    ->info(
+                                        'Components allowed as content of an ObjectWindow sent to the component '
+                                        . 'renderer, none by default'
+                                    )
+                                    ->stringPrototype()->end()
+                                ->end()
+                            ->end()
                         ->end()
                     ->end()
                 ->end()

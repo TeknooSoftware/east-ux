@@ -1,6 +1,6 @@
 # Live Components and the East bridge
 
-`FormWindow` and `ListWindow` are Symfony UX Live Components: the server re-renders them through
+`FormWindow`, `ListWindow` and `ObjectWindow` are Symfony UX Live Components: the server re-renders them through
 `/_components/<Name>`. In an East application, a page is rendered by an East recipe, and the objects a component shows
 are loaded by that recipe. East Foundation and East Common glue Live Components to the recipes, so a re-render runs
 the recipe of the page again instead of letting the component load anything itself. East UX only uses this bridge:
@@ -72,7 +72,8 @@ Symfony UX exist (`TwigComponentBundle` and `LiveComponentBundle` registered).
   into `originalPath`), then the template.
 - **Live render** (`component.render()` from JavaScript, `data-model` with `live#update`): the service is built again,
   the LiveProps are hydrated, the view parameters of the recipe are copied, then `__invoke()`.
-  `FormWindow::__invoke()` calls `postMount()`; `ListWindow` uses `DefaultActionTrait` (an empty `__invoke()`).
+  `FormWindow::__invoke()` calls `postMount()`; `ListWindow` and `ObjectWindow` use `DefaultActionTrait` (an empty
+  `__invoke()`).
 - **Live action** (`component.action()`): the same render, with the method instead of `__invoke()`, so the method runs
   after the recipe and sees its view parameters. It needs `#[LiveAction]`, the header `X-Requested-With` and a recipe
   without error. Any other action only renders the component again, like the `save` of the search form of `ListWindow`.
@@ -132,6 +133,25 @@ re-render to the recipe of `originalPath` (the list recipe), which loads the pag
 window is not bound to the URL: its pagination re-renders it through the same recipe without changing the URL of the
 page holding it ([components.md](components.md#listwindow)).
 
+### Object windows
+
+A row of a list opens its object in a floating `ObjectWindow` ([components.md](components.md#objectwindow)), with the
+`window-dynamic-loader` controller, as a list window. The `originalPath` of its body is the path of the page of the
+object, the `href` of the link.
+
+```http
+POST /component/render
+Content-Type: application/json
+X-Requested-With: XMLHttpRequest
+
+{"component": "ObjectWindow", "props": {"windowId": "item-view-42", "originalPath": "/items/42",
+ "contentComponent": "ItemView", "floating": true, "hidden": true, "title": "Item 42", "closable": true,
+ "draggable": true}}
+```
+
+The window is rendered hidden and without object. `list-window-refresh` opens it on `window:open`: its re-render runs
+the recipe of `originalPath`, which loads the object, and the window shows it through `contentComponent`.
+
 ### The component renderer
 
 `Teknoo\East\UXBundle\Controller\ComponentRenderer`, route `_teknoo_east_ux_component_render` (`POST /render`,
@@ -153,7 +173,7 @@ The props are validated before the rendering:
   `fail()` with an `UnreferencedComponentException`.
 - The controller throws the error passed to `fail()`: invalid props get a 400 (`InvalidPropsException`), a component
   without validator a 403 (`UnreferencedComponentException`); props that are not an object get a 400.
-- The library references two components, with validators built on Symfony's validator (`Assert\Collection`, no
+- The library references three components, with validators built on Symfony's validator (`Assert\Collection`, no
   extra field):
     - `FormWindow`, with `FormWindowPropsValidator`: `windowId`, `formPath` and `formName` (a form type) are
       required, `originalPath`, `objectId`, `title`, `closeAriaLabel` (strings) and `closable`, `draggable`, `hidden`
@@ -167,6 +187,9 @@ The props are validated before the rendering:
       (a positive integer) are optional. Any other prop is refused: `closeRedirectUrl`, the view parameters of the
       recipes (`objectsCollection`, `pageCount`, `formView`), the LiveProps of the search form (`formValues`,
       `isValidated`, `validatedFields`), `@checksum`, ...
+    - `ObjectWindow`, with `ObjectWindowPropsValidator`, whose `contentComponent` must be one of the components of
+      `teknoo_east_ux.component_rendering.object_window.content_components`: see
+      [components.md](components.md#objectwindow).
     - A prop is `null` only when its property is nullable (`originalPath`, `objectId` of `FormWindow`,
       `searchFormName` of `ListWindow`): any other `null` prop gets a 400, not a `TypeError` of the component.
 - An application renders another component through the renderer by registering a validator for it:

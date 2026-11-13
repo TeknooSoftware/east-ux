@@ -28,6 +28,7 @@ namespace Teknoo\Tests\East\UX\Support\Fixtures\config;
 use Psr\Container\ContainerInterface;
 use Teknoo\East\Common\Contracts\Recipe\Plan\EditObjectEndPointInterface;
 use Teknoo\East\Common\Contracts\Recipe\Plan\ListObjectEndPointInterface;
+use Teknoo\East\Common\Recipe\Step\LoadObject;
 use Teknoo\East\Common\Recipe\Step\Render;
 use Teknoo\East\Common\Recipe\Step\RenderError;
 use Teknoo\East\UX\Contracts\Recipe\Step\CreateWindowReferenceInterface;
@@ -35,6 +36,7 @@ use Teknoo\East\UX\Contracts\Window\WindowMethodPublisherInterface;
 use Teknoo\Recipe\RecipeInterface;
 use Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Plan\PublishWindowMethodEndPoint;
 use Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Plan\ReferencedWindowEndPoint;
+use Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Plan\ViewItemEndPoint;
 use Teknoo\Tests\East\UX\Support\Fixtures\Recipe\Step\PublishWindowMethod;
 
 /*
@@ -71,6 +73,15 @@ return [
         => new PublishWindowMethodEndPoint(
             $container->get(RecipeInterface::class),
             new PublishWindowMethod($container->get(WindowMethodPublisherInterface::class)),
+            $container->get(Render::class),
+            $container->get(RenderError::class),
+        ),
+
+    // The page of an item, the route of its `ObjectWindow`
+    ViewItemEndPoint::class => static fn (ContainerInterface $container): ViewItemEndPoint
+        => new ViewItemEndPoint(
+            $container->get(RecipeInterface::class),
+            $container->get(LoadObject::class),
             $container->get(Render::class),
             $container->get(RenderError::class),
         ),

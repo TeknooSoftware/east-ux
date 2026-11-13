@@ -1,5 +1,6 @@
 # The parameters `teknoo_east_ux.home_route`, `teknoo_east_ux.form_theme`,
-# `teknoo_east_ux.component_rendering.allow_unreferenced_components` and `teknoo_east_ux.theme.*` are set by
+# `teknoo_east_ux.component_rendering.allow_unreferenced_components`,
+# `teknoo_east_ux.component_rendering.object_window.content_components` and `teknoo_east_ux.theme.*` are set by
 # `TeknooEastUXExtension` from the `teknoo_east_ux` configuration.
 
 services:
@@ -106,6 +107,12 @@ services:
         class: 'Teknoo\East\UXBundle\Components\ObjectList'
         autoconfigure: true
 
+    Teknoo\East\UXBundle\Components\ObjectWindow:
+        class: 'Teknoo\East\UXBundle\Components\ObjectWindow'
+        autoconfigure: true
+        arguments:
+            - '@request_stack'
+
     Teknoo\East\UXBundle\Components\Pagination:
         class: 'Teknoo\East\UXBundle\Components\Pagination'
         autoconfigure: true
@@ -199,3 +206,13 @@ services:
             - '@ux.twig_component.component_factory'
         tags:
             - { name: 'teknoo.east.ux.component_rendering.validation', component: 'Teknoo\East\UXBundle\Components\ListWindow' }
+
+    # An `ObjectWindow` loaded by the component renderer is a floating window: its `contentComponent` must be one of the
+    # components of `teknoo_east_ux.component_rendering.object_window.content_components`, none by default
+    Teknoo\East\UXBundle\ComponentRendering\Validator\ObjectWindowPropsValidator:
+        class: 'Teknoo\East\UXBundle\ComponentRendering\Validator\ObjectWindowPropsValidator'
+        arguments:
+            - '@validator'
+            - '%teknoo_east_ux.component_rendering.object_window.content_components%'
+        tags:
+            - { name: 'teknoo.east.ux.component_rendering.validation', component: 'Teknoo\East\UXBundle\Components\ObjectWindow' }

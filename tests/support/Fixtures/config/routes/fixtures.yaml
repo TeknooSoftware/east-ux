@@ -43,6 +43,17 @@ fixtures_item_edit:
     errorTemplate: 'error.html.twig'
     formOptions: { }
 
+# The page of an item, also the route of its `ObjectWindow`: `POST` for the Live re-render of the window
+fixtures_item_view:
+  path: '/items/view/{id}'
+  methods: ['GET', 'POST']
+  defaults:
+    _controller: 'fixtures.endpoint.item.view'
+    loader: '@Teknoo\Tests\East\UX\Support\Fixtures\Loader\ItemLoader'
+    objectViewKey: 'objectInstance'
+    template: 'item/view.html.twig'
+    errorTemplate: 'error.html.twig'
+
 # Same recipe as `fixtures_item_new`, behind the `^/admin` access rule (ROLE_ADMIN)
 fixtures_admin_item_new:
   path: '/admin/items/new'

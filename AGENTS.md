@@ -6,12 +6,13 @@
 `teknoo/east-foundation` and `teknoo/east-common`. It provides the application-level UI pieces of an East
 application:
 
-- Symfony UX Twig and Live Components (`Window`, `FormWindow`, `ListWindow`, `LoginWindow`, `MenuBar`, `ObjectList`,
-  `Pagination`, `ConfirmModal`, `Card`, `ThemeSwitcher`) and their templates
+- Symfony UX Twig and Live Components (`Window`, `FormWindow`, `ListWindow`, `ObjectWindow`, `LoginWindow`, `MenuBar`,
+  `ObjectList`, `Pagination`, `ConfirmModal`, `Card`, `ThemeSwitcher`) and their templates
 - Eleven Stimulus controllers and a structural stylesheet, served by AssetMapper
 - A component renderer endpoint (`POST /render`) rendering the component and the props of its JSON body, used to load a
-  `FormWindow` or a floating `ListWindow` dynamically; the props are validated by the validator of the component (tag
-  `teknoo.east.ux.component_rendering.validation`), a component without validator is refused by default
+  `FormWindow`, a floating `ListWindow` or a floating `ObjectWindow` dynamically; the props are validated by the
+  validator of the component (tag `teknoo.east.ux.component_rendering.validation`), a component without validator is
+  refused by default
 - A menu service fed by the menu generators of the application
 - The references of the Live windows (`WindowReference`): a worker or another window asks an opened window to run one of
   its methods, through Mercure, which only carries the name of the method
@@ -54,8 +55,8 @@ never re-implements them. Its only step, `CreateWindowReference`, creates the re
     - `Mercure/`: `WindowMethodPublisher`, `WindowReferenceAttributesSubscriber`; `Hydration/`:
       `WindowReferenceHydrationExtension`; `Recipe/Step/`: `CreateWindowReference`.
     - `ComponentRendering/`, `Contracts/ComponentRendering/`: the validation of the props of the rendered components
-      (`PropsValidatorInterface`, `PropsValidatorRegistry`, `FormWindowPropsValidator`, `ListWindowPropsValidator`, the
-      exceptions).
+      (`PropsValidatorInterface`, `PropsValidatorRegistry`, `FormWindowPropsValidator`, `ListWindowPropsValidator`,
+      `ObjectWindowPropsValidator`, the exceptions).
     - `config/`: `services.yaml`, `routes.yaml` (component renderer), `theme_routes.yaml` (theme updater, public),
       `di.php`, `twig.php`.
     - `templates/`: Twig namespace `@TeknooEastUX` (`components/<Name>.html.twig`, `component_renderer.html.twig`).
@@ -65,7 +66,7 @@ never re-implements them. Its only step, `CreateWindowReference`, creates the re
   copied from the theme repository by `make system-theme`, never edited here), mapped in AssetMapper as
   `@teknoo/east-ux`.
 - `documentation/`: components, Live Components and the East bridge, Stimulus, menu, theming, System.css theme.
-- `features/`: Behat features (components rendered by East recipes, dynamic form and list windows, menu, theme,
+- `features/`: Behat features (components rendered by East recipes, dynamic form, list and object windows, menu, theme,
   window references).
 - `tests/`: test suites:
     - `universal/`: menu, theme and window reference tests (`Teknoo\Tests\East\UX\`).
