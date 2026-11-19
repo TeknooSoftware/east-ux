@@ -1,6 +1,6 @@
 # Teknoo Software - East UX - Change Log
 
-## [0.6.0] - Release pending
+## [0.6.0] - 2026-11-19
 ### Alpha Release
 
 #### Evolutions
@@ -10,7 +10,7 @@
 - Configuration `teknoo_east_ux.component_rendering.object_window.content_components`: the components allowed as
   content of an `ObjectWindow` loaded by the component renderer. Empty by default: such a window is refused.
 
-## [0.5.0] - Release pending
+## [0.5.0] - 2026-11-06
 ### Alpha Release
 
 #### Fixes
