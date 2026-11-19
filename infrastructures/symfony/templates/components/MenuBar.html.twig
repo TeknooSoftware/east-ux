@@ -1,9 +1,9 @@
-{% macro menu_section(section, dropdownId) %}
+{% macro menu_section(section, dropdownId, endAligned = false) %}
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="{{ dropdownId }}" role="button" data-bs-toggle="dropdown">
             {% if section.icon %}<span class="menu-icon {{ section.icon }}" aria-hidden="true"></span> {% endif %}{% if section.rawLabel %}{{ section.name }}{% else %}{{ section.name|trans({}, section.translationDomain) }}{% endif %}
         </a>
-        <ul class="dropdown-menu">
+        <ul class="dropdown-menu{% if endAligned %} dropdown-menu-end{% endif %}">
             {% for item in section.items %}
                 {% if item.divider %}
             <li><hr class="dropdown-divider"></li>
@@ -71,7 +71,7 @@
             {% block right_sections %}
                 <ul class="navbar-nav ms-auto">
                     {% for section in this.getRightItems() %}
-                        {{ _self.menu_section(section, 'menuBarRightDropdown' ~ loop.index) }}
+                        {{ _self.menu_section(section, 'menuBarRightDropdown' ~ loop.index, true) }}
                     {% endfor %}
                 </ul>
             {% endblock %}
