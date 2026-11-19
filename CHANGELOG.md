@@ -1,5 +1,12 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.6.1] - Release pending
+### Alpha Release
+
+#### Fixes
+- `MenuBar`: the menus of the right sections open on the end of their button (`dropdown-menu-end`), the last one no
+  longer goes out of the window.
+
 ## [0.6.0] - Release pending
 ### Alpha Release
 

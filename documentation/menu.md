@@ -211,8 +211,9 @@ class UserMenu implements MenuGeneratorInterface
 ## Rendering
 
 `<twig:MenuBar :user="..." />` (see [components.md](components.md#menubar)) renders the `Location::TopLeft` sections
-on the left and the `Location::TopRight` sections on the right, each as a Bootstrap dropdown, with the brand linked to
-`teknoo_east_ux.home_route`. Without user, no section is rendered.
+on the left and the `Location::TopRight` sections on the right, each as a Bootstrap dropdown (the right ones open on the
+end of their button, with `dropdown-menu-end`), with the brand linked to `teknoo_east_ux.home_route`. Without user, no
+section is rendered.
 
 Before a link of the menu bar leaves a page where floating windows are shown (a floating `ListWindow` or
 `ObjectWindow`, a `FormWindow` overlay), the `leave-confirm` controller of the `<nav>` asks a confirmation in a
