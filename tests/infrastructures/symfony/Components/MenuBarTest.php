@@ -431,6 +431,24 @@ class MenuBarTest extends TestCase
         $this->assertStringNotContainsString('<a class="nav-link" href="#">', $html);
     }
 
+    public function testRenderTheRightSectionsAlignedOnTheEndOfTheirButton(): void
+    {
+        $menuBar = $this->buildMenuBar($this->buildMenuServiceWithSections());
+        $menuBar->user = new User();
+
+        $html = $this->render($menuBar);
+
+        // A menu opens on the left edge of its button: the last one of the right would go out of the window
+        $right = (int) strpos($html, '<ul class="navbar-nav ms-auto">');
+        $this->assertGreaterThan(0, $right);
+        $this->assertSame(1, substr_count($html, '<ul class="dropdown-menu dropdown-menu-end">'));
+        $this->assertGreaterThan($right, (int) strpos($html, '<ul class="dropdown-menu dropdown-menu-end">'));
+
+        // The menus of the left keep their alignment
+        $this->assertSame(2, substr_count($html, '<ul class="dropdown-menu">'));
+        $this->assertLessThan($right, (int) strrpos($html, '<ul class="dropdown-menu">'));
+    }
+
     public function testRenderButtonsAttributesAndTranslationDomains(): void
     {
         $theme = new MenuSection(name: 'east.theme', position: 1, icon: 'icon-palette', translationDomain: 'east_ux');
