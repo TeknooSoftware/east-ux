@@ -16,6 +16,8 @@ export default class extends Controller {
         component: String,
         title: String,
         props: { type: Object, default: {} },
+        // A link set by the server, which only triggers the opening: its window opens when the link connects
+        autoOpen: { type: Boolean, default: false },
     }
 
     initialize() {
@@ -27,6 +29,10 @@ export default class extends Controller {
         // listener per controller: a listener shared by all of them would be removed by the first disconnected one
         this.boundEndWaits = () => endWaits();
         window.addEventListener('pagehide', this.boundEndWaits);
+
+        if (this.autoOpenValue) {
+            this.openFromServer();
+        }
     }
 
     disconnect() {
@@ -55,7 +61,31 @@ export default class extends Controller {
 
         event.preventDefault();
 
-        // A second click while the window is loading is ignored
+        await this.load(existing, true);
+    }
+
+    // The link is a trigger set by the server (`autoOpen`): there is no click to leave to the browser, and no page to
+    // go to when the window can not be loaded, so a failure is logged and the page stays as it is. Like a click, it
+    // opens again the Live window of the page which has its id, and leaves a window which is not live alone
+    async openFromServer() {
+        if (!this.element.href) {
+            console.error('The window-dynamic-loader controller must be set on a link with an href');
+
+            return;
+        }
+
+        const existing = this.findExistingWindow();
+        if (existing && !existing.matches(WINDOWS_OPENED_ON_EVENT)) {
+            return;
+        }
+
+        await this.load(existing, false);
+    }
+
+    // Loads the window of the link, or opens again the Live window of the page, `existing`. When it can not be
+    // loaded, a click follows the link (`followLinkOnFailure`), a link set by the server only ends its wait
+    async load(existing, followLinkOnFailure) {
+        // A second opening while the window is loading is ignored
         if (this.loading) {
             return;
         }
@@ -130,9 +160,15 @@ export default class extends Controller {
             windowElement.addEventListener('window:opened', endWait, { once: true });
             windowElement.dispatchEvent(new CustomEvent('window:open'));
         } catch (error) {
-            // Fallback: the page of the link, the wait cursor stays until the page is left
             console.error('Error loading the window:', error);
-            window.location.assign(this.element.href);
+
+            if (followLinkOnFailure) {
+                // Fallback: the page of the link, the wait cursor stays until the page is left
+                window.location.assign(this.element.href);
+            } else {
+                // The page stays: the wait is over
+                endWait();
+            }
         } finally {
             this.loading = false;
         }

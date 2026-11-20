@@ -150,7 +150,9 @@ Values:
 - `url`: the URL of the component renderer (`path('_teknoo_east_ux_component_render')`), required;
 - `component`: the name of the component to render (`ListWindow`, `FormWindow`, `ObjectWindow`, ...);
 - `title`: the title of the window, added to the props when it is not empty (it replaces a `title` of `props`);
-- `props` (`{}`): the props of the component, a JSON object; its `windowId` names the window in the page.
+- `props` (`{}`): the props of the component, a JSON object; its `windowId` names the window in the page;
+- `auto-open` (`false`): the link is a trigger set by the server, and its window opens when the controller connects,
+  see [Opening from the server](#opening-from-the-server).
 
 `open()` (bound to `click`):
 
@@ -197,6 +199,34 @@ Values:
 
 `form-window-dynamic-loader` stays for the "New" and "Edit" buttons: it builds the props of a `FormWindow` from its
 values and shows an `alert()` on failure.
+
+#### Opening from the server
+
+A window can be asked for by the server, not by a click: a tool of an agent, a worker, another tab. The server cannot
+click, and a Mercure message only carries the name of a method (see [window-reference](#window-reference)). So a Live
+window renders the link of the window to open, with `auto-open` set to true and the same values as the link of a menu
+entry, and the window opens when the link connects. The link is only a trigger: hide it (`hidden`), and render it in the
+one render that follows the request, so that the next render removes it and no other render opens the window again.
+
+```twig
+<a href="{{ path('app_about') }}" hidden
+   data-controller="window-dynamic-loader"
+   data-window-dynamic-loader-url-value="{{ path('_teknoo_east_ux_component_render') }}"
+   data-window-dynamic-loader-component-value="AboutWindow"
+   data-window-dynamic-loader-title-value="{{ 'app.about.title'|trans }}"
+   data-window-dynamic-loader-props-value="{{ props|json_encode }}"
+   data-window-dynamic-loader-auto-open-value="true">{{ 'app.about.title'|trans }}</a>
+```
+
+The window is loaded and opened as for a click (same request, same props, same cascade offset and wait cursor), except:
+
+- There is no click: no test of the button or of a modifier key, nothing to prevent, and no `data-action` to set.
+- A failure (see the last point of `open()`) never takes the page to the `href`: nobody asked for a navigation.
+  The error goes to `console.error()` and the wait cursor ends at once.
+- The Live window of the page which has the `windowId` gets `window:open` and opens again, also when the user closed
+  it. A window of the page which is not live is left alone: nothing happens.
+- The link opens its window once, when it connects. A link that stays in the page across the renders does not open it
+  again.
 
 ### The wait cursor
 

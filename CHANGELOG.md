@@ -1,5 +1,12 @@
 # Teknoo Software - East UX - Change Log
 
+## [0.7.0] - Release pending
+### Alpha Release
+
+#### Evolutions
+- `window-dynamic-loader`: the value `auto-open` opens the window of a link when the link connects, so a server render
+  can open a window which a worker or a tool asked for. A failure never leaves the page.
+
 ## [0.6.1] - Release pending
 ### Alpha Release
 
